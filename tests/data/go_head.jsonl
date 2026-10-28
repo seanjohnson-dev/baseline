@@ -1,0 +1,86 @@
+{"ImportPath":"example.com/shop/report [example.com/shop/report.test]","Action":"build-output","Output":"# example.com/shop/report [example.com/shop/report.test]\n"}
+{"ImportPath":"example.com/shop/report [example.com/shop/report.test]","Action":"build-output","Output":"report/report_test.go:6:5: undefined: Summary\n"}
+{"ImportPath":"example.com/shop/report [example.com/shop/report.test]","Action":"build-fail"}
+{"Time":"2026-10-28T08:54:08.077570185+02:00","Action":"start","Package":"example.com/shop/cart"}
+{"Time":"2026-10-28T08:54:08.077816231+02:00","Action":"start","Package":"example.com/shop/control"}
+{"Time":"2026-10-28T08:54:08.078968432+02:00","Action":"run","Package":"example.com/shop/control","Test":"TestControlA"}
+{"Time":"2026-10-28T08:54:08.079041456+02:00","Action":"output","Package":"example.com/shop/control","Test":"TestControlA","Output":"=== RUN   TestControlA\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079083854+02:00","Action":"output","Package":"example.com/shop/control","Test":"TestControlA","Output":"--- PASS: TestControlA (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079088117+02:00","Action":"pass","Package":"example.com/shop/control","Test":"TestControlA","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.079105668+02:00","Action":"run","Package":"example.com/shop/control","Test":"TestControlB"}
+{"Time":"2026-10-28T08:54:08.079107322+02:00","Action":"output","Package":"example.com/shop/control","Test":"TestControlB","Output":"=== RUN   TestControlB\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079109824+02:00","Action":"output","Package":"example.com/shop/control","Test":"TestControlB","Output":"--- PASS: TestControlB (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079111636+02:00","Action":"pass","Package":"example.com/shop/control","Test":"TestControlB","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.079113784+02:00","Action":"output","Package":"example.com/shop/control","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079124199+02:00","Action":"run","Package":"example.com/shop/cart","Test":"TestTotalPlain"}
+{"Time":"2026-10-28T08:54:08.079132688+02:00","Action":"output","Package":"example.com/shop/cart","Test":"TestTotalPlain","Output":"=== RUN   TestTotalPlain\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079136488+02:00","Action":"output","Package":"example.com/shop/cart","Test":"TestTotalPlain","Output":"--- PASS: TestTotalPlain (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079139215+02:00","Action":"pass","Package":"example.com/shop/cart","Test":"TestTotalPlain","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.07914212+02:00","Action":"run","Package":"example.com/shop/cart","Test":"TestNewDiscountPercent"}
+{"Time":"2026-10-28T08:54:08.07914366+02:00","Action":"output","Package":"example.com/shop/cart","Test":"TestNewDiscountPercent","Output":"=== RUN   TestNewDiscountPercent\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079165627+02:00","Action":"output","Package":"example.com/shop/control","Output":"ok  \texample.com/shop/control\t0.001s\n"}
+{"Time":"2026-10-28T08:54:08.079169175+02:00","Action":"output","Package":"example.com/shop/cart","Test":"TestNewDiscountPercent","Output":"    cart_test.go:13: got 99.9 want 90\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.079188005+02:00","Action":"pass","Package":"example.com/shop/control","Elapsed":0.001}
+{"Time":"2026-10-28T08:54:08.079195145+02:00","Action":"output","Package":"example.com/shop/cart","Test":"TestNewDiscountPercent","Output":"--- FAIL: TestNewDiscountPercent (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079198628+02:00","Action":"fail","Package":"example.com/shop/cart","Test":"TestNewDiscountPercent","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.079204332+02:00","Action":"output","Package":"example.com/shop/cart","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079908+02:00","Action":"output","Package":"example.com/shop/cart","Output":"FAIL\texample.com/shop/cart\t0.002s\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.079928163+02:00","Action":"fail","Package":"example.com/shop/cart","Elapsed":0.002}
+{"Time":"2026-10-28T08:54:08.092008711+02:00","Action":"start","Package":"example.com/shop/envtests"}
+{"Time":"2026-10-28T08:54:08.092209403+02:00","Action":"start","Package":"example.com/shop/flaky"}
+{"Time":"2026-10-28T08:54:08.092394119+02:00","Action":"start","Package":"example.com/shop/report"}
+{"Time":"2026-10-28T08:54:08.092410879+02:00","Action":"output","Package":"example.com/shop/report","Output":"FAIL\texample.com/shop/report [build failed]\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.092417589+02:00","Action":"fail","Package":"example.com/shop/report","Elapsed":0,"FailedBuild":"example.com/shop/report [example.com/shop/report.test]"}
+{"Time":"2026-10-28T08:54:08.092450299+02:00","Action":"start","Package":"example.com/shop/shipping"}
+{"Time":"2026-10-28T08:54:08.09257436+02:00","Action":"start","Package":"example.com/shop/tax"}
+{"Time":"2026-10-28T08:54:08.09391591+02:00","Action":"run","Package":"example.com/shop/shipping","Test":"TestPreChangedShipping"}
+{"Time":"2026-10-28T08:54:08.093932937+02:00","Action":"run","Package":"example.com/shop/flaky","Test":"TestFlakyRandom"}
+{"Time":"2026-10-28T08:54:08.093954624+02:00","Action":"output","Package":"example.com/shop/shipping","Test":"TestPreChangedShipping","Output":"=== RUN   TestPreChangedShipping\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.093962652+02:00","Action":"output","Package":"example.com/shop/shipping","Test":"TestPreChangedShipping","Output":"    shipping_test.go:7: got 6 want 7\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.093961485+02:00","Action":"output","Package":"example.com/shop/flaky","Test":"TestFlakyRandom","Output":"=== RUN   TestFlakyRandom\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.093982817+02:00","Action":"output","Package":"example.com/shop/shipping","Test":"TestPreChangedShipping","Output":"--- FAIL: TestPreChangedShipping (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.093987891+02:00","Action":"fail","Package":"example.com/shop/shipping","Test":"TestPreChangedShipping","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.093992795+02:00","Action":"output","Package":"example.com/shop/shipping","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.093989987+02:00","Action":"output","Package":"example.com/shop/flaky","Test":"TestFlakyRandom","Output":"    flaky_test.go:12: unlucky\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.094012056+02:00","Action":"output","Package":"example.com/shop/flaky","Test":"TestFlakyRandom","Output":"--- FAIL: TestFlakyRandom (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094016228+02:00","Action":"fail","Package":"example.com/shop/flaky","Test":"TestFlakyRandom","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.094020946+02:00","Action":"run","Package":"example.com/shop/flaky","Test":"TestFlakyTiming"}
+{"Time":"2026-10-28T08:54:08.094021756+02:00","Action":"output","Package":"example.com/shop/shipping","Output":"FAIL\texample.com/shop/shipping\t0.002s\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094023355+02:00","Action":"output","Package":"example.com/shop/flaky","Test":"TestFlakyTiming","Output":"=== RUN   TestFlakyTiming\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094028212+02:00","Action":"fail","Package":"example.com/shop/shipping","Elapsed":0.002}
+{"Time":"2026-10-28T08:54:08.094027076+02:00","Action":"run","Package":"example.com/shop/tax","Test":"TestTaxBasic"}
+{"Time":"2026-10-28T08:54:08.094093157+02:00","Action":"output","Package":"example.com/shop/tax","Test":"TestTaxBasic","Output":"=== RUN   TestTaxBasic\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094104282+02:00","Action":"output","Package":"example.com/shop/tax","Test":"TestTaxBasic","Output":"--- PASS: TestTaxBasic (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094108838+02:00","Action":"pass","Package":"example.com/shop/tax","Test":"TestTaxBasic","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.094112087+02:00","Action":"run","Package":"example.com/shop/tax","Test":"TestPreTaxRounding"}
+{"Time":"2026-10-28T08:54:08.094118451+02:00","Action":"output","Package":"example.com/shop/tax","Test":"TestPreTaxRounding","Output":"=== RUN   TestPreTaxRounding\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094121677+02:00","Action":"output","Package":"example.com/shop/tax","Test":"TestPreTaxRounding","Output":"    tax_test.go:13: got 1.51 want 1.5\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.094125609+02:00","Action":"output","Package":"example.com/shop/tax","Test":"TestPreTaxRounding","Output":"--- FAIL: TestPreTaxRounding (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094130357+02:00","Action":"fail","Package":"example.com/shop/tax","Test":"TestPreTaxRounding","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.094132362+02:00","Action":"output","Package":"example.com/shop/tax","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094069733+02:00","Action":"run","Package":"example.com/shop/envtests","Test":"TestEnvModule"}
+{"Time":"2026-10-28T08:54:08.094170368+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvModule","Output":"=== RUN   TestEnvModule\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094327818+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvModule","Output":"    env_test.go:14: required tool missing: exec: \"psql-not-installed\": executable file not found in $PATH\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.094341297+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvModule","Output":"--- FAIL: TestEnvModule (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094343853+02:00","Action":"fail","Package":"example.com/shop/envtests","Test":"TestEnvModule","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.094347536+02:00","Action":"run","Package":"example.com/shop/envtests","Test":"TestEnvVar"}
+{"Time":"2026-10-28T08:54:08.094349935+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvVar","Output":"=== RUN   TestEnvVar\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094341044+02:00","Action":"output","Package":"example.com/shop/tax","Output":"FAIL\texample.com/shop/tax\t0.002s\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094364463+02:00","Action":"fail","Package":"example.com/shop/tax","Elapsed":0.002}
+{"Time":"2026-10-28T08:54:08.094352295+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvVar","Output":"    env_test.go:20: DATABASE_URL not set\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.094425771+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvVar","Output":"--- FAIL: TestEnvVar (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094430512+02:00","Action":"fail","Package":"example.com/shop/envtests","Test":"TestEnvVar","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.094433498+02:00","Action":"run","Package":"example.com/shop/envtests","Test":"TestEnvService"}
+{"Time":"2026-10-28T08:54:08.094435355+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvService","Output":"=== RUN   TestEnvService\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.0944378+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvService","Output":"    env_test.go:27: dial: dial tcp 127.0.0.1:59999: connect: connection refused\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.094441699+02:00","Action":"output","Package":"example.com/shop/envtests","Test":"TestEnvService","Output":"--- FAIL: TestEnvService (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094444192+02:00","Action":"fail","Package":"example.com/shop/envtests","Test":"TestEnvService","Elapsed":0}
+{"Time":"2026-10-28T08:54:08.094445769+02:00","Action":"output","Package":"example.com/shop/envtests","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094524513+02:00","Action":"output","Package":"example.com/shop/envtests","Output":"FAIL\texample.com/shop/envtests\t0.002s\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.094538191+02:00","Action":"fail","Package":"example.com/shop/envtests","Elapsed":0.003}
+{"Time":"2026-10-28T08:54:08.103469063+02:00","Action":"output","Package":"example.com/shop/flaky","Test":"TestFlakyTiming","Output":"    flaky_test.go:24: worker had not finished\n","OutputType":"error"}
+{"Time":"2026-10-28T08:54:08.103498595+02:00","Action":"output","Package":"example.com/shop/flaky","Test":"TestFlakyTiming","Output":"--- FAIL: TestFlakyTiming (0.01s)\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.103502716+02:00","Action":"fail","Package":"example.com/shop/flaky","Test":"TestFlakyTiming","Elapsed":0.01}
+{"Time":"2026-10-28T08:54:08.103506134+02:00","Action":"output","Package":"example.com/shop/flaky","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.104383922+02:00","Action":"output","Package":"example.com/shop/flaky","Output":"FAIL\texample.com/shop/flaky\t0.012s\n","OutputType":"frame"}
+{"Time":"2026-10-28T08:54:08.104404505+02:00","Action":"fail","Package":"example.com/shop/flaky","Elapsed":0.012}

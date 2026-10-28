@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="7" skipped="0" tests="13" time="0.049" timestamp="2026-10-28T09:05:28.217717+02:00" hostname="host"><testcase classname="" name="tests.test_report" file="tests/test_report.py" time="0.000"><error message="collection failure">ImportError while importing test module '/tmp/bl-fixtures/py-shop/tests/test_report.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_report.py:1: in &lt;module&gt;
+    from shop.report import summary
+E   ModuleNotFoundError: No module named 'shop.report'</error></testcase><testcase classname="tests.test_cart" name="test_total_plain" file="tests/test_cart.py" line="2" time="0.000" /><testcase classname="tests.test_cart" name="test_new_discount_percent" file="tests/test_cart.py" line="5" time="0.000"><failure message="assert 99.9 == 90&#10; +  where 99.9 = total([(100, 1)], discount=0.1)">def test_new_discount_percent():
+&gt;       assert total([(100, 1)], discount=0.1) == 90
+E       assert 99.9 == 90
+E        +  where 99.9 = total([(100, 1)], discount=0.1)
+
+tests/test_cart.py:7: AssertionError</failure></testcase><testcase classname="tests.test_control" name="test_control_a" file="tests/test_control.py" line="0" time="0.000" /><testcase classname="tests.test_control" name="test_control_b" file="tests/test_control.py" line="1" time="0.000" /><testcase classname="tests.test_env" name="test_env_module" file="tests/test_env.py" line="2" time="0.000"><failure message="ModuleNotFoundError: No module named 'psycopg2_not_installed'">def test_env_module():
+&gt;       import psycopg2_not_installed  # noqa
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ModuleNotFoundError: No module named 'psycopg2_not_installed'
+
+tests/test_env.py:4: ModuleNotFoundError</failure></testcase><testcase classname="tests.test_env" name="test_env_var" file="tests/test_env.py" line="5" time="0.000"><failure message="KeyError: 'DATABASE_URL'">def test_env_var():
+&gt;       assert os.environ["DATABASE_URL"].startswith("postgres")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_env.py:7: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = environ({'HOME': '/home/user', 'PATH': '/usr/bin'})
+key = 'DATABASE_URL'
+
+&gt;   ???
+E   KeyError: 'DATABASE_URL'
+
+&lt;frozen os&gt;:717: KeyError</failure></testcase><testcase classname="tests.test_env" name="test_env_service" file="tests/test_env.py" line="8" time="0.001"><failure message="ConnectionRefusedError: [Errno 111] Connection refused">def test_env_service():
+&gt;       socket.create_connection(("127.0.0.1", 59999), timeout=1)
+
+tests/test_env.py:10: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/socket.py:864: in create_connection
+    raise exceptions[0]
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = ('127.0.0.1', 59999), timeout = 1, source_address = None
+all_errors = False
+
+    def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT,
+                          source_address=None, *, all_errors=False):
+        """Connect to *address* and return the socket object.
+    
+        Convenience function.  Connect to *address* (a 2-tuple ``(host,
+        port)``) and return the socket object.  Passing the optional
+        *timeout* parameter will set the timeout on the socket instance
+        before attempting to connect.  If no *timeout* is supplied, the
+        global default timeout setting returned by :func:`getdefaulttimeout`
+        is used.  If *source_address* is set it must be a tuple of (host, port)
+        for the socket to bind as a source address before making the connection.
+        A host of '' or port 0 tells the OS to use the default. When a connection
+        cannot be created, raises the last error if *all_errors* is False,
+        and an ExceptionGroup of all errors if *all_errors* is True.
+        """
+    
+        host, port = address
+        exceptions = []
+        for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+            af, socktype, proto, canonname, sa = res
+            sock = None
+            try:
+                sock = socket(af, socktype, proto)
+                if timeout is not _GLOBAL_DEFAULT_TIMEOUT:
+                    sock.settimeout(timeout)
+                if source_address:
+                    sock.bind(source_address)
+&gt;               sock.connect(sa)
+E               ConnectionRefusedError: [Errno 111] Connection refused
+
+/usr/lib/python3.13/socket.py:849: ConnectionRefusedError</failure></testcase><testcase classname="tests.test_flaky" name="test_flaky_random" file="tests/test_flaky.py" line="2" time="0.000"><failure message="assert 0.21298817300123818 &gt; 0.5&#10; +  where 0.21298817300123818 = &lt;built-in method random of Random object at 0x3d5c1d90&gt;()&#10; +    where &lt;built-in method random of Random object at 0x3d5c1d90&gt; = random.random">def test_flaky_random():
+&gt;       assert random.random() &gt; 0.5
+E       assert 0.21298817300123818 &gt; 0.5
+E        +  where 0.21298817300123818 = &lt;built-in method random of Random object at 0x3d5c1d90&gt;()
+E        +    where &lt;built-in method random of Random object at 0x3d5c1d90&gt; = random.random
+
+tests/test_flaky.py:4: AssertionError</failure></testcase><testcase classname="tests.test_flaky" name="test_flaky_timing" file="tests/test_flaky.py" line="5" time="0.011" /><testcase classname="tests.test_shipping" name="test_pre_changed_shipping" file="tests/test_shipping.py" line="2" time="0.000"><failure message="assert 6 == 7&#10; +  where 6 = shipping(2)">def test_pre_changed_shipping():
+&gt;       assert shipping(2) == 7
+E       assert 6 == 7
+E        +  where 6 = shipping(2)
+
+tests/test_shipping.py:4: AssertionError</failure></testcase><testcase classname="tests.test_tax" name="test_tax_basic" file="tests/test_tax.py" line="2" time="0.000" /><testcase classname="tests.test_tax" name="test_pre_tax_rounding" file="tests/test_tax.py" line="5" time="0.000"><failure message="assert 1.57 == 1.58&#10; +  where 1.57 = tax(10.5)">def test_pre_tax_rounding():
+&gt;       assert tax(10.50) == 1.58
+E       assert 1.57 == 1.58
+E        +  where 1.57 = tax(10.5)
+
+tests/test_tax.py:7: AssertionError</failure></testcase></testsuite></testsuites>

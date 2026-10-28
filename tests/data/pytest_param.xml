@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="4" skipped="1" tests="7" time="0.021" timestamp="2026-10-28T09:05:28.449048+02:00" hostname="host"><testcase classname="test_p.TestA.TestB" name="test_n" file="test_p.py" line="3" time="0.000"><failure message="assert 0">self = &lt;test_p.TestA.TestB object at 0x7f360002a710&gt;
+
+&gt;   def test_n(self): assert 0
+                      ^^^^^^^^
+E   assert 0
+
+test_p.py:4: AssertionError</failure></testcase><testcase classname="test_p" name="test_p[1]" file="test_p.py" line="4" time="0.000" /><testcase classname="test_p" name="test_p[a b]" file="test_p.py" line="4" time="0.000"><failure message="AssertionError: assert 'a b' == 1">x = 'a b'
+
+    @pytest.mark.parametrize("x", [1, "a b", "x::y", "[z]"])
+&gt;   def test_p(x): assert x == 1
+                   ^^^^^^^^^^^^^
+E   AssertionError: assert 'a b' == 1
+
+test_p.py:6: AssertionError</failure></testcase><testcase classname="test_p" name="test_p[x::y]" file="test_p.py" line="4" time="0.000"><failure message="AssertionError: assert 'x::y' == 1">x = 'x::y'
+
+    @pytest.mark.parametrize("x", [1, "a b", "x::y", "[z]"])
+&gt;   def test_p(x): assert x == 1
+                   ^^^^^^^^^^^^^
+E   AssertionError: assert 'x::y' == 1
+
+test_p.py:6: AssertionError</failure></testcase><testcase classname="test_p" name="test_p[[z]]" file="test_p.py" line="4" time="0.000"><failure message="AssertionError: assert '[z]' == 1">x = '[z]'
+
+    @pytest.mark.parametrize("x", [1, "a b", "x::y", "[z]"])
+&gt;   def test_p(x): assert x == 1
+                   ^^^^^^^^^^^^^
+E   AssertionError: assert '[z]' == 1
+
+test_p.py:6: AssertionError</failure></testcase><testcase classname="test_p" name="test_fx" file="test_p.py" line="8" time="0.000"><error message="failed on setup with &quot;RuntimeError: fixture boom&quot;">@pytest.fixture
+&gt;   def broken(): raise RuntimeError("fixture boom")
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: fixture boom
+
+test_p.py:8: RuntimeError</error></testcase><testcase classname="test_p" name="test_skip" file="test_p.py" line="9" time="0.000"><skipped type="pytest.skip" message="nope">/tmp/pyparam/test_p.py:10: nope</skipped></testcase></testsuite></testsuites>
