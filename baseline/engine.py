@@ -42,6 +42,21 @@ COLLISION = re.compile(
     r"EEXIST|file exists|deadlock detected|too many clients", re.I)
 
 
+# head reruns run as this many concurrent copies (the head reruns are the critical path: failing tests mostly
+# wait for timeouts); 1 when serial. Any collision sign in a copy -> redone serially.
+HEAD_COPIES = 2
+
+
+def _confirm_runs(opts: "Options") -> int:
+    if opts.confirm_runs is not None:
+        return max(1, opts.confirm_runs)
+    try:
+        v = int(os.environ.get(brand.ENV_PREFIX + "CONFIRM_RUNS", ""))
+        return max(1, v)
+    except ValueError:
+        return max(1, opts.runs)
+
+
 class UsageError(Exception):
     """Exit code 2."""
 
@@ -145,6 +160,7 @@ class Options:
     flaky_hunt: int = 0           # extra full head runs to catch tests that flip
     deadline: Optional[float] = None  # absolute time.time(); past it -> BudgetExceeded (no verdict)
     in_chain: bool = False        # this check is one part of a chained command (see run_chain)
+    confirm_runs: Optional[int] = None  # base runs behind a verdict at most (None: <PREFIX>CONFIRM_RUNS or --runs)
 
 
 class Progress:
@@ -184,7 +200,7 @@ def _scripts(cwd: Path) -> Optional[Dict]:
 class Engine:
     def __init__(self, opts: Options):
         self.opts = opts
-        self.policy = decide.Policy.from_runs(opts.runs, opts.base_runs, opts.max_runs)
+        self.policy = decide.Policy.from_runs(opts.runs, opts.base_runs, opts.max_runs, _confirm_runs(opts))
         self.progress = Progress(opts.verbose)
         self.warnings: List[str] = []
         self.notes: List[str] = []
@@ -632,10 +648,7 @@ class Engine:
     def _iteration(self, states, hneed: List[decide.UnitState], btask) -> None:
         head_fn = base_fn = None
         if hneed:
-            self.rnd += 1
-            rnd = self.rnd
-            head_fn = lambda: self._execute(self.runner.subset([s.unit for s in hneed], self.head, f"head-r{rnd}"),
-                                            self.head, progress=f"head rerun {rnd}: {len(hneed)} unit(s)")
+            head_fn = self._head_copies_fn(states, hneed)
         plan = None
         if btask:
             if btask[0] == "full":
@@ -647,20 +660,60 @@ class Engine:
                 base_fn = lambda: self._exec_base_round(plan[0], brnd)
         if head_fn and base_fn and not self.serial:
             h, b, berr = self._pair(head_fn, base_fn)
-            sign = collision_sign(h) or (collision_sign(b) if berr is None else "")
+            sign = _copies_sign(h) or (collision_sign(b) if berr is None else "")
             if not sign:
                 self.overlap_saved += self._last_overlap
-                self._apply_head_round(hneed, h)
+                self._apply_head_copies(h)
                 if berr is not None:
                     raise berr
                 self._apply_base(states, btask, plan, b)
                 return
             self._go_serial(sign)
+            if hneed:
+                head_fn = self._head_copies_fn(states, hneed)
+        elif head_fn and not self.serial:
+            h = head_fn()
+            sign = _copies_sign(h)
+            if not sign:
+                self._apply_head_copies(h)
+                if base_fn:
+                    self._apply_base(states, btask, plan, base_fn())
+                return
+            self._go_serial(sign)
+            head_fn = self._head_copies_fn(states, hneed)
         # serial: base first, then head (the stage-1 order)
         if base_fn:
             self._apply_base(states, btask, plan, base_fn())
         if head_fn:
-            self._apply_head_round(hneed, head_fn())
+            self._apply_head_copies(head_fn())
+
+    def _head_copies_fn(self, states, hneed: List[decide.UnitState]):
+        """-> fn running the head reruns: up to HEAD_COPIES concurrent copies (copy j holds the units that
+        still need more than j runs); one copy when serial. fn() -> [(units, RunResult)]."""
+        pol = self.policy
+        k = 1 if self.serial else max(1, min(HEAD_COPIES, max(_head_need(s, pol) for s in hneed)))
+        batches = []
+        for j in range(k):
+            units = [s for s in hneed if _head_need(s, pol) > j]
+            if units:
+                self.rnd += 1
+                batches.append((units, self.rnd))
+
+        def one(units, rnd):
+            return self._execute(self.runner.subset([s.unit for s in units], self.head, f"head-r{rnd}"),
+                                 self.head, progress=f"head rerun {rnd}: {len(units)} unit(s)")
+
+        def fn():
+            if len(batches) == 1:
+                return [(batches[0][0], one(*batches[0]))]
+            tasks = [_Async(lambda u=u, r=r: one(u, r)) for u, r in batches[1:]]
+            first = one(*batches[0])
+            return [(batches[0][0], first)] + [(b[0], t.wait()) for b, t in zip(batches[1:], tasks)]
+        return fn
+
+    def _apply_head_copies(self, copies) -> None:
+        for units, r in copies:
+            self._apply_head_round(units, r)
 
     def _pair(self, head_fn, base_fn):
         """Run head_fn here and base_fn in a worker thread. -> (head result, base result, base BaseError)."""
@@ -1066,6 +1119,21 @@ class Engine:
             "warnings": self.warnings + ([f"base: {self.base_problem_global}"] if self.base_problem_global else []),
             "notes": self.notes,
         }
+
+
+def _head_need(s: decide.UnitState, pol: decide.Policy) -> int:
+    """Head runs a unit still needs: a 'fixed' candidate passed head's full run, a failing unit failed it."""
+    if s.head and s.head[0].status == PASS:
+        return decide.needs_head_fixed(s, pol)
+    return decide.needs_head(s, pol)
+
+
+def _copies_sign(copies) -> str:
+    for _, r in copies:
+        sign = collision_sign(r)
+        if sign:
+            return sign
+    return ""
 
 
 def _head_flaky(st: decide.UnitState) -> bool:

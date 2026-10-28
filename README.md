@@ -311,6 +311,12 @@ start costs about 0.7 s here and a check needs about 13 of them, so a cold check
 cost grows with the number of rerun rounds, not the number of failing tests, but a suite whose single run
 takes minutes will take several times that.
 
+Many failing tests on a big suite: every verdict still rests on 5 runs per side, but the base side
+stops at those 5 by default (`--confirm-runs N` or `BASELINE_CONFIRM_RUNS=N` for more) and head reruns
+run as two concurrent copies. On a 2,333-test Create React App suite (about 10 s per plain run), 26 NEW
+failures took 36 s (was 48 s here; 61 s on a busier machine) and 5 old failures, one of them flaky, 22 s
+(was 48 s), with the same verdicts.
+
 In the fresh benchmark run above, on a busier machine, the medians were 2.16 s (py), 7.96 s (js) and
 2.7 s (go) per check (`bench/results/scorecard.md`).
 

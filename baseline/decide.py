@@ -25,12 +25,16 @@ class Policy:
     max_runs: int = 15       # per side, when a verdict is suspicious (see suspicious())
 
     @classmethod
-    def from_runs(cls, runs: int, base_runs: Optional[int] = None, max_runs: Optional[int] = None) -> "Policy":
+    def from_runs(cls, runs: int, base_runs: Optional[int] = None, max_runs: Optional[int] = None,
+                  confirm_runs: Optional[int] = None) -> "Policy":
+        """confirm_runs: cap on base runs behind a NEW (or pre-existing) verdict beyond the required ones,
+        also for NEW whose dependencies are unknown (None: 2x runs). Suspicious verdicts still get max_runs."""
         runs = max(1, runs)
         if base_runs is not None:  # explicit: no optional confirmation, exactly this many
             req = conf = max(1, base_runs)
         else:
-            req, conf = runs, 2 * runs
+            req = runs
+            conf = 2 * runs if confirm_runs is None else max(req, confirm_runs)
         m = max_runs if max_runs is not None else 3 * runs
         return cls(runs, req, conf, max(m, runs, conf))
 

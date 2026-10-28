@@ -107,18 +107,29 @@ rounds, not the number of failing tests.
 1. **Head, full run** with machine-readable reporting injected. Failing units = F.
    F empty → exit 0, "all passed".
 2. **Head reruns** of F only, until a unit passes once (⇒ FLAKY, stop) or has
-   failed `--runs` times (default 5, the full run counting).
+   failed `--runs` times (default 5, the full run counting). Unless serial,
+   each head rerun round runs as 2 concurrent copies (copy 2 holds the units
+   that still need 2 or more runs): the head reruns are the critical path
+   (failing tests mostly wait for timeouts) and the run counts stay the
+   same. A collision sign in either copy redoes the round serially and makes
+   the rest of the check serial.
 3. **Base**: a temporary detached worktree at the base commit. If the head run
    took ≤ 60 s (`--full-base auto`), the full suite runs once on base (this
    gives `fixed`, `missing` and the `blocked_tests` names; it doubles as the
    first base sample). Then F is rerun on base:
    * **required** runs: `--runs` (5) per unit, early stop as soon as a unit
      has both passed and failed on base;
-   * **optional confirmation** runs up to 2× `--runs` (10). They ride along for
-     free in rounds that happen anyway; extra rounds just for confirmation
-     are only spent while they add at most ~25 % to the elapsed time (min 1 s).
+   * **optional confirmation** runs up to `--confirm-runs` (default: `--runs`,
+     so none beyond the required 5; also `<PREFIX>CONFIRM_RUNS`, e.g.
+     `BASELINE_CONFIRM_RUNS=10` for the earlier default of 2× `--runs`). They
+     ride along for free in rounds that happen anyway; extra rounds just for
+     confirmation are only spent while they add at most ~25 % to the elapsed
+     time (min 1 s). Capped because on a big suite with many failing tests
+     every extra base round costs a runner start: 26 NEW tests on a 2,333-test
+     jest suite went from 48 s to 36 s (5 head + 5 base runs each instead of
+     5 + 10), with the same verdicts.
    * a NEW candidate whose dependencies can't be analysed gets the
-     confirmation runs as required.
+     confirmation runs as required (with the default cap: the same 5).
    The optional budget is measured against *serial-equivalent* time (wall time
    plus the time that running head and base concurrently saved), so the
    concurrency below never buys fewer confirmation runs than running serially

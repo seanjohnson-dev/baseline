@@ -36,6 +36,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="max runs per failing test on head, the first full run counting (default 5)")
     c.add_argument("--base-runs", type=int, default=None,
                    help="runs on base behind a deterministic verdict (default 2x --runs)")
+    c.add_argument("--confirm-runs", type=int, default=None, metavar="N",
+                   help=f"base runs behind a verdict at most, beyond the required ones (default: --runs; also "
+                        f"{brand.ENV_PREFIX}CONFIRM_RUNS); suspicious verdicts still get --max-runs")
     c.add_argument("--max-runs", type=int, default=None,
                    help="per-side cap for suspicious verdicts (default 3x --runs)")
     c.add_argument("--json", action="store_true", help="print only JSON to stdout")
@@ -130,7 +133,7 @@ def cmd_check(a) -> int:
                    max_runs=a.max_runs, no_cache=a.no_cache, keep_worktree=a.keep_worktree, timeout=a.timeout,
                    cwd=a.cwd, strict_changed=a.strict_changed, copy_ignored=a.copy_ignored,
                    full_base=a.full_base, verbose=a.verbose or (fmt == "text" and sys.stderr.isatty()),
-                   serial=a.serial, flaky_hunt=a.flaky_hunt)
+                   serial=a.serial, flaky_hunt=a.flaky_hunt, confirm_runs=a.confirm_runs)
     if opts.runs < 1 or opts.flaky_hunt < 0:
         print(f"{brand.CLI_NAME}: --runs must be >= 1 and --flaky-hunt >= 0", file=sys.stderr)
         return EXIT_USAGE

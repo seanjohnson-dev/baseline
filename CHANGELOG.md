@@ -47,6 +47,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Faster checks with many failing tests, same verdicts: base confirmation runs are capped at `--runs`
+  (5) by default, also for NEW tests whose dependencies can't be analysed (was up to 2× `--runs`, 10);
+  `--confirm-runs N` / `BASELINE_CONFIRM_RUNS=N` raises the cap. Suspicious verdicts still escalate to
+  `--max-runs` (15) on both sides. Head reruns run as two concurrent copies (redone serially on any
+  collision sign, never with `--serial`). On a 2,333-test jest suite: 26 NEW 48 s -> 36 s (5,002 -> 4,872
+  test runs), 5 old failures incl. a flaky one 48 s -> 22 s; identical verdicts and exit codes. New test:
+  `tests/test_confirm.py` (a counting stand-in jest: invocations and test runs bounded, a flaky test stays
+  FLAKY).
 - Every child runs with `CI=true` (set when unset or false-like) and stdin from /dev/null, so watch modes
   (Create React App's `npm test` without CI) and prompts can't hang a check.
 - Whole commands cost fewer runs: head twice, base once when both fail (was twice each); a second base run
