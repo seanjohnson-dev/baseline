@@ -487,6 +487,12 @@ class HookEndToEndTest(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------------------------- --strict-changed
+def _have_pytest():
+    import importlib.util
+    return importlib.util.find_spec("pytest") is not None
+
+
+@unittest.skipUnless(_have_pytest(), "pytest not installed")
 class StrictChangedTest(unittest.TestCase):
     def test_error_changed_fails_only_with_strict_changed(self):
         repo = git_repo({"tests/test_a.py": "def test_a():\n    assert 5 == 7\n"})
