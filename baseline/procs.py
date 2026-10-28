@@ -81,8 +81,10 @@ def kill_all() -> None:
 
 
 def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
-        timeout: Optional[float] = None) -> ProcResult:
-    """Run argv (no shell). Never raises for a failing/missing command."""
+        timeout: Optional[float] = None, merge_stderr: bool = False) -> ProcResult:
+    """Run argv (no shell). Never raises for a failing/missing command.
+
+    merge_stderr: interleave stderr into stdout (for runners that split one report over both)."""
     t0 = time.time()
     out = tempfile.TemporaryFile()
     err = tempfile.TemporaryFile()
@@ -94,7 +96,7 @@ def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
     try:
         try:
             p = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
-                                 stdout=out, stderr=err, **kwargs)
+                                 stdout=out, stderr=subprocess.STDOUT if merge_stderr else err, **kwargs)
         except (FileNotFoundError, PermissionError, NotADirectoryError) as e:
             return ProcResult(argv, cwd, 127, "", f"{argv[0]}: {e.strerror or e}",
                               time.time() - t0, not_found=True)

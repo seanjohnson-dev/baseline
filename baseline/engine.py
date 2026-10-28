@@ -98,7 +98,8 @@ class Engine:
             side.outdir.mkdir(parents=True, exist_ok=True)
             if inv.report is not None and inv.report.exists():
                 inv.report.unlink()
-            proc = procs.run(inv.argv, str(side.cwd), env=env, timeout=self.opts.timeout)
+            proc = procs.run(inv.argv, str(side.cwd), env=env, timeout=self.opts.timeout,
+                             merge_stderr=bool(inv.meta.get("merge_stderr")))
             if proc.not_found:
                 r = RunResult(ok=False, problem=f"command not found: {inv.argv[0]}", exit_code=127,
                               duration=proc.duration, output_tail=proc.stderr)
@@ -128,7 +129,8 @@ class Engine:
             le = r.load_errors.get(u.id)
             if le is not None:
                 return le.obs()
-            if any(t.group == u.group for t in r.tests.values()):
+            whole = u.group.startswith("(")  # whole-build failure (e.g. a crate that doesn't compile)
+            if any(whole or t.group == u.group for t in r.tests.values()):
                 return Obs(PASS)
             return Obs(ABSENT)
         t = r.tests.get(u.id)
@@ -413,7 +415,7 @@ class Engine:
         if u.kind == LOAD_ERROR:
             if u.id in les:
                 return Obs.from_dict(les[u.id])
-            if any(g == u.group for g in full.get("groups", {}).values()):
+            if any(u.group.startswith("(") or g == u.group for g in full.get("groups", {}).values()):
                 return Obs(PASS)
             return Obs(ABSENT)
         st = full.get("tests", {}).get(u.id)
@@ -510,9 +512,11 @@ class Engine:
 
     def _fill_blocked(self, states) -> None:
         for s in states.values():
-            if s.unit.kind == LOAD_ERROR and s.unit.id != SESSION_UNIT:
-                seen = self.base_seen.get(s.unit.group, {})
-                s.blocked_tests = sorted(seen)
+            if s.unit.kind == LOAD_ERROR:
+                if s.unit.group.startswith("("):
+                    s.blocked_tests = sorted({t for seen in self.base_seen.values() for t in seen})
+                else:
+                    s.blocked_tests = sorted(self.base_seen.get(s.unit.group, {}))
 
     def _closure(self, u: Unit) -> Optional[bool]:
         try:
@@ -564,7 +568,8 @@ class Engine:
         flaky_passing: List[str] = []
         for fs in getattr(self, "fixed_states", []):
             (fixed if decide.fixed_verdict(fs) == "fixed" else flaky_passing).append(fs.unit.id)
-        if base_full is not None:
+        whole_build_failed = any(k.startswith("(") for k in head_load) or not r1.ok
+        if base_full is not None and not whole_build_failed:
             for tid, st in base_full["tests"].items():
                 g = base_full["groups"].get(tid, "")
                 if tid not in head_ids and g not in head_load:

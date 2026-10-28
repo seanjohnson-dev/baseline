@@ -37,13 +37,14 @@ class CargoRunner(Runner):
         return args + ["--"] + self.harness_args + harness_extra
 
     def full(self, side: Side, tag: str) -> List[Invocation]:
-        return [Invocation(self._argv([]), None, "full")]
+        # cargo prints "Running <target>" on stderr and results on stdout: keep them interleaved
+        return [Invocation(self._argv([]), None, "full", {"merge_stderr": True})]
 
     def subset(self, units: List[Unit], side: Side, tag: str) -> List[Invocation]:
         if any(u.kind == LOAD_ERROR for u in units):
             return self.full(side, tag)
         names = sorted({u.locator.get("test", u.name) for u in units})
-        return [Invocation(self._argv(["--exact"] + names), None, "subset")]
+        return [Invocation(self._argv(["--exact"] + names), None, "subset", {"merge_stderr": True})]
 
     def parse(self, inv: Invocation, proc, side: Side) -> RunResult:
         if proc.timed_out:

@@ -223,3 +223,35 @@ class GoIntegrationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+CARGO_BASE = {
+    "Cargo.toml": "[package]\nname = \"shop\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    ".gitignore": "target/\nCargo.lock\n",
+    "src/lib.rs": "pub fn total(p: f64, d: f64) -> f64 { p * (1.0 - d) }\npub fn ship() -> i32 { 5 }\n\n"
+                  "#[cfg(test)]\nmod tests {\n    use super::*;\n"
+                  "    #[test] fn plain() { assert_eq!(total(10.0, 0.0), 10.0); }\n"
+                  "    #[test] fn discount() { assert_eq!(total(100.0, 0.5), 50.0); }\n"
+                  "    #[test] fn pre() { assert_eq!(ship(), 7); }\n}\n",
+    "tests/it.rs": "#[test] fn integ() { assert_eq!(shop::ship(), 5); }\n",
+}
+
+
+@unittest.skipUnless(shutil.which("cargo"), "cargo not installed")
+class CargoIntegrationTest(unittest.TestCase):
+    def test_new_pre_and_compile_error(self):
+        head = {"src/lib.rs": CARGO_BASE["src/lib.rs"].replace("p * (1.0 - d)", "p - d")}
+        repo = make(CARGO_BASE, head, "dirty")
+        try:
+            p, rep, before, after = check(repo, ["cargo", "test"], ["--runs", "2"])
+            got = {v["id"]: v["verdict"] for v in rep["results"]}
+            self.assertEqual(got, {"src/lib.rs::tests::discount": "new", "src/lib.rs::tests::pre": "pre_existing"})
+            self.assertEqual(before, after)
+            write(repo, {"src/lib.rs": CARGO_BASE["src/lib.rs"].replace("pub fn ship()", "pub fn shipx()")})
+            p, rep, before, after = check(repo, ["cargo", "test"], ["--runs", "2"])
+            self.assertEqual([(v["kind"], v["verdict"]) for v in rep["results"]], [("load_error", "new")])
+            self.assertIn("tests/it.rs::integ", rep["results"][0]["blocked_tests"])
+            self.assertEqual(rep["missing"], [])
+            self.assertEqual(p.returncode, 1)
+        finally:
+            rmtree(repo)

@@ -35,14 +35,13 @@ def _global(changed: Iterable[str], is_src) -> bool:
 
 # ------------------------------------------------------------------------------ python
 def python_closure(root: Path, test_file: str, changed: Set[str]) -> Optional[Set[str]]:
+    # import roots: the repo, src/, and every directory from the test file up to the repo (rootdir,
+    # `pythonpath = .` ini settings and pytest's prepend import mode all resolve from one of these)
     roots = [root, root / "src"]
     d = (root / test_file).parent
-    while True:  # pytest "prepend" import mode puts the first dir without __init__.py on sys.path
-        if not (d / "__init__.py").exists():
-            roots.append(d)
-            break
+    while True:
+        roots += [d, d / "src"]
         if d == root or d.parent == d:
-            roots.append(d)
             break
         d = d.parent
     seen: Set[str] = set()

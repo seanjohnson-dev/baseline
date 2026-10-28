@@ -76,10 +76,12 @@ rounds, not the number of failing tests.
    samples; only trusted results are stored; `--no-cache` disables it.
 
 With the defaults a failing test gets 5 head runs and 5–10 base runs. Under
-the worst case for flakiness (a test that fails 50 % of the time), the chance
-of it being labelled NEW is (1/2)^(4+5) ≈ 0.2 % when the change touched its
-dependencies and ~(1/2)^28 when it didn't (escalation); real flaky tests
-usually fail far less often, and head reruns alone catch them.
+the worst case for flakiness (a test that fails 50 % of the time and failed
+in the first run), the chance of it being labelled NEW is (1/2)^(4+5) ≈ 0.2 %
+with only the required runs, (1/2)^(4+9) ≈ 0.01 % with confirmation, and
+~(1/2)^28 when the change didn't touch its dependencies (escalation). The
+same numbers bound a coin-flip flaky test being labelled PRE-EXISTING. Real
+flaky tests usually fail far less often, and the head reruns alone catch them.
 
 ## Decision (per unit, in this order)
 
@@ -174,6 +176,34 @@ left by a `kill -9` are removed on the next run.
   default (secrets). Use `--copy-ignored GLOB` (repeatable). When a base
   failure looks environmental and head's doesn't, the verdict is UNKNOWN and
   the report lists ignored files the worktree lacks.
+
+## JSON output
+
+`--json` prints only JSON; the same document is always written to
+`.git/<name>/last.json`. Top level: `tool`, `version`, `schema` (1),
+`exit_code`, `summary` (verdict counts + `tests_total/passed/failed/skipped`,
+`load_errors`, `fixed`, `missing`), `base` (`sha`, `short`, `ref`, `how`),
+`head` (`sha`, `short`, `dirty`), `runner` (`name`, `command`, `per_test`,
+`cwd`), `policy`, `test_runs`, `cache` (`enabled`, `hit`), `duration_s`,
+`results`, `fixed`, `flaky_passing`, `missing`, `warnings`, `notes`.
+
+Each entry of `results`:
+
+```json
+{"id": "tests/test_cart.py::test_new_discount_percent", "kind": "test",
+ "verdict": "new", "reason": "Passed all 10 runs on base but failed all 5 runs on head — this change broke it.",
+ "head": {"runs": 5, "failed": 5, "passed": 0, "skipped": 0, "absent": 0, "cached_runs": 0,
+          "error": "<normalised>", "error_raw": "<raw excerpt>", "message": "<raw short message>",
+          "distinct_errors": 1},
+ "base": {"...": "same shape"},
+ "runs_total": 15, "env_class": null, "env_suspect": false, "flaky_side": null,
+ "match": null, "similarity": 0.93, "blocked_tests": [], "closure_changed": true,
+ "suspicious_escalated": false, "base_sha": "…", "head_sha": "…", "dirty": true}
+```
+
+`kind` is `test`, `load_error` or `command` (unknown runner). `match` is
+`exact`/`loose` when both sides failed with the same error; `similarity` is
+present for error-changed verdicts.
 
 ## Known limits
 

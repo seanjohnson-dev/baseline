@@ -40,16 +40,15 @@ NODE_ENOENT_OPEN = re.compile(r"ENOENT: no such file or directory, (?:open|stat|
 GO_OPEN_MISSING = re.compile(r"open (\S+): no such file or directory")
 
 SERVICE_RE = re.compile(
-    r"connection refused|ECONNREFUSED|actively refused|could not connect to server|"
-    r"connection to server at .* failed|Can't connect to (?:local )?MySQL server|"
-    r"Connection reset by peer|ECONNRESET|server closed the connection unexpectedly|"
-    r"Cannot connect to the Docker daemon|No route to host|EHOSTUNREACH|Network is unreachable|"
-    r"ENETUNREACH|Error 111 connecting|Connect call failed", re.I)
-TIMEOUT_RE = re.compile(r"(?:connect|connection|dial)[^\n]{0,80}(?:timed out|timeout)|ETIMEDOUT|i/o timeout|"
-                        r"ConnectTimeout", re.I)
-DNS_RE = re.compile(r"Name or service not known|nodename nor servname|ENOTFOUND|EAI_AGAIN|"
-                    r"Temporary failure in name resolution|no such host|getaddrinfo failed|"
-                    r"Could not resolve host|NameResolutionError", re.I)
+    r"(?i:connection refused|actively refused|could not connect to server|connection to server at .* failed|"
+    r"Can't connect to (?:local )?MySQL server|Connection reset by peer|server closed the connection unexpectedly|"
+    r"Cannot connect to the Docker daemon|No route to host|Network is unreachable|Error 111 connecting|"
+    r"Connect call failed)|\b(?:ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH)\b")
+TIMEOUT_RE = re.compile(r"(?i:(?:connect|connection|dial)[^\n]{0,80}(?:timed out|timeout)|i/o timeout)|"
+                        r"\bETIMEDOUT\b|\bConnectTimeout")
+DNS_RE = re.compile(r"(?i:Name or service not known|nodename nor servname|Temporary failure in name resolution|"
+                    r"no such host|getaddrinfo failed|Could not resolve host)|\b(?:ENOTFOUND|EAI_AGAIN)\b|"
+                    r"NameResolutionError")
 CREDS_RE = re.compile(r"NoCredentialsError|Unable to locate credentials|could not find default credentials|"
                       r"DefaultCredentialsError|NoCredentialProviders", re.I)
 DISPLAY_RE = re.compile(r"cannot open display|Missing X server or \$DISPLAY", re.I)
