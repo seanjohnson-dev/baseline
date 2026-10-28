@@ -1,4 +1,7 @@
-# Baseline — stage 1 spec (working name; may become "ownfault")
+# Baseline — stage 1 spec
+
+The name is final: Baseline (CLI, package, plugin, marketplace, command: `baseline`). The rule below still
+holds, so a rename stays one command if it is ever needed.
 
 Tool for coding agents (Claude Code, Codex, Cursor) and humans. When tests fail after the agent's change, one command
 answers per failing test: **did my change break this, or was it already broken (or flaky / environment)?** with proof.

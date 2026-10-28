@@ -59,5 +59,6 @@ them in one line); UNKNOWN means no trustworthy base result.
 * The re-run uses the hook's environment (the one Claude Code was started with) plus what the
   command line itself sets (`FOO=1`, `export`, venv activation). State set by earlier Bash calls
   (exports in a previous command) is not seen.
-* One test command per shell line (the first one).
+* Several test commands on one shell line (`pytest a; pytest b`) are judged as a chain, each part on
+  its own, when they run in the same directory; in different directories the hook gives no verdict.
 * Claude Code's `--output-format stream-json` does not log hook context; `BASELINE_HOOK_LOG` does.

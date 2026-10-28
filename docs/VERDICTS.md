@@ -387,10 +387,12 @@ passed in the full head run (see above).
 * A flaky test that passes in the full head run and doesn't flip in any other
   run that happened is not reported (`--flaky-hunt N` looks harder).
 * Unknown runners: the command runs as is and only the whole command gets a
-  verdict: NEW if it passes on base or head fails in more files than base,
-  UNKNOWN if it fails on base too. Never PRE-EXISTING, ENVIRONMENT or FLAKY
-  on base.
-* jest/cargo/rspec support is parser-tested but not exercised end to end here;
-  `missing` detection needs the full base run.
+  verdict: NEW if it passes on base, or if every head run prints a `FAIL <file>`
+  line that no base run does; otherwise UNKNOWN if it fails on base too. Never
+  PRE-EXISTING, ENVIRONMENT or FLAKY on base.
+* cargo/rspec support is parser-tested on captured reports, not exercised end
+  to end here; jest is tested end to end through a stand-in that writes jest's
+  report, and on one real Create React App suite. `missing` detection needs the
+  full base run.
 * Windows: best effort (no process-group kill, `node_modules` mirroring needs
   symlink rights, hooks path).
