@@ -27,7 +27,8 @@ Fixed tests (fail on every base run, pass on every head run) are listed under
 (`--runs` each; 2× when the change's effect on them can't be analysed; 3× when
 the change touched nothing they depend on — such a test can't have been fixed
 by it, so it is most likely flaky). Candidates that pass on base or fail on
-head go to `flaky_passing` instead; tests on base that no longer exist on head are listed under `missing`
+head are reported FLAKY (see *Flaky tests that passed on head*) and also listed
+in `flaky_passing`; tests on base that no longer exist on head are listed under `missing`
 (informational); passing tests are only counted.
 
 ## Units
@@ -67,6 +68,10 @@ rounds, not the number of failing tests.
      are only spent while they add at most ~25 % to the elapsed time (min 1 s).
    * a NEW candidate whose dependencies can't be analysed gets the
      confirmation runs as required.
+   The optional budget is measured against *serial-equivalent* time (wall time
+   plus the time that running head and base concurrently saved), so the
+   concurrency below never buys fewer confirmation runs than running serially
+   would.
 4. **Escalation**: a deterministic-looking verdict that a coin-flip flaky test
    could fake is *suspicious* and gets up to 3× `--runs` (15) on both sides:
    * NEW or error-changed although nothing the test depends on changed
@@ -78,6 +83,30 @@ rounds, not the number of failing tests.
    (hash of tool version, runner command, project dir, environment
    fingerprint, installed-deps markers). Cached observations count as base
    samples; only trusted results are stored; `--no-cache` disables it.
+
+### Head and base at the same time
+
+Head runs happen in the real working tree, base runs in the temporary
+worktree, so by default they run concurrently:
+
+* the full base run starts alongside head's full run (*speculatively*: it is
+  cancelled — process group killed — if head has no failure). Not when the
+  base result is cached, and not when the last head run of the same command
+  took > 30 s (two full suites at once mostly fight for the CPU);
+* after that, each round runs head's reruns and the base round at the same
+  time (the decisions between rounds are the same as serially).
+
+Separate processes in separate directories can still collide on ports,
+databases, lock files or fixed temp paths. **Guard:** if either side of a
+concurrent round shows a collision sign (`address already in use`,
+`EADDRINUSE`, `[Errno 98]`, `database is locked`, `SQLITE_BUSY`, lock
+held/busy, `EBUSY`, `text file busy`, `EEXIST`/`File exists`, `too many
+clients`, …) in its output or failure texts, that round is **discarded and
+redone serially**, and the rest of the check runs serially (`concurrency` in
+the JSON records it). False alarms only cost time; `--serial` /
+`BASELINE_SERIAL=1` force the serial order from the start. Collisions that
+leave no such sign (two runs rewriting the same fixed temp file) are not
+caught; if your suite does that, use `--serial`.
 
 With the defaults a failing test gets 5 head runs and 5–10 base runs. Under
 the worst case for flakiness (a test that fails 50 % of the time and failed
@@ -117,6 +146,27 @@ flaky tests usually fail far less often, and the head reruns alone catch them.
 
 Load errors follow the same rules with "loads fine" in place of "passes"
 (a file that loads on base and fails to load on head is a NEW load error).
+
+If the base side fails part-way (worktree can't be created, base run crashes),
+head reruns still complete, so a test that is flaky on head is still FLAKY
+rather than UNKNOWN.
+
+## Flaky tests that passed on head
+
+A flaky test that happens to pass in the full head run is not a failure, but
+the runs made anyway often show it flipping. Such tests are reported as
+**FLAKY** with `surfaced: true` (counted in `summary.flaky` and
+`summary.flaky_surfaced`, never NEW, exit code unaffected):
+
+* a `fixed` candidate (failed in the full base run, passed on head) that later
+  passes on base (`flaky_side: base`) or fails on head (`flaky_side: head`);
+* any test that both passed and failed on the same side across the runs that
+  happened (full runs, reruns, rounds where it ran alongside the failing tests).
+
+No run is added just to look for flakes, unless asked: `--flaky-hunt N` runs
+the full suite N more times on head; every test that flips between those runs
+is reported FLAKY, and tests that fail in all of them get the extra head
+samples.
 
 ## Error normalisation
 
@@ -162,14 +212,32 @@ Narrow, per-language patterns; a plain assertion failure (`assert …`,
 disabled). The user's working tree, index, stash and branches are never
 touched (no checkout/stash/reset; git runs with `GIT_OPTIONAL_LOCKS=0`). The
 head run happens in the real working tree (pytest writes its `.pyc` files to
-`.git/<name>/pycache`), the base run in the worktree, sequentially. The
-worktree is removed in `finally` (SIGTERM/SIGHUP are turned into exceptions,
-child process groups are killed), followed by `git worktree prune`; worktrees
-left by a `kill -9` are removed on the next run.
+`.git/<name>/pycache`), the base run in the worktree, concurrently (see
+above). The worktree is removed in `finally` (SIGTERM/SIGHUP are turned into
+exceptions, child process groups are killed, base threads are joined first),
+followed by `git worktree prune`.
+
+**Leftovers of killed runs.** Every temp dir (`<tmp>/baseline-wt-*`,
+`<tmp>/baseline-run-*`) holds `owner.json`: pid, process start time (so a
+reused pid doesn't look alive) and the repo's git dir. At the start of every
+run (best effort, ≤ 3 s, never fatal) dirs whose owner is gone are removed:
+`git worktree remove --force` + `git worktree prune` in the recorded repo,
+then the dir. Dirs without an owner file (older versions) only when older
+than 1 h and no process has its cwd inside. A dir is only touched if it sits
+directly in the system temp dir, matches the name pattern, contains nothing
+but what a run puts there, and its `wt/.git` file points at a
+`…/worktrees/…` git dir; a live run's dirs (two concurrent runs) are never
+touched. `baseline clean [--dry-run] [--json]` lists/removes them by hand.
 
 * `node_modules` (root, the project dir and npm/yarn/pnpm workspace packages)
   is mirrored with per-package symlinks; workspace packages linked inside
   `node_modules` are re-pointed at the worktree's copy so base imports base code.
+  The mirror is a real directory and the cache dirs (`.vite`, `.vitest`,
+  `.cache`, `.vite-temp`) are not linked, so vite/vitest write their caches
+  into the worktree's own `node_modules/.vite`, never through a symlink into
+  your tree; jest keeps its cache under the system temp dir keyed by the
+  config/rootDir, which differs between the sides. (A tool that writes inside
+  an installed package's own directory would still write through the link.)
 * Python: the active venv is used as is. An editable install of the repo
   (`.pth` / `__editable__` finder / `.egg-link` pointing into the repo) would
   make the base run import HEAD's code, so it is detected and each side gets
@@ -189,7 +257,10 @@ left by a `kill -9` are removed on the next run.
 `load_errors`, `fixed`, `missing`), `base` (`sha`, `short`, `ref`, `how`),
 `head` (`sha`, `short`, `dirty`), `runner` (`name`, `command`, `per_test`,
 `cwd`), `policy`, `test_runs`, `cache` (`enabled`, `hit`), `duration_s`,
-`results`, `fixed`, `flaky_passing`, `missing`, `warnings`, `notes`.
+`results`, `fixed`, `flaky_passing`, `missing`, `warnings`, `notes`,
+`concurrency` (`serial`, `forced`, `collision`: the sign that made it go
+serial). `summary.flaky_surfaced` counts surfaced FLAKY entries;
+`policy.flaky_hunt` echoes `--flaky-hunt`.
 
 Each entry of `results`:
 
@@ -207,13 +278,13 @@ Each entry of `results`:
 
 `kind` is `test`, `load_error` or `command` (unknown runner). `match` is
 `exact`/`loose` when both sides failed with the same error; `similarity` is
-present for error-changed verdicts.
+present for error-changed verdicts; `surfaced: true` marks a FLAKY test that
+passed in the full head run (see above).
 
 ## Known limits
 
-* A flaky test that passes in the first head run is not a failure and is not
-  reported (if it failed in the full base run it shows up under
-  `flaky_passing`, not `fixed`).
+* A flaky test that passes in the full head run and doesn't flip in any other
+  run that happened is not reported (`--flaky-hunt N` looks harder).
 * Unknown runners: the command runs as is and only the whole command gets a
   verdict (by exit code; same exit code on base ⇒ PRE-EXISTING).
 * jest/cargo/rspec support is parser-tested but not exercised end to end here;

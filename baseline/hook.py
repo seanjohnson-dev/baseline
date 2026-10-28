@@ -455,7 +455,8 @@ def _item(v: Dict, base_short: str) -> str:
         line = f"- {vid}: {_one(detail, 120)} (fails on base {b.get('failed', 0)}/{b.get('runs', 0)} and head {h.get('failed', 0)}/{h.get('runs', 0)})"
     elif verdict == "flaky":
         if v.get("flaky_side") == "base":
-            line = f"- {vid}: flaky on base (failed {b.get('failed', 0)}, passed {b.get('passed', 0)})"
+            line = (f"- {vid}: flaky on base (failed {b.get('failed', 0)}, passed {b.get('passed', 0)}); head "
+                    f"failed {h.get('failed', 0)}, passed {h.get('passed', 0)}")
         else:
             line = f"- {vid}: head failed {h.get('failed', 0)}, passed {h.get('passed', 0)} of {h.get('runs', 0)} runs"
         if v.get("surfaced"):
