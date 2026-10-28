@@ -17,7 +17,7 @@ from . import __version__, brand, closure, decide, envclass, gitutil, normalize,
 from .cache import BaseCache, env_fingerprint
 from .model import (ABSENT, BLOCKED, CHECK, COMMAND, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST,
                     UNKNOWN, Obs, RunResult, Unit)
-from .runners import Detection, Side, auto_detect, from_command, make_runner
+from .runners import Detection, Side, auto_detect, from_command, make_runner, missing_npm_script
 from .runners.base import Runner
 from .runners.checks import WHOLE
 from .worktree import BaseWorktree, cleanup_stale, make_tmp_dir, missing_ignored
@@ -157,12 +157,24 @@ class Progress:
 
 def detect(cwd: Path, command: Optional[List[str]]) -> Detection:
     if command:
+        missing = missing_npm_script(command if len(command) > 1 else command[0].split(), cwd)
+        if missing:
+            have = sorted((_scripts(cwd) or {}).keys())
+            raise UsageError(f"no such npm script: '{missing}' (package.json scripts: "
+                             f"{', '.join(have) if have else 'none'}); nothing to check")
         return from_command(command, cwd)
     found = auto_detect(cwd)
     if not found:
         raise UsageError("could not detect a test runner here (looked for pytest, vitest, jest, go, cargo, rspec); "
                          f"pass the command explicitly: {brand.CLI_NAME} check -- <test command>")
     return found[0]
+
+
+def _scripts(cwd: Path) -> Optional[Dict]:
+    try:
+        return json.loads((cwd / "package.json").read_text()).get("scripts") or {}
+    except (OSError, ValueError, AttributeError):
+        return None
 
 
 class Engine:

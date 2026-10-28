@@ -32,9 +32,20 @@ EXEC_PATTERNS = [
     re.compile(r"executable file not found in \$(?:PATH|path)"),
     re.compile(r"spawn (\S+) ENOENT"),
     re.compile(r"(?:^|\s)([\w.-]+): command not found"),
+    re.compile(r"(?:^|\s|/)sh: (?:\d+: )?([\w./-]+): (?:command )?not found"),
     re.compile(r"C compiler \"(\w+)\" not found"),
     re.compile(r"Executable doesn't exist at (\S+)"),          # playwright browsers
 ]
+NODE_TS_EXT = re.compile(r"ERR_UNKNOWN_FILE_EXTENSION[^\n]*?(\.m?ts|\.cts|\.tsx)\b|"
+                         r"Unknown file extension \"(\.m?ts|\.cts|\.tsx)\"")
+NODE_TOO_OLD = re.compile(r"(?i:requires? (?:node(?:\.js)?|a node(?:\.js)? version)\s*(?:version\s*)?"
+                          r"(?:>=?|\^|v)?\s*(\d+(?:\.\d+)*))|"
+                          r"(?i:the engine \"node\" is incompatible[^\n]*?Expected version \"([^\"]+)\")|"
+                          r"(?i:unsupported engine[^\n]*?node[^\n]*?\"([^\"]+)\")|"
+                          r"\b(ERR_UNKNOWN_BUILTIN_MODULE|ERR_REQUIRE_ESM)\b|"
+                          r"(?i:bad option: (--[\w-]+))")
+NPM_MISSING_SCRIPT = re.compile(r"Missing script: \"?([\w:.-]+)\"?|Command \"([\w:.-]+)\" not found|"
+                                r"ERR_PNPM_NO_SCRIPT[^\n]*?script(?:: | \")([\w:.-]+)")
 PY_FILE_NOT_FOUND = re.compile(r"(?:FileNotFoundError|No such file or directory)[^'\n]*: '([^']+)'")
 NODE_ENOENT_OPEN = re.compile(r"ENOENT: no such file or directory, (?:open|stat|access|lstat) '([^']+)'")
 GO_OPEN_MISSING = re.compile(r"open (\S+): no such file or directory")
@@ -183,6 +194,21 @@ def classify(key: str, raw: str, ctx: EnvContext) -> Optional[Dict[str, str]]:
         # Never call a plain assertion failure environmental.
         return None
 
+    # --- runtime too old / no such npm script --------------------------------------------
+    m = NODE_TS_EXT.search(text)
+    if m:
+        ext = m.group(1) or m.group(2)
+        return _m("unsupported_runtime", f"Node {node_version(ctx.env.get('PATH'))} can't load {ext} files (ERR_UNKNOWN_FILE_EXTENSION); "
+                                         f"running TypeScript directly needs Node >= 22.6")
+    m = NODE_TOO_OLD.search(text)
+    if m:
+        want = next((g for g in m.groups() if g), "")
+        return _m("unsupported_runtime", f"needs a different Node version ({want}; this is Node {node_version(ctx.env.get('PATH'))})")
+    m = NPM_MISSING_SCRIPT.search(text)
+    if m:
+        name = next((g for g in m.groups() if g), "?")
+        return _m("no_such_script", f"no such npm script: {name}")
+
     # --- missing executables --------------------------------------------------------------
     for rx in EXEC_PATTERNS:
         m = rx.search(key)
@@ -233,6 +259,26 @@ def classify(key: str, raw: str, ctx: EnvContext) -> Optional[Dict[str, str]]:
         if CONFIG_NAME_RE.search(path):
             return _m("permission_denied", f"no permission to read {path}")
     return None
+
+
+_NODE_VERSION: Dict[str, str] = {}
+
+
+def node_version(path: Optional[str] = None) -> str:
+    """`node --version` of the node on PATH (cached per PATH), or 'unknown'."""
+    key = path or os.environ.get("PATH", "")
+    if key not in _NODE_VERSION:
+        import shutil
+        import subprocess
+        v = "unknown"
+        exe = shutil.which("node", path=key or None)
+        if exe:
+            try:
+                v = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=10).stdout.strip() or v
+            except (OSError, subprocess.SubprocessError):
+                pass
+        _NODE_VERSION[key] = v
+    return _NODE_VERSION[key]
 
 
 def one(s: str) -> str:

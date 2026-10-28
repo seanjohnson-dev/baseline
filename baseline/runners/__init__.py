@@ -84,6 +84,26 @@ def _npm_script(argv: List[str], project: Path) -> Optional[List[str]]:
     return cmd + extra
 
 
+def missing_npm_script(argv: List[str], project: Path) -> Optional[str]:
+    """`npm test` / `npm run X` / `pnpm X` / `yarn run X` whose script package.json doesn't define -> X."""
+    if len(argv) < 2 or os.path.basename(argv[0]) not in ("npm", "pnpm", "yarn", "bun"):
+        return None
+    tool, rest = os.path.basename(argv[0]), argv[1:]
+    if rest[0] in ("run", "run-script"):
+        if len(rest) < 2 or rest[1].startswith("-"):
+            return None
+        name = rest[1]
+    elif rest[0] in ("test", "t", "tst") and tool in ("npm", "pnpm", "yarn"):
+        name = "test"
+    else:
+        return None
+    try:
+        scripts = json.loads((project / "package.json").read_text()).get("scripts") or {}
+    except (OSError, ValueError):
+        return None
+    return None if name in scripts else name
+
+
 def from_command(argv: List[str], project: Path) -> Detection:
     if len(argv) == 1 and " " in argv[0]:
         argv = shlex.split(argv[0])
