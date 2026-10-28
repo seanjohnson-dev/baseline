@@ -73,6 +73,10 @@ HEAD itself, so your uncommitted changes are what gets judged. `--base REF` over
 is always written to `.git/baseline/last.json`. In Claude Code, `/baseline [options] [-- <test command>]`
 runs the same check and reports it.
 
+To try it on a ready-made case, [`examples/demo/`](examples/demo/) builds a local repo (Node, no
+dependencies) whose last commit leaves 1 NEW, 2 pre-existing and 1 flaky failure, with a one-line prompt
+for your own Claude Code.
+
 ## The verdicts
 
 | verdict | meaning | exit code |

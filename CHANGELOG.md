@@ -48,6 +48,9 @@ Initial release. Everything below was written before the first public release.
   runner; results for Baseline and three other tools (wasitme, flake-or-fault, preexisting-proof).
 - Docs: `docs/VERDICTS.md` (decision rules), `docs/PLUGIN.md`, `docs/live-demo.md`,
   `docs/STAGE2-VERIFY.md`.
+- `examples/demo/`: a reproducible local demo (`setup.sh` builds a Node repo with a local bare remote whose
+  last commit leaves 1 NEW, 2 pre-existing and 1 flaky failure; `prompt.txt`; `verify.sh` checks the
+  verdicts on fresh setups and after the fix).
 
 - `react-scripts test`, `craco test`, `react-app-rewired test`, `rescripts test` are the jest runner (per-test
   verdicts via `--json --outputFile`, `--watchAll=false`, reruns of failing tests only with
