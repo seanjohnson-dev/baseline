@@ -48,6 +48,11 @@ RUN_WRAPPERS = {("uv", "run"), ("poetry", "run"), ("pipenv", "run"), ("pdm", "ru
                 ("hatch", "run"), ("bundle", "exec"), ("pnpm", "exec"), ("pnpm", "dlx"), ("yarn", "dlx"),
                 ("conda", "run"), ("mamba", "run"), ("pixi", "run")}
 JS_RUNNERS = {"vitest", "jest", "mocha", "ava", "tap", "uvu", "jasmine", "karma", "playwright", "cypress"}
+# `react-scripts test` (Create React App) and friends run jest
+JEST_WRAPPERS = {"react-scripts", "craco", "react-app-rewired", "rescripts"}
+# package launchers kept in front of the command: the tool usually lives in node_modules/.bin only
+JS_LAUNCHERS = {"npx", "bunx", "pnpx"}
+JS_RUN_LAUNCHERS = {("pnpm", "exec"), ("pnpm", "dlx"), ("yarn", "dlx"), ("yarn", "exec")}
 DIRECT_RUNNERS = {"pytest", "py.test", "rspec", "phpunit", "nosetests", "nose2", "ward", "tox", "nox", "ctest",
                   "pest", "behave"} | JS_RUNNERS
 SUBCOMMAND_TESTS = {"go": {"test"}, "cargo": {"test", "nextest"}, "deno": {"test"}, "dotnet": {"test"},
@@ -106,8 +111,9 @@ def split_segments(tokens: List[str]) -> List[Tuple[List[str], bool]]:
     return [(a, p) for a, p in out if a]
 
 
-def _unwrap(argv: List[str], env: Dict[str, str]) -> List[str]:
-    """Strip env assignments and wrappers (env, timeout, time, uv run, npx, ...)."""
+def _unwrap(argv: List[str], env: Dict[str, str], launcher: Optional[List[str]] = None) -> List[str]:
+    """Strip env assignments and wrappers (env, timeout, time, uv run, npx, ...). A JS package launcher
+    (npx, pnpm exec, ...) is recorded in `launcher` so the command can be re-run the same way."""
     a = list(argv)
     for _ in range(12):
         while a and ASSIGN.match(a[0]):
@@ -143,14 +149,19 @@ def _unwrap(argv: List[str], env: Dict[str, str]) -> List[str]:
                 a = a[1:]
             continue
         if len(a) >= 2 and (head, a[1]) in RUN_WRAPPERS:
+            if launcher is not None and (head, a[1]) in JS_RUN_LAUNCHERS:
+                launcher[:] = a[:2]
             a = a[2:]
             while a and a[0].startswith("-"):
                 a = a[1:]
             continue
-        if head in ("npx", "bunx", "pnpx"):
-            a = a[1:]
-            while a and a[0].startswith("-"):
-                a = a[1:]
+        if head in JS_LAUNCHERS:
+            k = 1
+            while k < len(a) and a[k].startswith("-"):
+                k += 1
+            if launcher is not None:
+                launcher[:] = a[:k]
+            a = a[k:]
             continue
         break
     return a
@@ -185,6 +196,8 @@ def classify(argv: List[str], cwd: str) -> str:
         return "node-test"
     if check_kind(argv):
         return "check"
+    if head in JEST_WRAPPERS:
+        return "jest" if rest[:1] == ["test"] else ""
     if head in DIRECT_RUNNERS or re.fullmatch(r"pytest-?\d+(\.\d+)*", head):
         if head in ("playwright", "cypress") and not (rest and rest[0] in ("test", "run")):
             return ""
@@ -230,6 +243,8 @@ def _npm_kind(head: str, rest: List[str], cwd: str) -> str:
     elif head in ("yarn", "pnpm", "bun") and not rest[0].startswith("-"):
         if rest[0] in JS_RUNNERS:
             return rest[0]
+        if rest[0] in JEST_WRAPPERS:
+            return "jest" if rest[1:2] == ["test"] else ""
         script = rest[0]
     if script is None:
         return ""
@@ -241,6 +256,7 @@ def _npm_kind(head: str, rest: List[str], cwd: str) -> str:
     except (OSError, ValueError, AttributeError):
         body = ""
     if any(re.search(r"\b" + r + r"\b", body) for r in JS_RUNNERS | {"pytest"}) or \
+            re.search(r"\b(?:react-scripts|craco|react-app-rewired|rescripts) test\b", body) or \
             re.search(r"\bnode\b[^|&;]*\s--test\b", body):
         return "npm-test"
     if NPM_CHECK_SCRIPT.match(script) or re.search(r"\b(?:tsc|vue-tsc|eslint|next (?:build|lint))\b|"
@@ -273,7 +289,8 @@ def find_test_segment(command: str, cwd: str) -> Optional[Segment]:
     found: Optional[Segment] = None
     for argv, _piped in split_segments(tokens):
         env: Dict[str, str] = {}
-        a = _unwrap(argv, env)
+        launcher: List[str] = []
+        a = _unwrap(argv, env, launcher)
         if is_own_cli(a) or is_own_cli(argv):
             return None
         if not a:
@@ -310,6 +327,8 @@ def find_test_segment(command: str, cwd: str) -> Optional[Segment]:
             continue
         if kind == "check":
             a = argv[next(i for i, x in enumerate(argv) if not ASSIGN.match(x)):]  # keep `npx` for the hint
+        elif launcher:
+            a = launcher + a  # `npx jest`: jest is usually only in node_modules/.bin, not on PATH
         if any("$" in x or "`" in x for x in a):
             expanded = [os.path.expandvars(x) for x in a]
             if any("$" in x or "`" in x for x in expanded):
@@ -471,7 +490,10 @@ def _item(v: Dict, base_short: str) -> str:
     berr = _one(b.get("message") or b.get("error") or "")
     verdict = v["verdict"]
     if verdict == "new":
-        if b.get("passed"):
+        if v.get("head_only_fails") and b.get("failed"):
+            ev = (f"fails on base {b.get('failed', 0)}/{b.get('runs', 0)} too, but head also fails in: "
+                  + ", ".join(v["head_only_fails"][:4]))
+        elif b.get("passed"):
             ev = f"base {base_short}: {'loads' if v.get('kind') == 'load_error' else 'passed'} {b['passed']}/{b['runs']}; head: failed {h.get('failed', 0)}/{h.get('runs', 0)}"
         else:
             ev = f"not on base; head: failed {h.get('failed', 0)}/{h.get('runs', 0)}"
@@ -511,7 +533,8 @@ def format_context(rep: Dict, command: str, launcher: str, limit: int = MAX_CONT
                                                         ("unknown", "unknown")) if s.get(k))
     head_s = head.get("short", "?") + (" + uncommitted changes" if head.get("dirty") else "")
     how = base.get("how", "")
-    hdr = (f"[{brand.NAME}] Per-test verdicts for the failing command `{_one(command, 120)}`: {counts or 'no failures'}. "
+    per = "Per-test" if (rep.get("runner") or {}).get("per_test", True) else "Whole-command"
+    hdr = (f"[{brand.NAME}] {per} verdicts for the failing command `{_one(command, 120)}`: {counts or 'no failures'}. "
            f"Base {bshort} ({_one(how, 70)}) vs head {head_s}; {s.get('tests_total', 0)} tests, "
            f"{rep.get('test_runs', 0)} test runs, {rep.get('duration_s', 0):.0f}s.")
     guide = [
@@ -529,7 +552,10 @@ def format_context(rep: Dict, command: str, launcher: str, limit: int = MAX_CONT
     if not present & {"flaky", "environment"}:
         guide = [g for g in guide if not g.startswith("- FLAKY")]
     if "new" not in present:
-        guide[1:2] = ["- None of these failures was caused by the current change (no NEW)."]
+        if present & {"unknown", "pre_existing_error_changed"}:
+            guide[1:2] = []
+        else:
+            guide[1:2] = ["- None of these failures was caused by the current change (no NEW)."]
     for per in (1.0, 0.6, 0.3, 0.0):
         lines = [hdr, ""]
         for verdict, title in LABELS:
@@ -607,13 +633,15 @@ def handle(payload: Dict, now: Optional[float] = None, session_dir: Optional[Pat
                 f"(pytest, vitest, jest, node --test, go test, cargo test, rspec); no verdict. Running the underlying runner "
                 f"through `{launcher_path()} check -- <runner command>` gives one.")
     from . import gitutil
+    declined = (f"; run `{launcher_path()} check -- {_one(seg.display(), 100)}` to attribute these failures "
+                f"(don't call them pre-existing without it).")
     try:
         root = str(gitutil.repo_root(seg.cwd))
-    except gitutil.GitError:
-        return None
+    except gitutil.GitError as e:
+        return f"[{name}] No verdict: {_one(str(e), 120)}" + declined
     fp = fingerprint(root)
     if fp is None:
-        return None
+        return f"[{name}] No verdict: could not read the git state (no commit yet?)" + declined
     sess = Session(str(payload.get("session_id") or ""), session_dir)
     key = hashlib.sha256("\0".join([seg.display(), os.path.realpath(seg.cwd), json.dumps(seg.env, sort_keys=True),
                                     fp]).encode()).hexdigest()[:24]
@@ -628,7 +656,12 @@ def handle(payload: Dict, now: Optional[float] = None, session_dir: Optional[Pat
                 f"to attribute these failures.")
     sess.data["runs"] = sess.data.get("runs", 0) + 1
     sess.save()
-    ctx = run_check(seg, budget)
+    try:
+        ctx = run_check(seg, budget)
+    except Exception as e:  # never silent for a failed test command
+        ctx = f"[{name}] No verdict: internal error ({_one(type(e).__name__ + ': ' + str(e), 120)})" + declined
+    if not ctx:
+        ctx = f"[{name}] No verdict: the check gave no result" + declined
     if ctx is not None and not ctx.startswith(f"[{name}] No verdict"):
         sess.put(key, ctx, now)
         sess.save()
@@ -664,9 +697,8 @@ def run_check(seg: Segment, budget: float) -> Optional[str]:
         return (f"[{name}] No verdict (timed out after {budget:.0f}s): nothing is known about which of these "
                 f"failures are new or pre-existing, so don't describe any of them as pre-existing.")
     except UsageError as e:
-        if "not found" in str(e):
-            return None
-        return f"[{name}] No verdict: {_one(str(e), 200)}"
+        return (f"[{name}] No verdict: {_one(str(e), 200)}; run `{launcher_path()} check -- "
+                f"{_one(seg.display(), 100)}` to attribute these failures (don't call them pre-existing without it).")
     except BaseError as e:
         return (f"[{name}] No verdict: could not establish the base result ({_one(str(e), 160)}). Without it, "
                 f"don't describe any failure as pre-existing.")

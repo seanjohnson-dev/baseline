@@ -26,7 +26,7 @@ DETECT = [
     ("python -m unittest discover -s tests", ["python", "-m", "unittest", "discover", "-s", "tests"], ""),
     ("python manage.py test", ["python", "manage.py", "test"], ""),
     ("cd sub && pytest -q", ["pytest", "-q"], "sub"),
-    ("cd sub; cd deeper && npx vitest run", ["vitest", "run"], "sub/deeper"),
+    ("cd sub; cd deeper && npx vitest run", ["npx", "vitest", "run"], "sub/deeper"),
     ("(cd sub && go test ./...)", ["go", "test", "./..."], "sub"),
     ("FOO=1 BAR=2 pytest", ["pytest"], ""),
     ("env FOO=1 pytest -q", ["pytest", "-q"], ""),
@@ -43,9 +43,9 @@ DETECT = [
     ("yarn test", ["yarn", "test"], ""),
     ("pnpm test", ["pnpm", "test"], ""),
     ("pnpm vitest run", ["pnpm", "vitest", "run"], ""),
-    ("npx vitest run test/a.test.js", ["vitest", "run", "test/a.test.js"], ""),
-    ("npx jest --ci", ["jest", "--ci"], ""),
-    ("npx --yes vitest", ["vitest"], ""),
+    ("npx vitest run test/a.test.js", ["npx", "vitest", "run", "test/a.test.js"], ""),
+    ("npx jest --ci", ["npx", "jest", "--ci"], ""),  # npx kept: jest is in node_modules/.bin
+    ("npx --yes vitest", ["npx", "--yes", "vitest"], ""),
     ("bun test", ["bun", "test"], ""),
     ("uv run pytest -q", ["pytest", "-q"], ""),
     ("poetry run python -m pytest", ["python", "-m", "pytest"], ""),
@@ -179,9 +179,12 @@ class FormatTest(unittest.TestCase):
         self.assertTrue(text.startswith(f"[{brand.NAME}]"))
 
     def test_no_new(self):
+        # (was: also said "None of these failures was caused" next to an UNKNOWN; unknown is not cleared)
         text = hook.format_context(fake_report(n_new=0, n_unknown=1), "pytest", "/p/bin/x")
-        self.assertIn("None of these failures was caused by the current change", text)
+        self.assertNotIn("None of these failures was caused by the current change", text)
         self.assertIn("UNKNOWN means there is no trustworthy base result", text)
+        text = hook.format_context(fake_report(n_new=0, n_unknown=0), "pytest", "/p/bin/x")
+        self.assertIn("None of these failures was caused by the current change", text)
 
     def test_caps(self):
         long_msg = "AssertionError: " + "x" * 5000
