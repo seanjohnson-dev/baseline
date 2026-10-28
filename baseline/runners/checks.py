@@ -77,16 +77,28 @@ def parse_tsc(text: str, side: Optional[Side] = None) -> List[Tuple[str, str, st
     return out
 
 
+ESLINT_JSON_START = re.compile(r'\[\s*(?:\{\s*"filePath"|\])')
+
+
+def find_json_array(text: str) -> Optional[list]:
+    """The eslint JSON report inside text that may have notices before or after it (a Browserslist
+    'caniuse-lite is outdated' line, npm warnings, banners): the first '[{"filePath"' (or '[]') that decodes."""
+    dec = json.JSONDecoder()
+    for m in ESLINT_JSON_START.finditer(text):
+        try:
+            data, _ = dec.raw_decode(text, m.start())
+        except ValueError:
+            continue
+        if isinstance(data, list) and all(isinstance(f, dict) and "filePath" in f for f in data):
+            return data
+    return None
+
+
 def parse_eslint(text: str, side: Optional[Side] = None) -> List[Tuple[str, str, str]]:
     """JSON (array of {filePath, messages}) or stylish text. Errors only (warnings don't fail)."""
-    s = text.strip()
     out: List[Tuple[str, str, str]] = []
-    if s.startswith("["):
-        end = s.rfind("]")
-        try:
-            data = json.loads(s[: end + 1])
-        except ValueError:
-            data = None
+    if "[" in text:
+        data = find_json_array(text)
         if isinstance(data, list):
             for f in data:
                 rel = side.rel(f.get("filePath", "")) if side is not None else f.get("filePath", "")
@@ -165,11 +177,54 @@ def check_tool(argv: List[str]) -> Optional[str]:
     return None
 
 
+# proof lines for whole-command runs, best first: failing files/tests and assertion lines, then summaries
+PROOF_FAIL = re.compile(r"^(?:FAIL(?:ED)?\b|--- FAIL|not ok\b)")
+PROOF_MARK = re.compile(r"^(?:●(?! Console)|✕|×|✗|✖)")
+PROOF_STRONG = re.compile(r"^(?:(?:\w+\.)*\w*(?:Error|Exception)\b|AssertionError|Expected\b|Received\b|"
+                          r"expected\b.*\b(?:to|got)\b|panic:|Traceback)")
+PROOF_SUMMARY = re.compile(r"^(?:Tests?:\s+\d|Test Suites:\s+\d|Test Files\s+\d|Tests\s+\d+ failed|"
+                           r"=+ .*\b(?:failed|errors?)\b.* in [\d.]+|\d+ failing\b|(?:ℹ|#) fail \d|"
+                           r"test result: FAILED|FAILED \(|Found \d+ errors?|✖ \d+ problems?)")
+# a failing file/suite/test line: jest/vitest "FAIL src/a.test.js", pytest "FAILED t.py::x", go "--- FAIL: TestX"
+FAIL_UNIT_LINE = re.compile(r"^(?:FAIL(?:ED)?|--- FAIL:)\s+(\S.*?)\s*$")
+TRAILING_TIME = re.compile(r"\s*(?:\(\s*[\d.]+\s*m?s\s*\)|\t[\d.]+s|\[[\d.]+\s*m?s\])\s*$")
+
+
+def fail_units(text: str, roots: List[str]) -> Optional[List[str]]:
+    """'FAIL <file>'-style lines of a whole command's output, normalised (roots, timings, pytest ' - msg'
+    stripped); None when there are none (nothing to compare per file)."""
+    found = set()
+    for ln in _clean(text):
+        m = FAIL_UNIT_LINE.match(ln.strip())
+        if not m:
+            continue
+        what = TRAILING_TIME.sub("", m.group(1))
+        what = re.sub(r"\s+-\s.*$", "", what) if "::" in what else what
+        for r in roots:
+            if r:
+                what = what.replace(r.rstrip("/") + "/", "")
+        what = " ".join(what.split())
+        if what and not re.fullmatch(r"[\d.]+m?s|\(.*\)", what):
+            found.add(("FAIL " if not ln.strip().startswith("--- ") else "--- FAIL: ") + what)
+        if len(found) >= 500:
+            break
+    return sorted(found) or None
+
+
 def error_lines(text: str, n: int = 6) -> Dict[str, List[str]]:
-    """First and last lines that look like errors (for proof on whole-command runs)."""
+    """Lines that prove the failure on whole-command runs: failing-file/assertion lines first and the final
+    summary last; generic error-looking lines only when there are none of those (console noise from passing
+    tests otherwise comes first)."""
+    lines = [ln.strip() for ln in _clean(text) if ln.strip()]
+    strong = [ln for ln in lines if PROOF_FAIL.match(ln)] + [ln for ln in lines if PROOF_MARK.match(ln)] + \
+        [ln for ln in lines if PROOF_STRONG.match(ln)]
+    summary = [ln for ln in lines if PROOF_SUMMARY.match(ln)]
+    if strong or summary:
+        first = strong[:n]
+        last = [ln for ln in summary[-3:] if ln not in first]
+        return {"first": [ln[:300] for ln in first], "last": [ln[:300] for ln in last]}
     rx = re.compile(r"\b(?:error|Error|ERR!?|fail(?:ed|ure)?|FAIL|panic|Traceback|not found|"
                     r"Cannot|cannot|warn(?:ing)?)\b")
-    lines = [ln.strip() for ln in _clean(text) if ln.strip()]
     hits = [ln for ln in lines if rx.search(ln)]
     if not hits:
         hits = lines[-n:]
@@ -199,8 +254,14 @@ class CheckRunner(Runner):
             return list(self.argv) + ["--format", "json"]
         return list(self.argv)
 
+    @property
+    def whole_id(self) -> str:
+        """Unit id when the command fails and nothing in its output can be read: the command itself."""
+        return self.display_command()
+
     def full(self, side: Side, tag: str) -> List[Invocation]:
-        return [Invocation(self._argv(), None, "full", {"merge_stderr": True})]
+        # stdout and stderr apart: a notice on stderr (Browserslist, npm) must not split a JSON report
+        return [Invocation(self._argv(), None, "full")]
 
     def subset(self, units: List[Unit], side: Side, tag: str) -> List[Invocation]:
         return self.full(side, tag)
@@ -210,11 +271,18 @@ class CheckRunner(Runner):
             return crash_result(proc, f"{self.tool} timed out after {proc.duration:.0f}s", inv)
         res = RunResult(exit_code=proc.returncode, duration=proc.duration, output_tail=proc.output[-4000:])
         res.invocations.append(inv.argv)
-        errors = PARSERS[self.tool](proc.output, side) if proc.returncode != 0 else []
+        errors: List[Tuple[str, str, str]] = []
+        if proc.returncode != 0:
+            # the report usually is on stdout; fall back to both streams (prettier warns on stderr)
+            errors = PARSERS[self.tool](proc.stdout, side) or PARSERS[self.tool](proc.output, side)
+        wid = self.whole_id
         if proc.returncode == 0 or errors:
-            res.tests[WHOLE] = TestResult(WHOLE, WHOLE, PASS, WHOLE, {"kind": COMMAND})
+            res.tests[wid] = TestResult(wid, wid, PASS, wid, {"kind": COMMAND, "whole": "1"})
         else:
-            res.tests[WHOLE] = whole_failure(proc, side, self.classify)
+            t = whole_failure(proc, side, self.classify)
+            t.id = t.group = t.name = wid
+            t.locator["whole"] = "1"
+            res.tests[wid] = t
         seen: Dict[str, int] = {}
         for f, code, msg in errors:
             base_id = f"{f or '(global)'}: {code} {msg}" if self.tool != "prettier" or code != "format" \
@@ -237,4 +305,4 @@ def whole_failure(proc, side: Side, classify) -> TestResult:
     raw = "\n".join(shown) or normalize.first_lines("\n".join(text.strip().splitlines()[-15:]), 15)
     env = classify(normalize.normalize("\n".join(shown), side.roots()), text[-4000:], side)
     return TestResult(WHOLE, WHOLE, FAIL, WHOLE, {"kind": COMMAND, "exit_code": str(proc.returncode)}, key,
-                      normalize.one_line(msg)[:300], raw, env)
+                      normalize.one_line(msg)[:300], raw, env, fail_units(text, side.roots()))
