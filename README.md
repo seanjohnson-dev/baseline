@@ -522,18 +522,19 @@ been tried.
 When a coding agent hits a failing test, "pre-existing" is the convenient answer, and it is often given
 without anyone checking the base commit.
 
-- A thread on r/ClaudeCode titled "Claude has used 'pre-existing' 712 times in 30 days" (May 2026; the title
-  comes from a search-result snapshot, we could not open the thread).
+- A thread on r/ClaudeCode (May 2026) by a user who counted 712 uses of "pre-existing" across 139 sessions
+  in 30 days (their count, mostly Opus 4.7):
+  <https://www.reddit.com/r/ClaudeCode/comments/1t2bgg0/my_claudemd_says_every_error_is_yours_to_fix_not/>
 - A dev.to post by jeff_pdc, 16 Oct 2026, on an agent that calls a failing test pre-existing and merges
   anyway:
   <https://dev.to/jeff_pdc/when-the-agent-calls-the-failing-test-pre-existing-and-merges-anyway-4me8>
-- [anthropics/claude-code#99078](https://github.com/anthropics/claude-code/issues/99078) (2 Oct 2026): the
-  model called a security gap pre-existing without checking.
-- [anthropics/claude-code#96463](https://github.com/anthropics/claude-code/issues/96463) (23 Sep 2026): the
-  model reported a regression it had introduced itself as pre-existing.
+- [anthropics/claude-code#99078](https://github.com/anthropics/claude-code/issues/99078) (2 Oct 2026): a
+  security-relevant gap the model called pre-existing without checking the code.
+- [anthropics/claude-code#96463](https://github.com/anthropics/claude-code/issues/96463) (23 Sep 2026): a
+  regression the model's own fix introduced, which it then reported as a pre-existing gap.
 
-Some people respond by writing hooks that block the word "pre-existing". That stops the word, not the
-guess.
+Telling the agent not to doesn't settle it: the CLAUDE.md in that Reddit thread already said "Every error
+is yours to fix - not label, not defer." A rule against the word stops the word at best, not the guess.
 
 ## Licence and name
 
