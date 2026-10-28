@@ -324,11 +324,23 @@ What it can't do, or does only partly:
   state from both sides, and head and base run in parallel by default. Collisions that print a known sign
   (port in use, database locked, lock busy) are redone serially; silent ones (two runs rewriting the same
   fixed temp file) are not caught. Use `--serial` for such suites.
-- Per-test verdicts need pytest, vitest, jest, `node --test`, go test, cargo test or rspec; per-error verdicts
-  need tsc, eslint, `prettier --check` or `next build`. Anything else (`make test`, `tox`, mocha, a shell
-  chain like `node --test; npm run typecheck`) is one unit: NEW when base passes, UNKNOWN when base fails too
-  (its first and last error lines for both sides are shown, but not compared). For those the plugin's hook
-  only adds a one-line note. jest, cargo and rspec are tested on captured reports, not end to end.
+- Per-test verdicts need pytest, vitest, jest (also `react-scripts test`, `craco test`), `node --test`, go
+  test, cargo test or rspec; per-error verdicts need tsc, eslint, `prettier --check` or `next build`.
+  Anything else (`make test`, `tox`, mocha, a shell chain like `node --test; npm run typecheck`) is one
+  unit: NEW when base passes, or when every head run prints a `FAIL <file>` line that base doesn't;
+  otherwise UNKNOWN when base fails too (exit 3), never PRE-EXISTING or ENVIRONMENT, even if the output
+  contains environment-looking errors. Its `FAIL` / assertion lines and summary are shown for both sides
+  but not compared per test. For those the plugin's hook only adds a one-line note. cargo and rspec are
+  tested on captured reports, not end to end; jest end to end through a stand-in that writes jest's report
+  and on one real Create React App suite.
+- Every command runs with `CI=true` and stdin from /dev/null, and jest gets `--watchAll=false`, so watch
+  modes (Create React App's `npm test` starts one without `CI`) don't hang. A command that waits for input
+  gets end-of-file.
+- Auto-detection (`check`/`detect` without a command) picks the project's `test` script when it runs a
+  known runner (`react-scripts test` included), else a vitest/jest dependency or config (`jest.config.*`,
+  a `jest` key in package.json). Other suites it finds (a `jest.*.config.js`, `test:*` scripts) are listed
+  in a note ("also found: ..."), not run: a project with a web suite and an api suite needs one check per
+  suite.
 - Check errors are matched by file + code/rule + message, without line numbers. An error whose message
   stays the same but moves to a different place in the same file is still PRE-EXISTING; a second copy of
   an existing error in the same file counts as NEW.
@@ -352,7 +364,10 @@ What it can't do, or does only partly:
   still fails with errors head doesn't have, head's own errors are compared one by one anyway (an error
   base doesn't report is NEW) and a note lists base's extra errors.
 - node:test: TypeScript test files need Node >= 22.6 (`--experimental-strip-types` below 23.6). On an older
-  node they fail to load on both sides and are reported ENVIRONMENT with the node version.
+  node they fail to load on both sides and are reported ENVIRONMENT with the node version (as a whole
+  command, e.g. through a shell script, UNKNOWN with the node version as a hint).
+- ENVIRONMENT is per test (or per load error) and needs the same error on base: a test that fails with an
+  environment error only on head, or with a different one on base, is NEW or UNKNOWN.
 - Monorepos and workspaces: npm/yarn/pnpm workspace packages in `node_modules` are re-pointed at the base
   copy; other layouts are not specially handled. Run it from the directory the tests run in (or `--cwd`).
 - It runs your test command several times (5 times on head and 5 to 10 times on base per failing test, up

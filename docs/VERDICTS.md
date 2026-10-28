@@ -51,10 +51,25 @@ A *unit* is what can fail:
   `file: code message` (eslint: rule id; prettier: `file: not formatted`),
   normalised, without line or column, so moving code doesn't make an error
   new. A second identical error in the same file gets ` (#2)`. A check that
-  exits non-zero with nothing parsed is one whole-command unit, `(command)`.
+  exits non-zero with nothing parsed is one whole-command unit whose id is the
+  command; the report then says its output "could not be read", never
+  "0 errors". Check output is read from stdout first, then stdout + stderr, and
+  an eslint JSON report is found inside surrounding notices (a Browserslist
+  "caniuse-lite is outdated" line, npm warnings).
 * a **whole command** (`kind: command`, id = the command): any command that is
-  neither a known test runner nor a known check. Its first and last
-  error-looking output lines are kept as `error_raw` for both sides.
+  neither a known test runner nor a known check. As proof, `error_raw` keeps
+  `FAIL <file>` / `●` / `✕` / `Error…` / `Expected`/`Received` lines first and
+  the final summary (`Tests: 26 failed, …`) last, before any other
+  error-looking line (console noise from passing tests). The set of
+  `FAIL <file>`-style lines (jest/vitest `FAIL path`, pytest `FAILED id`, go
+  `--- FAIL: Name` / `FAIL pkg`) is kept per run as `fails`.
+
+`react-scripts test`, `craco test` (also `react-app-rewired`, `rescripts`), via
+npx/yarn/pnpm, as an npm script (also `VAR=x react-scripts test ...`, or a
+script that starts with it before `&&`) are the jest runner: per-test verdicts
+through `--json --outputFile`. Every child runs with `CI=true` and stdin from
+/dev/null, and jest gets `--watchAll=false` (`--watch`/`--watchAll` removed;
+vitest always runs `run`), so watch modes never start.
 
 ## Sampling (how many runs a verdict rests on)
 
@@ -88,6 +103,13 @@ rounds, not the number of failing tests.
      any changed config/lockfile/data file counts as "everything changed"), or
    * the failure text varies between runs of the same code.
    Closure analysis only ever adds runs; it never decides a verdict.
+   Whole commands (each run is the full command): head twice (a pass on the
+   rerun ⇒ FLAKY on head), base once; a second base run only when the answer
+   would be NEW (base passed, or head fails in files base doesn't). A command
+   that fails on both sides with nothing more to compare costs 3 runs (was 4).
+   Check commands: one run per side. A per-test runner (now including
+   `react-scripts test`) never reruns the whole suite: reruns are the failing
+   tests only (`--runTestsByPath <files> -t <escaped names>` for jest).
 5. Base results are cached under `.git/<name>/cache/<base-sha>-<hash>.json`
    (hash of tool version, runner command, project dir, environment
    fingerprint, installed-deps markers). Cached observations count as base
@@ -140,17 +162,22 @@ flaky tests usually fail far less often, and the head reruns alone catch them.
 5. **Fails on base too** — compare the normalised errors:
    * same error (any head key equals any base key; if a side's own text varies
      run to run, numbers are masked before comparing) ⇒ **PRE-EXISTING**, or
-     **ENVIRONMENT** when both sides' errors are environment-class;
-   * different errors, both environment-class ⇒ **ENVIRONMENT**;
-   * base env-class but head not ⇒ **UNKNOWN** (base couldn't really run:
-     e.g. an ignored `.env` that the worktree doesn't have — see `--copy-ignored`);
+     **ENVIRONMENT** when both sides' errors are environment-class (an
+     environment error only counts per unit, and only when the same unit fails
+     with the same error on base);
+   * different errors and base env-class ⇒ **UNKNOWN** (base couldn't really run:
+     e.g. an ignored `.env` that the worktree doesn't have — see `--copy-ignored`;
+     also when head's different error is env-class too);
    * otherwise ⇒ **PRE-EXISTING (error changed)**, with a `similarity` score.
      A test whose file failed to load on base counts as failing on base with
      the error `[file failed to load] …`.
-   Whole commands (`kind: command`) are the exception: their output can't be
-   compared error by error, so failing on base too gives **ENVIRONMENT** when
-   both sides' errors are environment-class and **UNKNOWN** otherwise (exit 3,
-   "can't tell"), never PRE-EXISTING or error changed.
+   Whole commands (`kind: command`) are the exception: one unit stands for
+   every failure in the output, so failing on base too is never PRE-EXISTING,
+   error changed, ENVIRONMENT or FLAKY, whatever environment-looking text the
+   output contains. If every head run shows a `FAIL <file>` line that no base
+   run shows ⇒ **NEW** (`head_only_fails` lists them); otherwise **UNKNOWN**
+   (exit 3, "can't tell"), with any head-only `FAIL` lines as a hint. A base
+   that both passed and failed while head failed every run is UNKNOWN too.
 6. **Never ran on base**:
    * file/package doesn't exist at base, or the test name isn't in the base
      sources ⇒ **NEW** (introduced by this change);
@@ -311,8 +338,9 @@ passed in the full head run (see above).
 * A flaky test that passes in the full head run and doesn't flip in any other
   run that happened is not reported (`--flaky-hunt N` looks harder).
 * Unknown runners: the command runs as is and only the whole command gets a
-  verdict: NEW if it passes on base, UNKNOWN (or ENVIRONMENT) if it fails on
-  base too. Never PRE-EXISTING.
+  verdict: NEW if it passes on base or head fails in more files than base,
+  UNKNOWN if it fails on base too. Never PRE-EXISTING, ENVIRONMENT or FLAKY
+  on base.
 * jest/cargo/rspec support is parser-tested but not exercised end to end here;
   `missing` detection needs the full base run.
 * Windows: best effort (no process-group kill, `node_modules` mirroring needs

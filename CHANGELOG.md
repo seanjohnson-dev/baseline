@@ -8,6 +8,54 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- False clean on whole commands: a command Baseline can't read per test that failed on both sides was called
+  ENVIRONMENT (exit 0, "No failure was caused by this change") as soon as both outputs contained
+  environment-looking text, even when head failed in suites base passes (seen on a Create React App suite
+  with one test needing a missing module). A whole command is now never ENVIRONMENT, PRE-EXISTING or FLAKY
+  on base: NEW when every head run prints a `FAIL <file>`-style line that no base run does (listed), else
+  UNKNOWN (exit 3) with any head-only `FAIL` lines and the environment text as hints.
+- ENVIRONMENT per test needs the same error on base: different errors on the two sides, both
+  environment-looking, are UNKNOWN (were ENVIRONMENT). A test that fails on head and is absent from base's
+  run of the same file is NEW (was UNKNOWN when its name appeared elsewhere in the base file).
+- The "Agent:" line and the hook text no longer say "No failure was caused by this change" / "None of these
+  failures was caused by the current change" next to an UNKNOWN or a whole-command result.
+- eslint JSON is found inside surrounding notices (a Browserslist "caniuse-lite is outdated" line on stderr,
+  npm warnings, banners); check commands capture stdout and stderr apart and parse stdout first. A failed
+  check whose output can't be read says so ("could not be read") instead of "0 lint errors on head", and its
+  unit is named by the command instead of `(command)`.
+- Hook: `npx jest ...` (and `npx vitest`, `pnpm exec`, `yarn dlx`) re-runs through the launcher, so a runner
+  that only exists in `node_modules/.bin` is found (it was stripped to `jest`, "not found", and the hook went
+  silent). When the hook declines a failed test command it now says "No verdict: <reason>; run `baseline
+  check -- <command>`" instead of nothing (command not found, no git state, internal error).
+- Whole-command proof lines: `FAIL <file>`, `●`/`✕`, `Error…`/`AssertionError`, `Expected`/`Received` first and
+  the final summary (`Tests: 26 failed, …`) last, before console noise from passing tests.
+
+### Changed
+
+- Every child runs with `CI=true` (set when unset or false-like) and stdin from /dev/null, so watch modes
+  (Create React App's `npm test` without CI) and prompts can't hang a check.
+- Whole commands cost fewer runs: head twice, base once when both fail (was twice each); a second base run
+  only when the answer would be NEW.
+- Tests updated because they asserted the old behaviour: `test_envload` (`command not found` / TS on old Node
+  as a whole command on both sides: now UNKNOWN with the hint, exit 3), `test_decide` ("different env errors"
+  now UNKNOWN), `test_hook` (`npx ...` keeps `npx` in the re-run command; `format_context` with an UNKNOWN
+  no longer says "None of these failures was caused"), `test_parsers` (`NODE_ENV=x vitest && echo` now runs
+  its first part as vitest, with a note).
+
+### Added
+
+- `react-scripts test`, `craco test`, `react-app-rewired test`, `rescripts test` are the jest runner (per-test
+  verdicts via `--json --outputFile`, `--watchAll=false`, reruns of failing tests only with
+  `--runTestsByPath` and an escaped `-t` pattern), directly, through npx/yarn/pnpm, with a `VAR=x` prefix, or
+  as an npm script that is or starts with one (`... && other` runs the test part, with a note).
+- Auto-detection picks the project's `test` script when it runs a known runner (CRA included), detects jest
+  from `jest.config.*` or a `jest` key in package.json without a direct dependency, and lists other suites
+  it found (`jest.api.config.js`, `test:*` scripts) in an "also found" note.
+- Hook speaks for `react-scripts test` / `craco test` (also piped to `tail`, with `CI=true` prefixes) and npm
+  scripts whose body runs them.
+- `--strict-changed` end-to-end test (a pytest failure whose error text changes), and regression tests for
+  all of the above (`tests/test_mixed.py`, with a stand-in `react-scripts`/`jest` that writes jest's report).
+
 - Whole-command runs are no longer called PRE-EXISTING from exit codes alone. A command Baseline can't read
   per error that fails on base too is now UNKNOWN (exit 3) with "can't tell" wording, never "No failure was
   caused by this change"; "same error" and "PRE-EXISTING (error changed)" now only come from comparing the
