@@ -62,7 +62,8 @@ DETECT = [
     ("ls tests/ && pytest tests/test_x.py::test_y", ["pytest", "tests/test_x.py::test_y"], ""),
     # negatives
     ("npm install", None, None),
-    ("npm run build", None, None),
+    ("npm run build", ["npm", "run", "build"], ""),  # a check command now (was: ignored, the hook said nothing)
+    ("npm run dev", None, None),
     ("git status", None, None),
     ("ls tests/", None, None),
     ("cat test.py", None, None),
@@ -117,7 +118,8 @@ class DetectionTest(unittest.TestCase):
         try:
             Path(d, "package.json").write_text(json.dumps({"scripts": {"ci": "vitest run", "build": "tsc"}}))
             self.assertIsNotNone(hook.find_test_segment("npm run ci", d))
-            self.assertIsNone(hook.find_test_segment("npm run build", d))
+            # (was: None — the hook stayed silent for check scripts; now they get a one-line hint)
+            self.assertEqual(hook.find_test_segment("npm run build", d).kind, "check")
         finally:
             rmtree(d)
 

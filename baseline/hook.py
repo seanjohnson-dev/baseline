@@ -156,14 +156,35 @@ def _unwrap(argv: List[str], env: Dict[str, str]) -> List[str]:
     return a
 
 
+NPM_CHECK_SCRIPT = re.compile(r"^(?:typecheck|type-check|types|tsc|lint|lint:.+|format:check|format-check|"
+                              r"fmt:check|check|check:.+|build)$")
+
+
+def check_kind(argv: List[str]) -> bool:
+    """tsc / eslint / prettier --check / next build (already unwrapped from npx; mirrors
+    runners.checks.check_tool without importing the runners at hook startup)."""
+    tool = os.path.basename(argv[0])
+    if tool in ("tsc", "vue-tsc"):
+        return not any(a in ("-w", "--watch", "--init", "-v", "--version") for a in argv)
+    if tool == "eslint":
+        return not any(a in ("--fix", "--init") for a in argv)
+    if tool == "prettier":
+        return any(a in ("--check", "-c", "--list-different", "-l") for a in argv)
+    return tool == "next" and argv[1:2] == ["build"]
+
+
 def classify(argv: List[str], cwd: str) -> str:
-    """Runner family if argv (already unwrapped) runs tests, else ''."""
+    """Runner family if argv (already unwrapped) runs tests, 'check' for a check command, else ''."""
     if not argv:
         return ""
     head = os.path.basename(argv[0])
     rest = argv[1:]
     if head == brand.CLI_NAME:
         return ""
+    if head in ("node", "node.exe") and "--test" in rest:
+        return "node-test"
+    if check_kind(argv):
+        return "check"
     if head in DIRECT_RUNNERS or re.fullmatch(r"pytest-?\d+(\.\d+)*", head):
         if head in ("playwright", "cypress") and not (rest and rest[0] in ("test", "run")):
             return ""
@@ -218,8 +239,14 @@ def _npm_kind(head: str, rest: List[str], cwd: str) -> str:
         scripts = json.loads((Path(cwd) / "package.json").read_text()).get("scripts") or {}
         body = scripts.get(script) or ""
     except (OSError, ValueError, AttributeError):
-        return ""
-    return "npm-test" if any(re.search(r"\b" + r + r"\b", body) for r in JS_RUNNERS | {"pytest"}) else ""
+        body = ""
+    if any(re.search(r"\b" + r + r"\b", body) for r in JS_RUNNERS | {"pytest"}) or \
+            re.search(r"\bnode\b[^|&;]*\s--test\b", body):
+        return "npm-test"
+    if NPM_CHECK_SCRIPT.match(script) or re.search(r"\b(?:tsc|vue-tsc|eslint|next (?:build|lint))\b|"
+                                                   r"\bprettier\b[^|&;]*\s(?:--check|-c)\b", body):
+        return "check"
+    return ""
 
 
 def is_own_cli(argv: List[str]) -> bool:
@@ -281,6 +308,8 @@ def find_test_segment(command: str, cwd: str) -> Optional[Segment]:
         kind = classify(a, cur)
         if not kind:
             continue
+        if kind == "check":
+            a = argv[next(i for i, x in enumerate(argv) if not ASSIGN.match(x)):]  # keep `npx` for the hint
         if any("$" in x or "`" in x for x in a):
             expanded = [os.path.expandvars(x) for x in a]
             if any("$" in x or "`" in x for x in expanded):
@@ -307,6 +336,11 @@ SUMMARY_FAIL = [
     re.compile(r"(?m)^\s*\d+ failing\b"),                                                    # mocha
     re.compile(r"\d+ examples?, [1-9]\d* failures?"),                                         # rspec
     re.compile(r"(?m)^FAILED \((?:failures|errors)=\d+"),                                     # unittest
+    re.compile(r"(?m)^(?:ℹ|#) fail [1-9]"),                                                  # node:test
+    re.compile(r"(?m)^Found [1-9]\d* errors?\b|^\S[^\n]*\(\d+,\d+\): error TS\d+"),          # tsc
+    re.compile(r"(?m)^✖ \d+ problems? \([1-9]"),                                              # eslint
+    re.compile(r"(?m)^\[warn\] Code style issues"),                                            # prettier
+    re.compile(r"(?m)^Failed to compile"),                                                   # next build
 ]
 
 
@@ -554,6 +588,12 @@ def handle(payload: Dict, now: Optional[float] = None, session_dir: Optional[Pat
     if event == EVENT_OK and not output_says_failed(_tool_output(payload)):
         return None  # the command succeeded and no test failure is visible: nothing to attribute
     name = brand.NAME
+    if seg.kind == "check":
+        # type check / lint / format check / build: not re-run here (builds are heavy); name the exact command
+        return (f"[{name}] `{_one(seg.display(), 100)}` failed. To see which of its errors this change introduced "
+                f"and which were already there on base (compared error by error), run "
+                f"`{launcher_path()} check -- {_one(seg.display(), 100)}`; don't call errors pre-existing "
+                f"without it.")
     budget = _env_float("HOOK_TIMEOUT", DEFAULT_BUDGET)
     dur = payload.get("duration_ms")
     if isinstance(dur, (int, float)) and dur / 1000.0 > budget / 2:
@@ -564,7 +604,7 @@ def handle(payload: Dict, now: Optional[float] = None, session_dir: Optional[Pat
     det = from_command(seg.argv, Path(seg.cwd))
     if det.runner == "generic":
         return (f"[{name}] `{_one(seg.display(), 100)}` is not a test runner it can attribute per test "
-                f"(pytest, vitest, jest, go test, cargo test, rspec); no verdict. Running the underlying runner "
+                f"(pytest, vitest, jest, node --test, go test, cargo test, rspec); no verdict. Running the underlying runner "
                 f"through `{launcher_path()} check -- <runner command>` gives one.")
     from . import gitutil
     try:
