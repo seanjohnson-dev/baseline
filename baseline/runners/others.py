@@ -9,6 +9,7 @@ from typing import Dict, List
 from .. import normalize
 from ..model import COMMAND, FAIL, LOAD_ERROR, PASS, SKIP, LoadError, RunResult, TestResult, Unit
 from .base import Invocation, Runner, Side, crash_result
+from .checks import whole_failure
 
 # ----------------------------------------------------------------------------------- cargo
 CARGO_RUNNING = re.compile(r"^\s*Running (?:unittests )?(\S+)(?: \((\S+)\))?")
@@ -186,10 +187,14 @@ class RspecRunner(Runner):
 
 # ----------------------------------------------------------------------------------- generic
 class GenericRunner(Runner):
-    """Unknown runner: run as-is, attribute only the whole command by exit code."""
+    """Unknown runner: run as-is; the whole command is one unit. Its error lines are kept as proof, but a
+    failure on both sides can't be attributed (UNKNOWN, never pre-existing; see decide)."""
     name = "generic"
     per_test = False
-    UNIT = "(test command)"
+
+    @property
+    def UNIT(self) -> str:  # noqa: N802 - the unit id is the command itself
+        return self.display_command()
 
     def full(self, side: Side, tag: str) -> List[Invocation]:
         return [Invocation(list(self.argv), None, "full")]
@@ -204,13 +209,13 @@ class GenericRunner(Runner):
             return crash_result(proc, proc.stderr, inv)
         res = RunResult(exit_code=proc.returncode, duration=proc.duration, output_tail=proc.output[-4000:])
         res.invocations.append(inv.argv)
+        uid = self.UNIT
         if proc.returncode == 0:
-            res.tests[self.UNIT] = TestResult(self.UNIT, self.UNIT, PASS, self.UNIT)
+            res.tests[uid] = TestResult(uid, uid, PASS, uid, {"kind": COMMAND})
         else:
-            key = f"exit code {proc.returncode}"
-            tail = normalize.first_lines("\n".join(proc.output.strip().splitlines()[-15:]), 15)
-            res.tests[self.UNIT] = TestResult(self.UNIT, self.UNIT, FAIL, self.UNIT, {}, key,
-                                              f"exit code {proc.returncode}", tail, None)
+            t = whole_failure(proc, side, self.classify)
+            t.id = t.group = t.name = uid
+            res.tests[uid] = t
         return res
 
 

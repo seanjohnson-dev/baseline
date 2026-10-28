@@ -39,27 +39,59 @@ def _evidence(v: Dict, base_short: str) -> str:
     return f"fails on head {_counts(h)}"
 
 
+def plural(n: int, word: str, many: str = "") -> str:
+    return f"{n} {word if n == 1 else (many or word + 's')}"
+
+
+def kind_of(rep: Dict) -> str:
+    """'tests' (per-test runner), 'check' (one unit per error) or 'command' (whole command)."""
+    r = rep["runner"]
+    if r.get("check"):
+        return "check"
+    return "tests" if r["per_test"] else "command"
+
+
+def command_text(rep: Dict) -> str:
+    return normalize.one_line(" ".join(rep["runner"]["command"]))[:120]
+
+
 def render(rep: Dict, json_path: str = "") -> str:
     s = rep["summary"]
     base = rep["base"]
     head = rep["head"]
+    kind = kind_of(rep)
     lines: List[str] = []
     parts = [f"{s[k]} {w}" for k, w in SUMMARY_WORDS if s.get(k)]
     head_s = head["short"] + ("+dirty" if head["dirty"] else "")
-    timing = f"{rep.get('duration_s', 0):.1f}s, {rep.get('test_runs', 0)} test runs"
+    runs = rep.get("test_runs", 0)
+    timing = f"{rep.get('duration_s', 0):.1f}s, " + (plural(runs, "test run") if kind == "tests" else plural(runs, "run"))
     where = f"(base {base['short']} → head {head_s}, {timing})"
     if not rep["results"]:
-        total = s["tests_total"]
-        lines.append(f"{brand.NAME}: all {total} tests passed on head  {where}")
+        if kind == "tests":
+            total = s["tests_total"]
+            what = "the 1 test passed" if total == 1 else f"all {total} tests passed"
+        elif kind == "check":
+            what = f"check passed (`{command_text(rep)}`)"
+        else:
+            what = f"`{command_text(rep)}` passed"
+        lines.append(f"{brand.NAME}: {what} on head  {where}")
     else:
         lines.append(f"{brand.NAME}: {', '.join(parts)}  {where}")
-    lines.append(f"  {s['tests_total']} tests on head: {s['tests_passed']} passed, {s['tests_failed']} failed"
-                 + (f", {s['tests_skipped']} skipped" if s["tests_skipped"] else "")
-                 + (f", {s['load_errors']} file(s)/package(s) failed to load" if s["load_errors"] else "")
-                 + f"; runner {rep['runner']['name']}; base = {base['how']}")
-    if not rep["runner"]["per_test"]:
-        lines.append("  note: unrecognised test runner — can't attribute per test; this is a whole-command verdict "
-                     "based on the exit code.")
+    if kind == "check":
+        noun = rep["runner"].get("noun", "error")
+        lines.append(f"  {plural(s.get('check_errors', 0), noun)} on head; check {rep['runner']['name']} "
+                     f"(`{command_text(rep)}`); base = {base['how']}")
+    elif kind == "tests":
+        lines.append(f"  {plural(s['tests_total'], 'test')} on head: {s['tests_passed']} passed, "
+                     f"{s['tests_failed']} failed"
+                     + (f", {s['tests_skipped']} skipped" if s["tests_skipped"] else "")
+                     + (f", {s['load_errors']} file(s)/package(s) failed to load" if s["load_errors"] else "")
+                     + f"; runner {rep['runner']['name']}; base = {base['how']}")
+    else:
+        lines.append(f"  command `{command_text(rep)}`; base = {base['how']}")
+        lines.append("  note: unrecognised command — its output can't be read per test or per error, so it is one "
+                     "unit; a failure on both sides can't be attributed (UNKNOWN), only pass-on-base/fail-on-head "
+                     "(NEW).")
     for verdict, title in SECTIONS:
         items = [v for v in rep["results"] if v["verdict"] == verdict]
         if not items:
@@ -69,7 +101,12 @@ def render(rep: Dict, json_path: str = "") -> str:
             label = v["id"] + (" [load error]" if v["kind"] == "load_error" else "")
             lines.append(f"  {label} — {_evidence(v, base['short'])}")
             h, b = v["head"], v["base"]
-            if verdict == PRE_CHANGED:
+            if v["kind"] == "command" and (h["error_raw"] or b["error_raw"]):
+                for name, side in (("head", h), ("base", b)):
+                    shown = [ln for ln in (side["error_raw"] or "").splitlines() if ln.strip()][:4]
+                    for i, ln in enumerate(shown):
+                        lines.append(f"      {name if i == 0 else ' ' * len(name)}: {normalize.one_line(ln)[:200]}")
+            elif verdict == PRE_CHANGED:
                 lines.append(f"      base: {normalize.one_line(b['message'] or b['error'])}")
                 lines.append(f"      head: {normalize.one_line(h['message'] or h['error'])}")
             elif verdict in (NEW, UNKNOWN, PRE, ENVIRONMENT) and (h["message"] or h["error"]):
@@ -109,7 +146,8 @@ def render(rep: Dict, json_path: str = "") -> str:
 def agent_line(rep: Dict) -> str:
     s = rep["summary"]
     if not rep["results"]:
-        return "Agent: all tests pass; nothing to attribute."
+        return "Agent: " + ("all tests pass" if kind_of(rep) == "tests" else "the command passes") + \
+            "; nothing to attribute."
     out = []
     if s[NEW]:
         out.append(f"Fix the {s[NEW]} NEW failure(s): they pass on base and fail with this change; do not call "

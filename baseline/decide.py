@@ -12,9 +12,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from . import normalize
-from .model import (ABSENT, BLOCKED, COMMAND, ENVIRONMENT, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE, PRE_CHANGED,
-                    SKIP, UNKNOWN, Obs, Unit)
+from . import brand, normalize
+from .model import (ABSENT, BLOCKED, CHECK, COMMAND, ENVIRONMENT, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE,
+                    PRE_CHANGED, SKIP, UNKNOWN, Obs, Unit)
 
 
 @dataclass
@@ -107,7 +107,9 @@ def needs_head(st: UnitState, p: Policy) -> int:
     if hp or not hf:
         return 0
     target = p.max_runs if suspicious(st) else p.runs
-    if st.unit.group.startswith("("):
+    if st.unit.kind == CHECK:
+        target = 1  # a check (tsc/eslint/prettier) prints the same errors for the same code
+    elif st.unit.group.startswith("(") or st.unit.kind == COMMAND:
         target = min(target, 2)  # whole-session failure: each rerun is a full run
     if st.head_attempts >= target + 2:
         return 0
@@ -124,10 +126,12 @@ def base_targets(st: UnitState, p: Policy):
         return 0, 0
     if not bf and not bp and (bs or ba):
         return 0, 0  # skipped/absent on base: deterministic, no point repeating
-    if st.unit.group.startswith("("):
+    if st.unit.kind == CHECK:
+        return 1, 1
+    if st.unit.group.startswith("(") or st.unit.kind == COMMAND:
         t = min(p.runs, 2)
         return t, t
-    if st.unit.kind in (LOAD_ERROR, COMMAND):
+    if st.unit.kind == LOAD_ERROR:
         return p.runs, p.runs
     if suspicious(st):
         return p.max_runs, p.max_runs
@@ -237,6 +241,10 @@ def _env_of(obs: List[Obs]) -> Optional[Dict[str, str]]:
     return None
 
 
+def _what_same(kind: str) -> str:
+    return {LOAD_ERROR: "Fails to load", CHECK: "Reported"}.get(kind, "Fails")
+
+
 def decide(st: UnitState) -> Dict:
     u = st.unit
     hf, hp, hs, ha = _split(st.head)
@@ -276,7 +284,12 @@ def decide(st: UnitState) -> Dict:
 
     # 4. passes on base -> NEW
     if bp and not bf:
-        if u.kind == LOAD_ERROR:
+        if u.kind == CHECK:
+            reason = (f"Not among base's errors ({b} run(s) of the same command) but reported on head — this "
+                      f"change introduced it.")
+        elif u.kind == COMMAND:
+            reason = f"Passed on base ({b}/{b}) but fails on head ({len(hf)}/{h}) — this change broke it."
+        elif u.kind == LOAD_ERROR:
             reason = (f"Loads fine on base but {what} on head ({len(hf)}/{h}) — this change broke it"
                       + (f"; {len(st.blocked_tests)} test(s) in it can't run." if st.blocked_tests else "."))
         else:
@@ -290,6 +303,18 @@ def decide(st: UnitState) -> Dict:
         return out
 
     # 5. fails on base too
+    if bf and u.kind == COMMAND:
+        benv = _env_of(bf)
+        if henv and benv:
+            out.update(verdict=ENVIRONMENT, env_class=henv,
+                       reason=f"The command fails on base ({len(bf)}/{b}) and head ({len(hf)}/{h}) with an "
+                              f"environment error ({henv['detail']}) — fix the environment, not the code.")
+            return out
+        out.update(verdict=UNKNOWN, env_class=benv,
+                   reason=f"Can't tell: the command fails on base too and {brand.NAME} can't read its output per "
+                          "error, so the exit code proves nothing either way; compare the error lines yourself "
+                          "(head and base below) — do not call this pre-existing.")
+        return out
     if bf:
         benv = _env_of(bf)
         match = errors_match(hf, bf)
@@ -302,7 +327,7 @@ def decide(st: UnitState) -> Dict:
             else:
                 extra = " (error text varies run to run; matched ignoring numbers)" if match == "loose" else ""
                 out.update(verdict=PRE,
-                           reason=f"{'Fails to load' if u.kind == LOAD_ERROR else 'Fails'} the same way on base "
+                           reason=f"{_what_same(u.kind)} the same way on base "
                                   f"({len(bf)}/{b}) and head ({len(hf)}/{h}){extra} — already broken before "
                                   f"this change.")
             return out
@@ -328,6 +353,10 @@ def decide(st: UnitState) -> Dict:
         return out
 
     # 6. never ran on base
+    if u.kind == CHECK:
+        out.update(verdict=UNKNOWN, reason=f"The base run failed without errors {brand.NAME} can read, so it is not "
+                                           "known whether base has this error — do not call it pre-existing.")
+        return out
     if bs and not ba:
         out.update(verdict=UNKNOWN, reason="Skipped on base, so there is no base result to compare against.")
         return out

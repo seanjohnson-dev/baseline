@@ -15,10 +15,11 @@ from typing import Dict, List, Optional
 
 from . import __version__, brand, closure, decide, envclass, gitutil, normalize, procs, pyenv
 from .cache import BaseCache, env_fingerprint
-from .model import (ABSENT, BLOCKED, COMMAND, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST, UNKNOWN,
-                    Obs, RunResult, Unit)
+from .model import (ABSENT, BLOCKED, CHECK, COMMAND, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST,
+                    UNKNOWN, Obs, RunResult, Unit)
 from .runners import Detection, Side, auto_detect, from_command, make_runner
 from .runners.base import Runner
+from .runners.checks import WHOLE
 from .worktree import BaseWorktree, cleanup_stale, make_tmp_dir, missing_ignored
 
 FULL_BASE_MAX_SECONDS = 60.0
@@ -229,7 +230,11 @@ class Engine:
             else:
                 r = self.runner.parse(inv, proc, side)
             with self._lock:
-                self.test_runs += sum(1 for t in r.tests.values() if t.status in (PASS, FAIL)) + len(r.load_errors)
+                if getattr(self.runner, "deterministic", False) or not self.runner.per_test:
+                    self.test_runs += 1  # whole-command runs: count runs, not units
+                else:
+                    self.test_runs += sum(1 for t in r.tests.values() if t.status in (PASS, FAIL)) + \
+                        len(r.load_errors)
             if first:
                 total = r
                 first = False
@@ -240,6 +245,13 @@ class Engine:
         return total
 
     def _obs_for(self, u: Unit, r: RunResult) -> Obs:
+        if u.kind == CHECK:
+            t = r.tests.get(u.id)
+            if t is not None:
+                return t.obs()
+            whole = r.tests.get(WHOLE)
+            # the run's errors were read and this one is not among them: on this side it 'passes'
+            return Obs(PASS) if r.ok and whole is not None and whole.status == PASS else Obs(ABSENT)
         if u.kind == COMMAND or u.id == SESSION_UNIT:
             if u.id == SESSION_UNIT:
                 if not r.ok:
@@ -720,6 +732,12 @@ class Engine:
                            full.get("output_tail", ""))
             return Obs(PASS)
         les = full.get("load_errors", {})
+        if u.kind == CHECK:
+            st = full.get("tests", {}).get(u.id)
+            if st == FAIL:
+                return Obs.from_dict(full["obs"][u.id])
+            readable = full.get("ok", True) and full.get("tests", {}).get(WHOLE) == PASS
+            return Obs(PASS) if readable else Obs(ABSENT)
         if u.kind == LOAD_ERROR:
             if u.id in les:
                 return Obs.from_dict(les[u.id])
@@ -801,7 +819,7 @@ class Engine:
         if s.exists_on_base is not None:
             return
         u = s.unit
-        if u.id == SESSION_UNIT or u.kind == COMMAND:
+        if u.id == SESSION_UNIT or u.kind in (COMMAND, CHECK):
             s.exists_on_base = True
             return
         if self.runner.name == "go":
@@ -911,7 +929,7 @@ class Engine:
             units.append(Unit(le.id, LOAD_ERROR, le.locator.get("file") or le.locator.get("pkg") or le.id,
                               le.id, dict(le.locator)))
         for t in r1.failing_tests():
-            kind = COMMAND if not self.runner.per_test else TEST
+            kind = t.locator.get("kind") or (COMMAND if not self.runner.per_test else TEST)
             units.append(Unit(t.id, kind, t.group, t.name, dict(t.locator)))
         return units
 
@@ -939,7 +957,19 @@ class Engine:
                 g = base_full["groups"].get(tid, "")
                 if tid not in head_ids and g not in head_load:
                     missing.append(tid)
-        if self.base_side is not None and any(v["verdict"] == UNKNOWN for v in results):
+        is_check = getattr(self.runner, "deterministic", False)
+        if is_check and base_full is not None:
+            extra = sorted(tid for tid, st in base_full["tests"].items() if st == FAIL and tid not in head_ids)
+            if extra:
+                self.notes.append(f"base also failed with {len(extra)} error(s) that head does not have (base "
+                                  f"failed for a different reason, e.g. generated or ignored files the base "
+                                  f"worktree lacks); head's own errors were still compared one by one: "
+                                  + "; ".join(normalize.one_line(x)[:160] for x in extra[:3])
+                                  + (f" (+{len(extra) - 3} more)" if len(extra) > 3 else ""))
+        if self.base_side is not None and (any(v["verdict"] == UNKNOWN for v in results) or
+                                           (is_check and base_full is not None and
+                                            any(st == FAIL and tid not in head_ids
+                                                for tid, st in base_full["tests"].items()))):
             miss = missing_ignored(self.root, self.base_side.root)
             if miss:
                 self.notes.append("ignored files in your tree that the base worktree lacks: " + ", ".join(miss) +
@@ -948,6 +978,8 @@ class Engine:
         for v in results:
             counts[v["verdict"]] += 1
         tests = list(r1.tests.values())
+        if is_check:
+            tests = []  # the units are errors, not tests
         exit_code = 0
         if counts[NEW] or (self.opts.strict_changed and counts[PRE_CHANGED]):
             exit_code = 1
@@ -966,13 +998,15 @@ class Engine:
                         "tests_failed": sum(1 for t in tests if t.status == FAIL),
                         "tests_skipped": sum(1 for t in tests if t.status == SKIP),
                         "load_errors": len(r1.load_errors),
+                        "check_errors": sum(1 for t in r1.tests.values()
+                                            if t.status == FAIL and t.locator.get("kind") == CHECK),
                         "fixed": len(fixed), "missing": len(missing),
                         "flaky_surfaced": len(flips)},
             "base": {"sha": self.base.sha, "short": gitutil.short(self.base.sha), "ref": self.base.ref,
                      "how": self.base.how},
             "head": {"sha": self.head_sha, "short": gitutil.short(self.head_sha), "dirty": self.dirty},
             "runner": {"name": self.runner.name, "command": self.runner.argv, "per_test": self.runner.per_test,
-                       "cwd": self.project_rel},
+                       "check": is_check, "noun": getattr(self.runner, "noun", ""), "cwd": self.project_rel},
             "policy": {"head_runs": self.policy.runs, "base_required": self.policy.base_required,
                        "base_confirm": self.policy.base_runs, "max_runs": self.policy.max_runs,
                        "confirm_budget_hit": self.confirm_limited, "flaky_hunt": self.opts.flaky_hunt},

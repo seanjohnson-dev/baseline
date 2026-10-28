@@ -15,6 +15,7 @@ from typing import List, Optional
 from .base import Invocation, Runner, Side  # noqa: F401
 from .gotest import GoRunner
 from .jsjson import JestRunner, VitestRunner, find_token
+from .checks import CheckRunner, check_tool
 from .others import CargoRunner, GenericRunner, RspecRunner
 from .pytest import PytestRunner, find_pytest
 
@@ -51,6 +52,9 @@ def runner_for_argv(argv: List[str]) -> str:
         return "cargo"
     if any(os.path.basename(a) == "rspec" for a in argv[:3]):
         return "rspec"
+    tool = check_tool(argv)
+    if tool:
+        return tool
     return "generic"
 
 
@@ -161,4 +165,9 @@ def auto_detect(project: Path) -> List[Detection]:
 
 
 def make_runner(det: Detection, project: Path) -> Runner:
+    if det.runner in CHECK_TOOLS:
+        return CheckRunner(det.argv, project, det.runner)
     return RUNNERS[det.runner](det.argv, project)
+
+
+CHECK_TOOLS = ("tsc", "eslint", "prettier", "next-build")

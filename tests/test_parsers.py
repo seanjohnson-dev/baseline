@@ -343,9 +343,10 @@ test result: FAILED. 1 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; 
     def test_generic_whole_command(self):
         r = runners.GenericRunner(["make", "test"], Path("/x"))
         ok = r.parse(base.Invocation([]), proc("all good", rc=0), side("/x"))
-        self.assertEqual(ok.tests["(test command)"].status, model.PASS)
+        self.assertEqual(ok.tests["make test"].status, model.PASS)
         bad = r.parse(base.Invocation([]), proc("boom", rc=2), side("/x"))
-        self.assertEqual(bad.tests["(test command)"].key, "exit code 2")
+        self.assertEqual(bad.tests["make test"].key, "boom")
+        self.assertEqual(bad.tests["make test"].raw, "boom")
 
 
 class DetectionTest(unittest.TestCase):

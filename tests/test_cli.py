@@ -70,7 +70,9 @@ class CliTest(unittest.TestCase):
         try:
             p = run_cli(["check", "--", "./t.sh"], repo)
             self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
-            self.assertIn("all 1 tests passed", p.stdout)
+            # (was "all 1 tests passed": wrong plural and 'tests' for a whole command)
+            self.assertIn("`./t.sh` passed on head", p.stdout)
+            self.assertIn("1 run)", p.stdout.splitlines()[0])
         finally:
             rmtree(repo)
 
@@ -80,7 +82,8 @@ class CliTest(unittest.TestCase):
             before = git_state(repo)
             p = run_cli(["check", "--runs", "2", "--", "./t.sh"], repo)
             self.assertEqual(p.returncode, 1, p.stdout + p.stderr)
-            self.assertIn("can't attribute per test", p.stdout)
+            self.assertIn("can't be read per test or per error", p.stdout)
+            self.assertIn("head: broken", p.stdout)
             self.assertIn("NEW", p.stdout.splitlines()[0])
             self.assertTrue(p.stdout.strip().splitlines()[-2].startswith("Agent:"))
             last = json.loads((repo / ".git" / brand.CACHE_DIR_NAME / "last.json").read_text())
@@ -89,14 +92,16 @@ class CliTest(unittest.TestCase):
         finally:
             rmtree(repo)
 
-    def test_generic_pre_existing_exit_0_json_only(self):
+    def test_generic_fails_on_both_sides_is_unknown_json_only(self):
+        # (was: PRE-EXISTING exit 0 from exit codes alone — the bug; an unreadable command failing on both
+        # sides can't be attributed)
         repo = script_repo("#!/bin/sh\nexit 3\n", "#!/bin/sh\n# edited\nexit 3\n")
         try:
             p = run_cli(["check", "--json", "--runs", "2", "--", "./t.sh"], repo)
-            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertEqual(p.returncode, 3, p.stdout + p.stderr)
             rep = json.loads(p.stdout)  # stdout is pure JSON
             v = rep["results"][0]
-            self.assertEqual(v["verdict"], "pre_existing")
+            self.assertEqual(v["verdict"], "unknown")
             self.assertTrue(v["dirty"])
             self.assertEqual(v["base_sha"], rep["base"]["sha"])
             for k in ("reason", "head", "base", "runs_total"):
@@ -104,14 +109,13 @@ class CliTest(unittest.TestCase):
         finally:
             rmtree(repo)
 
-    def test_changed_error_and_strict_flag(self):
+    def test_generic_exit_code_change_is_unknown_not_error_changed(self):
+        # (was: 'PRE-EXISTING (error changed)' from a different exit code alone)
         repo = script_repo("#!/bin/sh\nexit 3\n", "#!/bin/sh\nexit 4\n")
         try:
             p = run_cli(["check", "--json", "--runs", "2", "--", "./t.sh"], repo)
-            self.assertEqual(p.returncode, 0)
-            self.assertEqual(json.loads(p.stdout)["results"][0]["verdict"], "pre_existing_error_changed")
-            p2 = run_cli(["check", "--json", "--runs", "2", "--strict-changed", "--", "./t.sh"], repo)
-            self.assertEqual(p2.returncode, 1)
+            self.assertEqual(p.returncode, 3)
+            self.assertEqual(json.loads(p.stdout)["results"][0]["verdict"], "unknown")
         finally:
             rmtree(repo)
 

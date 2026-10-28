@@ -15,6 +15,7 @@ BLOCKED = "blocked"   # its file/package failed to load on that side
 TEST = "test"
 LOAD_ERROR = "load_error"
 COMMAND = "command"   # unknown runner: the whole command is one unit
+CHECK = "check_error" # one error reported by a check command (tsc, eslint, prettier, ...)
 
 # Verdicts (stable machine strings)
 NEW = "new"
