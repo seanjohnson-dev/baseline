@@ -34,6 +34,18 @@ def split_failure(text: str):
     return (m.group(1) if m else ""), msg
 
 
+# commands that run jest with the project's config: `react-scripts test` (Create React App), `craco test`, ...
+JEST_WRAPPERS = ("react-scripts", "craco", "react-app-rewired", "rescripts")
+
+
+def jest_wrapper(argv: List[str]) -> Optional[int]:
+    """Index of `test` in `[npx] react-scripts test ...` (and the other JEST_WRAPPERS), else None."""
+    i = find_token(argv, JEST_WRAPPERS)
+    if i is not None and i + 1 < len(argv) and argv[i + 1] == "test":
+        return i + 1
+    return None
+
+
 def find_token(argv: List[str], names) -> Optional[int]:
     for i, a in enumerate(argv):
         base = os.path.basename(a)
@@ -52,7 +64,7 @@ class JsJsonRunner(Runner):
 
     def __init__(self, argv: List[str], project_dir: Path):
         super().__init__(argv, project_dir)
-        idx = find_token(argv, [self.tool])
+        idx = self._tool_index(argv)
         if idx is None:
             idx = len(argv) - 1
         self.prefix = self._local_bin(argv[: idx + 1])
@@ -63,14 +75,20 @@ class JsJsonRunner(Runner):
         self.user_opts = self._clean(opts)
         self.user_pos = pos
 
+    def _tool_index(self, argv: List[str]) -> Optional[int]:
+        return find_token(argv, [self.tool])
+
     def _local_bin(self, prefix: List[str]) -> List[str]:
         """`npx vitest` -> node_modules/.bin/vitest when installed locally (saves ~0.4s per run)."""
-        if len(prefix) >= 2 and os.path.basename(prefix[0]) in ("npx", "npx.cmd") and prefix[-1] == self.tool:
-            extra = prefix[1:-1]
-            if all(e in ("--no-install", "--offline", "-y", "--yes") for e in extra):
-                local = self.project_dir / "node_modules" / ".bin" / self.tool
-                if local.exists():
-                    return [str(Path("node_modules") / ".bin" / self.tool)]
+        if len(prefix) >= 2 and os.path.basename(prefix[0]) in ("npx", "npx.cmd"):
+            k = 1
+            while k < len(prefix) and prefix[k] in ("--no-install", "--offline", "-y", "--yes"):
+                k += 1
+            if k < len(prefix):
+                tool = prefix[k]
+                local = self.project_dir / "node_modules" / ".bin" / tool
+                if "/" not in tool and local.exists():
+                    return [str(Path("node_modules") / ".bin" / tool)] + prefix[k + 1:]
         return prefix
 
     def _subcommand(self, rest: List[str]) -> List[str]:
@@ -225,6 +243,10 @@ class JestRunner(JsJsonRunner):
     DROP = {"--watch", "--watchAll", "--json", "-o", "--onlyChanged", "--lastCommit", "--listTests",
             "--passWithNoTests", "-u", "--updateSnapshot"}
     DROP_VALUE = {"--outputFile", "--changedSince"}
+
+    def _tool_index(self, argv: List[str]) -> Optional[int]:
+        w = jest_wrapper(argv)  # `react-scripts test`: the prefix keeps `test`
+        return w if w is not None else find_token(argv, [self.tool])
 
     def _cmd(self, side: Side, report: Path, extra: List[str]) -> List[str]:
         return (self.resolve_prefix(side) + self.user_opts + extra

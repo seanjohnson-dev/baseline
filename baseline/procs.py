@@ -111,6 +111,18 @@ class Lane:
             kill_group(p, grace=0.5)
 
 
+CI_OFF = ("", "0", "false", "no", "off")
+
+
+def child_env(env: Optional[Dict[str, str]]) -> Dict[str, str]:
+    """Every child is non-interactive: CI=true (Create React App's `react-scripts test`, jest and vitest
+    start watch mode without it and never exit) and stdin from /dev/null (see run)."""
+    e = dict(os.environ if env is None else env)
+    if e.get("CI", "").strip().lower() in CI_OFF:
+        e["CI"] = "true"
+    return e
+
+
 def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None, merge_stderr: bool = False, lane: Optional[Lane] = None) -> ProcResult:
     """Run argv (no shell). Never raises for a failing/missing command.
@@ -120,6 +132,7 @@ def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
     t0 = time.time()
     if lane is not None and lane.cancelled:
         return ProcResult(argv, cwd, -9, "", "cancelled", 0.0, cancelled=True)
+    env = child_env(env)
     out = tempfile.TemporaryFile()
     err = tempfile.TemporaryFile()
     kwargs = {}

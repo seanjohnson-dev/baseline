@@ -8,13 +8,13 @@ import re
 import shlex
 import shutil
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .base import Invocation, Runner, Side  # noqa: F401
 from .gotest import GoRunner
-from .jsjson import JestRunner, VitestRunner, find_token
+from .jsjson import JEST_WRAPPERS, JestRunner, VitestRunner, find_token, jest_wrapper
 from .nodetest import NodeTestRunner, detect_node_test, is_node_test
 from .checks import CheckRunner, check_tool
 from .others import CargoRunner, GenericRunner, RspecRunner
@@ -23,6 +23,7 @@ from .pytest import PytestRunner, find_pytest
 RUNNERS = {r.name: r for r in (PytestRunner, VitestRunner, JestRunner, GoRunner, CargoRunner, RspecRunner,
                                NodeTestRunner, GenericRunner)}
 SHELL_META = re.compile(r"[|&;<>()$`]")
+ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
 
 @dataclass
@@ -31,6 +32,7 @@ class Detection:
     argv: List[str]
     source: str          # "command" | "auto: <reason>"
     note: str = ""
+    env: Dict[str, str] = field(default_factory=dict)   # `CI=true react-scripts test`: the assignments
 
 
 def _python() -> str:
@@ -45,7 +47,7 @@ def runner_for_argv(argv: List[str]) -> str:
         return "pytest"
     if find_token(argv, ["vitest"]) is not None:
         return "vitest"
-    if find_token(argv, ["jest"]) is not None:
+    if find_token(argv, ["jest"]) is not None or jest_wrapper(argv) is not None:
         return "jest"
     if len(argv) >= 2 and os.path.basename(argv[0]) in ("go", "go.exe") and argv[1] == "test":
         return "go"
@@ -61,8 +63,48 @@ def runner_for_argv(argv: List[str]) -> str:
     return "generic"
 
 
+def split_env(argv: List[str]) -> Tuple[Dict[str, str], List[str]]:
+    """Leading `VAR=value` words -> (env, rest)."""
+    env: Dict[str, str] = {}
+    i = 0
+    while i < len(argv) and ASSIGN.match(argv[i]):
+        k, v = argv[i].split("=", 1)
+        env[k] = v
+        i += 1
+    return env, argv[i:]
+
+
+def script_command(body: str) -> Tuple[Optional[List[str]], Dict[str, str], str]:
+    """A package.json script body -> (argv, env, note). Simple bodies only, with an optional `VAR=x` prefix;
+    `react-scripts test ... && other` keeps its first (test) part, with a note."""
+    note = ""
+    if SHELL_META.search(body):
+        first = body.split("&&")[0]
+        if "&&" not in body or SHELL_META.search(first):
+            return None, {}, ""
+        try:
+            argv = shlex.split(first)
+        except ValueError:
+            return None, {}, ""
+        if runner_for_argv(split_env(argv)[1]) not in ("jest", "vitest"):
+            return None, {}, ""
+        note = f"the script also runs `{body.split('&&', 1)[1].strip()}` after the tests; only the tests were checked"
+        body = first
+    try:
+        env, argv = split_env(shlex.split(body))
+    except ValueError:
+        return None, {}, ""
+    return (argv or None), env, note
+
+
 def _npm_script(argv: List[str], project: Path) -> Optional[List[str]]:
     """`npm test` / `npm run test` / `yarn test` / `pnpm test` -> the script's own command when simple."""
+    r = _npm_script_full(argv, project)
+    return r[0] if r else None
+
+
+def _npm_script_full(argv: List[str], project: Path):
+    """-> (argv, env, note) or None."""
     if not argv or os.path.basename(argv[0]) not in ("npm", "yarn", "pnpm", "bun"):
         return None
     rest = argv[1:]
@@ -78,13 +120,15 @@ def _npm_script(argv: List[str], project: Path) -> Optional[List[str]]:
     except (OSError, ValueError):
         return None
     body = scripts.get(script)
-    if not body or SHELL_META.search(body) or "=" in body.split()[0]:
+    if not body:
         return None
-    cmd = shlex.split(body)
+    cmd, env, note = script_command(body)
+    if not cmd:
+        return None
     local = project / "node_modules" / ".bin" / cmd[0]
     if local.exists():
         cmd[0] = str(Path("node_modules") / ".bin" / cmd[0])
-    return cmd + extra
+    return cmd + extra, env, note
 
 
 def missing_npm_script(argv: List[str], project: Path) -> Optional[str]:
@@ -110,11 +154,14 @@ def missing_npm_script(argv: List[str], project: Path) -> Optional[str]:
 def from_command(argv: List[str], project: Path) -> Detection:
     if len(argv) == 1 and " " in argv[0]:
         argv = shlex.split(argv[0])
-    resolved = _npm_script(argv, project)
-    if resolved and runner_for_argv(resolved) != "generic":
+    env, argv = split_env(argv)
+    full = _npm_script_full(argv, project)
+    if full and runner_for_argv(full[0]) != "generic":
+        resolved, senv, note = full
         return Detection(runner_for_argv(resolved), resolved, "command",
-                         f"resolved `{' '.join(argv)}` to its package.json script")
-    return Detection(runner_for_argv(argv), argv, "command")
+                         "; ".join(x for x in (f"resolved `{' '.join(argv)}` to its package.json script", note) if x),
+                         {**senv, **env})
+    return Detection(runner_for_argv(argv), argv, "command", env=env)
 
 
 def _pytest_configured(project: Path) -> Optional[str]:
@@ -153,15 +200,60 @@ def _js_runner(project: Path) -> Optional[Detection]:
     deps = {}
     for k in ("dependencies", "devDependencies"):
         deps.update(data.get(k) or {})
-    test_script = (data.get("scripts") or {}).get("test", "")
+    scripts = data.get("scripts") or {}
+    test_script = scripts.get("test", "")
+    found: List[Detection] = []
+    cmd, env, note = script_command(test_script) if test_script else (None, {}, "")
+    if cmd and runner_for_argv(cmd) in ("jest", "vitest", "node-test"):
+        # the project's own test script, as written (react-scripts test, jest --config x, vitest, ...)
+        local = project / "node_modules" / ".bin" / cmd[0]
+        argv = ([str(Path("node_modules") / ".bin" / cmd[0])] + cmd[1:]) if local.exists() else cmd
+        found.append(Detection(runner_for_argv(cmd), argv, "auto: package.json test script", note, env))
     configs = [p.name for p in project.glob("vitest.config.*")] + [p.name for p in project.glob("vite.config.*")]
     if "vitest" in deps or "vitest" in test_script or any(c.startswith("vitest") for c in configs):
-        return Detection("vitest", _js_bin(project, "vitest") + ["run"], "auto: vitest in package.json")
-    if "jest" in deps or "jest" in test_script or list(project.glob("jest.config.*")):
-        return Detection("jest", _js_bin(project, "jest"), "auto: jest in package.json")
-    if re.match(r"^node\s(?:[^|&;]*\s)?--test\b", test_script) and not SHELL_META.search(test_script):
+        found.append(Detection("vitest", _js_bin(project, "vitest") + ["run"], "auto: vitest in package.json"))
+    elif any(w in deps for w in JEST_WRAPPERS) and not found:
+        w = next(w for w in JEST_WRAPPERS if w in deps)
+        found.append(Detection("jest", _js_bin(project, w) + ["test"], f"auto: {w} in package.json (runs jest)"))
+    jest_cfgs = sorted(p.name for p in project.glob("jest.config.*")) + \
+        sorted(p.name for p in project.glob("jest.*.config.*"))
+    wrapped = bool(found) and jest_wrapper(found[0].argv) is not None  # CRA: package.json "jest" is its config
+    if "jest" in deps or "jest" in test_script or ("jest" in data and not wrapped) or jest_cfgs:
+        if not jest_cfgs and not wrapped or jest_cfgs and jest_cfgs[0].startswith("jest.config.") or \
+                ("jest" in data and not wrapped):
+            found.append(Detection("jest", _js_bin(project, "jest"), "auto: jest config"))
+        for c in jest_cfgs:
+            if not c.startswith("jest.config."):
+                found.append(Detection("jest", _js_bin(project, "jest") + ["--config", c], f"auto: {c}"))
+    for name, body in scripts.items():
+        if name == "test" or not re.match(r"^test[:_-]", name):
+            continue
+        c, e, _ = script_command(body)
+        if c and runner_for_argv(c) in ("jest", "vitest", "node-test"):
+            found.append(Detection(runner_for_argv(c), c, f"auto: package.json script {name}", "", e))
+    if not found and re.match(r"^node\s(?:[^|&;]*\s)?--test\b", test_script) and not SHELL_META.search(test_script):
         return Detection("node-test", shlex.split(test_script), "auto: package.json test script runs node --test")
-    return None
+    if not found:
+        return None
+    first, seen = found[0], {_run_key(found[0].argv)}
+    others = []
+    for d in found[1:]:
+        k = _run_key(d.argv)
+        if k not in seen:
+            seen.add(k)
+            others.append(d)
+    if others:
+        also = "; ".join(f"`{' '.join(d.argv)}` ({d.source[6:]})" for d in others[:4])
+        first.note = "; ".join(x for x in (first.note, f"also found: {also} — check those with "
+                                                        f"`check -- <command>`") if x)
+    return first
+
+
+def _run_key(argv: List[str]) -> str:
+    """Detections that run the same thing compare equal (`node_modules/.bin/jest` vs `jest`; watch flags,
+    which are always overridden, ignored)."""
+    return " ".join(os.path.basename(x) for x in argv
+                    if x not in ("--watchAll=false", "--watchAll", "--watch", "--ci", "run"))
 
 
 def _node_test(project: Path) -> Optional[Detection]:
@@ -226,8 +318,11 @@ def auto_detect(project: Path) -> List[Detection]:
 
 def make_runner(det: Detection, project: Path) -> Runner:
     if det.runner in CHECK_TOOLS:
-        return CheckRunner(det.argv, project, det.runner)
-    return RUNNERS[det.runner](det.argv, project)
+        r: Runner = CheckRunner(det.argv, project, det.runner)
+    else:
+        r = RUNNERS[det.runner](det.argv, project)
+    r.cmd_env = dict(det.env)  # type: ignore[attr-defined]  # `CI=true react-scripts test`: kept for every run
+    return r
 
 
 CHECK_TOOLS = ("tsc", "eslint", "prettier", "next-build")
