@@ -114,6 +114,23 @@ class CheckIntegrationTest(unittest.TestCase):
         finally:
             rmtree(repo)
 
+    def test_generated_types_copied_into_base(self):
+        # a fake type check that fails while the git-ignored generated types are missing
+        fake = ("#!/bin/sh\nrc=0\n[ -f .next/types/routes.d.ts ] || { printf '%s' \"$MISSING\"; rc=2; }\n"
+                "[ -s errs.txt ] && { cat errs.txt; rc=2; }\nexit $rc\n")
+        fake = fake.replace("$MISSING", tsc_lines(OLD).replace("\n", "\\n").replace("'", ""))
+        repo = git_repo({"tsc": fake, "errs.txt": "", ".gitignore": ".next/\n"})
+        try:
+            (repo / "tsc").chmod(0o755)
+            commit(repo, "x")
+            write(repo, {"errs.txt": tsc_lines(NEW5), ".next/types/routes.d.ts": "export {}\n"})
+            p, rep = check(repo, "tsc")
+            self.assertEqual(p.returncode, 1, p.stdout + p.stderr)
+            self.assertEqual({v["verdict"] for v in rep["results"]}, {"new"})
+            self.assertTrue(any(".next/types" in n for n in rep["notes"]), rep["notes"])
+        finally:
+            rmtree(repo)
+
     def test_tsc_only_old_errors_pre_existing(self):
         repo = check_repo("tsc", "errs.txt", tsc_lines(OLD), tsc_lines(OLD, shift=5))
         try:

@@ -29,6 +29,8 @@ SPECULATE_MAX_SECONDS = 30.0
 CONFIRM_SHARE = 0.25
 CONFIRM_MIN_SECONDS = 1.0
 SESSION_UNIT = "(test session)"
+# git-ignored generated type files copied into the base worktree for type checks (see Engine._auto_copy)
+AUTO_COPY = (".next/types", "next-env.d.ts")
 
 # Signs that two runs at once got in each other's way (ports, sqlite/file locks, busy files). Seen in either
 # side of a concurrent round, that round is discarded and redone serially. False alarms only cost time.
@@ -383,7 +385,7 @@ class Engine:
             return self.base_side
         self.progress(f"creating base worktree at {gitutil.short(self.base.sha)}")
         self.wt = BaseWorktree(self.root, self.base.sha, keep=self.opts.keep_worktree,
-                               copy_ignored=self.opts.copy_ignored, project_rel=self.project_rel)
+                               copy_ignored=self.opts.copy_ignored + self._auto_copy(), project_rel=self.project_rel)
         try:
             wt_path = self.wt.create()
         except gitutil.GitError as e:
@@ -402,6 +404,19 @@ class Engine:
         self.base_side = Side("base", wt_path, bcwd, self.outdir / "base", env, [str(self.root)])
         self.head.other_roots = [str(wt_path)]
         return self.base_side
+
+    def _auto_copy(self) -> List[str]:
+        """Generated type files a type check needs but a fresh checkout lacks (e.g. `.next/types`, made by
+        `next build`). Only for check commands, only when git-ignored. Build output (dist/, build/) is never
+        copied: on base it would be head's code and could hide what the change broke."""
+        if not getattr(self.runner, "deterministic", False) or self.runner.name not in ("tsc", "next-build"):
+            return []
+        out = []
+        for name in AUTO_COPY:
+            rel = name if self.project_rel == "." else os.path.join(self.project_rel, name)
+            if (self.root / rel).exists() and gitutil.try_git(["check-ignore", "-q", rel], self.root) is not None:
+                out.append(rel)
+        return out
 
     # ------------------------------------------------------------------ the algorithm
     def _check(self) -> Dict:
