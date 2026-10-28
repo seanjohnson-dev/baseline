@@ -121,6 +121,18 @@ class DetectionTest(unittest.TestCase):
         finally:
             rmtree(d)
 
+    def test_output_says_failed(self):
+        for text in ("6 failed, 7 passed, 1 error in 0.31s", "===== 1 failed, 11 passed in 0.3s =====",
+                     "ERROR tests/test_r.py - ModuleNotFoundError", "Interrupted: 1 error during collection",
+                     "      Tests  1 failed | 8 passed (9)", " Test Files  2 failed | 5 passed (7)",
+                     "Tests:       2 failed, 10 passed, 12 total", "--- FAIL: TestX (0.00s)",
+                     "FAIL\texample.com/shop/cart\t0.01s", "test result: FAILED. 3 passed; 1 failed",
+                     "  2 failing", "10 examples, 2 failures", "FAILED (failures=1)"):
+            self.assertTrue(hook.output_says_failed("noise\n" + text + "\nmore"), text)
+        for text in ("12 passed in 0.31s", "      Tests  9 passed (9)", "ok  \texample.com/shop/cart\t0.01s",
+                     "test result: ok. 3 passed; 0 failed", "10 examples, 0 failures", "OK", "", "On branch main"):
+            self.assertFalse(hook.output_says_failed(text), text)
+
     def test_output_says_passed(self):
         self.assertTrue(hook.output_says_passed("Exit code 1\n===== 12 passed in 0.31s =====\n"))
         self.assertTrue(hook.output_says_passed(" Test Files  3 passed (3)\n      Tests  9 passed (9)\n"))
@@ -210,6 +222,12 @@ class GuardsTest(unittest.TestCase):
         self.assertEqual((p.returncode, p.stdout), (0, ""))
         self.assertLess(time.time() - t, 2.0)
 
+    def test_trace_log(self):
+        log = Path(self.cache) / "trace.jsonl"
+        run_hook(payload("ls /nonexistent", "/"), {**self.env, P + "HOOK_LOG": str(log)})
+        rec = json.loads(log.read_text().splitlines()[-1])
+        self.assertEqual((rec["event"], rec["command"], rec["context_chars"]), ("PostToolUseFailure", "ls /nonexistent", 0))
+
     def test_lean_startup(self):
         code = (f"import sys, io, json; sys.path.insert(0, {str(LAUNCHER.parents[1])!r}); "
                 f"sys.stdin = io.StringIO(json.dumps({{'tool_name': 'Bash', 'tool_input': {{'command': 'ls'}}, 'cwd': '/'}})); "
@@ -276,6 +294,48 @@ class GuardsTest(unittest.TestCase):
             self.assertIn("No verdict", ctx)
         finally:
             rmtree(repo)
+
+
+class PostToolUseTest(unittest.TestCase):
+    """A 'successful' Bash call can hide failing tests behind `| tail` or `; git status`."""
+
+    def setUp(self):
+        self.cache = Path(tempfile.mkdtemp())
+        self.repo = git_repo({"tests/test_a.py": "def test_a():\n    assert 0\n"})
+        self.calls = []
+        self.orig = hook.run_check
+        hook.run_check = lambda seg, budget: self.calls.append(seg.argv) or f"[{brand.NAME}] Per-test verdicts: x"
+
+    def tearDown(self):
+        hook.run_check = self.orig
+        rmtree(self.cache)
+        rmtree(self.repo)
+
+    def ok(self, command, stdout):
+        return {"session_id": "s", "hook_event_name": "PostToolUse", "tool_name": "Bash", "cwd": str(self.repo),
+                "tool_input": {"command": command}, "tool_response": {"stdout": stdout, "stderr": ""}}
+
+    def test_piped_failures_are_attributed(self):
+        ctx = hook.handle(self.ok("python -m pytest -q 2>&1 | tail -5; git status", "1 failed in 0.02s\n"),
+                          session_dir=self.cache)
+        self.assertTrue(ctx)
+        self.assertEqual(self.calls, [["python", "-m", "pytest", "-q"]])
+
+    def test_passing_or_non_test_output_is_ignored(self):
+        self.assertIsNone(hook.handle(self.ok("python -m pytest -q | tail -3", "3 passed in 0.02s\n"),
+                                      session_dir=self.cache))
+        self.assertIsNone(hook.handle(self.ok("git log | head", "1 failed in 0.02s\n"), session_dir=self.cache))
+        self.assertEqual(self.calls, [])
+
+    def test_event_name_in_output(self):
+        repo = self.repo
+        p = run_hook(json.dumps(self.ok("python -m pytest -q | tail -3", "3 passed in 0.1s")),
+                     {"XDG_CACHE_HOME": str(self.cache)})
+        self.assertEqual(p.stdout, "")
+        p = subprocess.run([sys.executable, str(LAUNCHER), "hook", "post-tool-use"], input=json.dumps(
+            {"hook_event_name": "PostToolUseFailure", "tool_input": {"command": "pytest"}, "cwd": str(repo)}),
+            capture_output=True, text=True)
+        self.assertEqual((p.returncode, p.stdout), (0, ""), "event mismatch -> silent")
 
 
 class DedupTest(unittest.TestCase):

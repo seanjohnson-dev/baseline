@@ -1,10 +1,14 @@
-"""Claude Code hook: PostToolUseFailure on Bash -> per-failing-test verdicts as additionalContext.
+"""Claude Code hooks on Bash -> per-failing-test verdicts as additionalContext.
 
-It fires on every failing Bash command, so the common path (not a test command) is cheap: stdlib only, no
-git, no engine import. For a failing TEST command it runs the check in-process (no shell, no recursion)
-within a time budget and prints ONE JSON object:
+* PostToolUseFailure: the command failed; if it ran tests, attribute the failures.
+* PostToolUse: the command "succeeded" but ran tests whose output shows failures — agents usually pipe
+  (`pytest | tail -40`) or chain (`pytest; git status`), which hides the test command's exit code.
 
-  {"hookSpecificOutput": {"hookEventName": "PostToolUseFailure", "additionalContext": "..."}}
+They fire on every Bash command, so the common path (not a test command) is cheap: stdlib only, no git,
+no engine import. For a failing TEST command it runs the check in-process (no shell, no recursion) within
+a time budget and prints ONE JSON object:
+
+  {"hookSpecificOutput": {"hookEventName": "<event>", "additionalContext": "..."}}
 
 Never prints anything else to stdout, never exits non-zero, never modifies the user's tree.
 """
@@ -24,6 +28,8 @@ from typing import Dict, List, Optional, Tuple
 from . import brand
 
 EVENT = "PostToolUseFailure"
+EVENT_OK = "PostToolUse"
+EVENTS = {"post-tool-failure": EVENT, "post-tool-use": EVENT_OK}
 MAX_CONTEXT = 3000          # hard cap (Claude Code truncates hook context at 10,000)
 DEFAULT_BUDGET = 150.0      # seconds; hooks/hooks.json's timeout must stay above this
 DEDUP_SECONDS = 600.0
@@ -290,6 +296,30 @@ SUMMARY_PASS = [
     re.compile(r"^Tests:\s+(?:\d+ (?:passed|skipped|todo), )*\d+ total", re.M),  # jest (no 'failed')
 ]
 FAIL_WORDS = re.compile(r"\b(?:failed|FAILED|FAIL|failures?|errors?|ERROR|panicked|Traceback)\b")
+SUMMARY_FAIL = [
+    re.compile(r"(?m)^(?:=+ )?(?:\d+ \w+, )*\d+ (?:failed|errors?)\b[^\n]* in [\d.]+m?s"),   # pytest
+    re.compile(r"(?m)^(?:FAILED|ERROR) \S+\.py"),                                          # pytest -rA lines
+    re.compile(r"Interrupted: \d+ errors? during collection"),
+    re.compile(r"(?m)^\s*Test(?:s| Files)\s+\d+ failed"),                                  # vitest
+    re.compile(r"(?m)^Tests:\s+\d+ failed"),                                                # jest
+    re.compile(r"(?m)^--- FAIL: |^FAIL\s+\S+"),                                             # go
+    re.compile(r"test result: FAILED"),                                                      # cargo
+    re.compile(r"(?m)^\s*\d+ failing\b"),                                                    # mocha
+    re.compile(r"\d+ examples?, [1-9]\d* failures?"),                                         # rspec
+    re.compile(r"(?m)^FAILED \((?:failures|errors)=\d+"),                                     # unittest
+]
+
+
+def output_says_failed(text: str) -> bool:
+    """A test runner summary in the output reports failures (used when the shell command itself succeeded)."""
+    return bool(text) and any(rx.search(text) for rx in SUMMARY_FAIL)
+
+
+def _tool_output(payload: Dict) -> str:
+    resp = payload.get("tool_response")
+    if isinstance(resp, dict):
+        return "\n".join(str(resp.get(k) or "") for k in ("stdout", "stderr", "output"))
+    return str(resp or "")
 
 
 def output_says_passed(text: str) -> bool:
@@ -484,8 +514,8 @@ def format_context(rep: Dict, command: str, launcher: str, limit: int = MAX_CONT
 
 
 # ------------------------------------------------------------------------------------- entry point
-def _emit(context: str) -> None:
-    out = {"hookSpecificOutput": {"hookEventName": EVENT, "additionalContext": context}}
+def _emit(context: str, event: str = EVENT) -> None:
+    out = {"hookSpecificOutput": {"hookEventName": event, "additionalContext": context}}
     sys.__stdout__.write(json.dumps(out) + "\n")
     sys.__stdout__.flush()
 
@@ -505,7 +535,8 @@ def launcher_path() -> str:
 def handle(payload: Dict, now: Optional[float] = None, session_dir: Optional[Path] = None) -> Optional[str]:
     """The additionalContext to return for this hook input, or None for 'say nothing'."""
     now = now or time.time()
-    if payload.get("hook_event_name") not in (None, EVENT) or payload.get("tool_name") not in (None, "Bash"):
+    event = payload.get("hook_event_name") or EVENT
+    if event not in (EVENT, EVENT_OK) or payload.get("tool_name") not in (None, "Bash"):
         return None
     if payload.get("is_interrupt"):
         return None
@@ -517,8 +548,10 @@ def handle(payload: Dict, now: Optional[float] = None, session_dir: Optional[Pat
     seg = find_test_segment(command, cwd)
     if seg is None or not os.path.isdir(seg.cwd) or not in_git_repo(seg.cwd):
         return None
-    if output_says_passed(str(payload.get("error") or "")):
+    if event == EVENT and output_says_passed(str(payload.get("error") or "")):
         return None
+    if event == EVENT_OK and not output_says_failed(_tool_output(payload)):
+        return None  # the command succeeded and no test failure is visible: nothing to attribute
     name = brand.NAME
     budget = _env_float("HOOK_TIMEOUT", DEFAULT_BUDGET)
     dur = payload.get("duration_ms")
@@ -613,22 +646,45 @@ def run_check(seg: Segment, budget: float) -> Optional[str]:
     return format_context(rep, seg.display(), launcher_path())
 
 
+def _trace(payload: Dict, event: str, ctx: Optional[str], seconds: float) -> None:
+    """<PREFIX>HOOK_LOG=<file>: append one JSON line per invocation (what fired, what it returned)."""
+    path = os.environ.get(brand.ENV_PREFIX + "HOOK_LOG")
+    if not path:
+        return
+    tin = payload.get("tool_input") or {}
+    rec = {"t": round(time.time(), 3), "event": event, "session": payload.get("session_id"),
+           "command": str(tin.get("command") if isinstance(tin, dict) else "")[:300], "cwd": payload.get("cwd"),
+           "seconds": round(seconds, 3), "context_chars": len(ctx or ""), "context": (ctx or "")[:MAX_CONTEXT]}
+    try:
+        with open(path, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+    except OSError:
+        pass
+
+
 def main(argv: List[str]) -> int:
-    """`<cli> hook post-tool-failure`: hook JSON on stdin -> at most one JSON object on stdout; exit 0."""
+    """`<cli> hook post-tool-failure|post-tool-use`: hook JSON on stdin -> at most one JSON object on stdout;
+    always exit 0."""
     try:
         if os.environ.get(brand.ENV_PREFIX + "IN_HOOK"):
             return 0  # never recurse (a test suite that runs an agent, ...)
         if os.environ.get(brand.ENV_PREFIX + "HOOK", "").lower() in ("off", "0", "false", "no"):
             return 0
-        if argv[:1] != ["post-tool-failure"]:
+        event = EVENTS.get(argv[0] if argv else "")
+        if event is None:
             return 0
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
         if not isinstance(payload, dict):
             return 0
+        payload.setdefault("hook_event_name", event)
+        if payload["hook_event_name"] != event:
+            return 0
+        t0 = time.time()
         ctx = handle(payload)
         if ctx:
-            _emit(ctx[:MAX_CONTEXT])
+            _emit(ctx[:MAX_CONTEXT], event)
+        _trace(payload, event, ctx, time.time() - t0)
     except BaseException:  # never crash, never block the agent
         try:
             if os.environ.get(brand.ENV_PREFIX + "HOOK_DEBUG"):

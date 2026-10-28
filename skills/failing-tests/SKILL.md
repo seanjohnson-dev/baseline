@@ -1,5 +1,5 @@
 ---
-name: baseline
+name: failing-tests
 description: Use when a test command fails, and before describing any failing test as "pre-existing", "unrelated", "already broken" or "flaky". Re-runs the failing tests on the base commit and labels each one NEW (this change broke it), PRE-EXISTING, FLAKY or ENVIRONMENT, with evidence.
 ---
 

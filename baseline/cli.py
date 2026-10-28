@@ -67,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     k.add_argument("--dry-run", action="store_true", help="only list them")
     k.add_argument("--json", action="store_true")
     h = sub.add_parser("hook", help="Claude Code hook entry point (reads the hook JSON on stdin)")
-    h.add_argument("event", choices=("post-tool-failure",))
+    h.add_argument("event", choices=("post-tool-failure", "post-tool-use"))
     sub.add_parser("version", help="print the version")
     return p
 

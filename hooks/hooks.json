@@ -12,6 +12,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/baseline",
+            "args": ["hook", "post-tool-use"],
+            "timeout": 180
+          }
+        ]
+      }
     ]
   }
 }
