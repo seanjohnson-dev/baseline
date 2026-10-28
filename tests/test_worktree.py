@@ -50,6 +50,9 @@ class WorktreeLifecycleTest(unittest.TestCase):
         self.assertTrue(path.exists())
         self.assertIn("kept base worktree", w.notes[0])
         sh(["git", "worktree", "remove", "--force", str(path)], self.repo)
+        self.assertEqual([s.path for s in wt.find_stale() if s.path == path.parent], [],
+                         "this process (the owner) is alive")
+        rmtree(path.parent)  # owner.json + no-hooks stay after a manual remove; a later run cleans them up
 
     def test_prune_stale_from_dead_process(self):
         w = wt.BaseWorktree(self.repo, self.sha)
