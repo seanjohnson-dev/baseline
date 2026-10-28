@@ -128,6 +128,9 @@ class EnvContext:
     def js_first_party(self, spec: str) -> bool:
         if spec.startswith((".", "/", "~", "@/", "#", "\\")) or re.match(r"^[A-Za-z]:[\\/]", spec):
             return True
+        if re.search(r"\.(?:[cm]?ts|tsx|[cm]js)$", spec) or (not spec.startswith("@") and "/" in spec and
+                                                             re.search(r"\.jsx?$", spec)):
+            return True  # a source file path (made repo-relative by normalising), not a package
         if spec.startswith("node:") or spec.split("/")[0] in NODE_BUILTINS:
             return True  # a builtin can't be "missing"; treat as code error
         name = self._pkg_name(spec)

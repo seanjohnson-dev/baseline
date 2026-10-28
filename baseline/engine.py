@@ -167,7 +167,8 @@ def detect(cwd: Path, command: Optional[List[str]]) -> Detection:
         return from_command(command, cwd)
     found = auto_detect(cwd)
     if not found:
-        raise UsageError("could not detect a test runner here (looked for pytest, vitest, jest, go, cargo, rspec); "
+        raise UsageError("could not detect a test runner here (looked for pytest, vitest, jest, node:test, go, cargo, "
+                         "rspec); "
                          f"pass the command explicitly: {brand.CLI_NAME} check -- <test command>")
     return found[0]
 
@@ -932,7 +933,7 @@ class Engine:
                 return None
             if self.runner.name == "pytest":
                 return closure.python_changed(self.root, u.group, self.changed)
-            if self.runner.name in ("vitest", "jest"):
+            if self.runner.name in ("vitest", "jest", "node-test"):
                 return closure.js_changed(self.root, self.cwd, u.group, self.changed)
             if self.runner.name == "go":
                 mod = getattr(self.runner, "module", "")

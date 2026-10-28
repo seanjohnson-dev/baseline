@@ -15,12 +15,13 @@ from typing import List, Optional
 from .base import Invocation, Runner, Side  # noqa: F401
 from .gotest import GoRunner
 from .jsjson import JestRunner, VitestRunner, find_token
+from .nodetest import NodeTestRunner, detect_node_test, is_node_test
 from .checks import CheckRunner, check_tool
 from .others import CargoRunner, GenericRunner, RspecRunner
 from .pytest import PytestRunner, find_pytest
 
 RUNNERS = {r.name: r for r in (PytestRunner, VitestRunner, JestRunner, GoRunner, CargoRunner, RspecRunner,
-                               GenericRunner)}
+                               NodeTestRunner, GenericRunner)}
 SHELL_META = re.compile(r"[|&;<>()$`]")
 
 
@@ -52,6 +53,8 @@ def runner_for_argv(argv: List[str]) -> str:
         return "cargo"
     if any(os.path.basename(a) == "rspec" for a in argv[:3]):
         return "rspec"
+    if is_node_test(argv):
+        return "node-test"
     tool = check_tool(argv)
     if tool:
         return tool
@@ -156,7 +159,40 @@ def _js_runner(project: Path) -> Optional[Detection]:
         return Detection("vitest", _js_bin(project, "vitest") + ["run"], "auto: vitest in package.json")
     if "jest" in deps or "jest" in test_script or list(project.glob("jest.config.*")):
         return Detection("jest", _js_bin(project, "jest"), "auto: jest in package.json")
+    if re.match(r"^node\s(?:[^|&;]*\s)?--test\b", test_script) and not SHELL_META.search(test_script):
+        return Detection("node-test", shlex.split(test_script), "auto: package.json test script runs node --test")
     return None
+
+
+def _node_test(project: Path) -> Optional[Detection]:
+    files = detect_node_test(project)
+    if not files:
+        return None
+    argv = ["node", "--test"]
+    note = ""
+    if any(f.endswith((".ts", ".mts")) for f in files) or _imports_ts(project, files):
+        from ..envclass import node_version
+        v = node_version()
+        m = re.match(r"v(\d+)\.(\d+)", v)
+        ver = (int(m.group(1)), int(m.group(2))) if m else None
+        if ver and ver < (22, 6):
+            note = (f"these tests load TypeScript, which needs Node >= 22.6; the node on PATH is {v}, so they "
+                    f"will fail to load (ENVIRONMENT)")
+        elif ver and ver < (23, 6):
+            argv.append("--experimental-strip-types")
+    argv += files
+    return Detection("node-test", argv, f"auto: {len(files)} file(s) import node:test", note)
+
+
+def _imports_ts(project: Path, files: List[str]) -> bool:
+    for f in files[:20]:
+        try:
+            if re.search(r"""from\s+['"][^'"]+\.m?ts['"]|import\(['"][^'"]+\.m?ts['"]""",
+                         (project / f).read_text(errors="replace")[:8000]):
+                return True
+        except OSError:
+            pass
+    return False
 
 
 def _js_bin(project: Path, tool: str) -> List[str]:
@@ -173,6 +209,10 @@ def auto_detect(project: Path) -> List[Detection]:
     js = _js_runner(project)
     if js:
         found.append(js)
+    elif (project / "package.json").exists() or not found:
+        nt = _node_test(project)
+        if nt:
+            found.append(nt)
     if (project / "go.mod").exists():
         found.append(Detection("go", ["go", "test", "./..."], "auto: go.mod"))
     if (project / "Cargo.toml").exists():
