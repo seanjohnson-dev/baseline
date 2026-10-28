@@ -1,0 +1,6 @@
+{
+  "name": "baseline",
+  "description": "Per-failing-test attribution for coding agents: did this change break the test, or was it already failing, flaky or environmental?",
+  "owner": { "name": "Sean Johnson" },
+  "plugins": [{ "name": "baseline", "source": "./" }]
+}

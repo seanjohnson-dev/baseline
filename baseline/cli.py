@@ -66,6 +66,8 @@ def build_parser() -> argparse.ArgumentParser:
     k = sub.add_parser("clean", help="list and remove temp worktrees/dirs left behind by killed runs")
     k.add_argument("--dry-run", action="store_true", help="only list them")
     k.add_argument("--json", action="store_true")
+    h = sub.add_parser("hook", help="Claude Code hook entry point (reads the hook JSON on stdin)")
+    h.add_argument("event", choices=("post-tool-failure",))
     sub.add_parser("version", help="print the version")
     return p
 
@@ -168,6 +170,10 @@ def _error(fmt: str, msg: str, code: int) -> None:
 
 def main(argv: Optional[List[str]] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["hook"]:
+        # fires on every failing Bash command: skip argparse and the engine imports unless needed
+        from . import hook
+        return hook.main(argv[1:])
     parser = build_parser()
     if not argv:
         parser.print_help(sys.stderr)

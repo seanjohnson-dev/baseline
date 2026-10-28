@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Rename the product: scripts/rename.py <newname> [--root DIR]
 
-Renames the package directory and bin/ launcher and rewrites every occurrence
-of the current name (lower, Capitalised and UPPER case) in all text files.
+Rewrites every occurrence of the current name (lower, Capitalised and UPPER
+case) in all text files (incl. the Claude Code plugin's .claude-plugin/*.json,
+hooks/hooks.json, skill and command), then renames every file/directory whose
+name contains it: the package, bin/<name>, skills/<name>/, commands/<name>.md.
 The current name is read from <pkg>/brand.py. SPEC.md (the input spec) and
 .git are left alone.
 """
@@ -68,13 +70,22 @@ def rename(root: Path, new: str) -> dict:
         if out != text:
             path.write_text(out, encoding="utf-8")
             changed += 1
-    launcher = root / "bin" / old
-    if launcher.exists():
-        mode = launcher.stat().st_mode
-        launcher.rename(root / "bin" / new)
-        os.chmod(root / "bin" / new, mode)
-    pkg.rename(root / new)
-    return {"old": old, "new": new, "files": changed}
+    # then every file/dir whose name holds the name: the package, bin/<name>, and the Claude Code plugin's
+    # skills/<name>/ and commands/<name>.md (their manifests and hooks.json were rewritten above)
+    todo = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        for name in filenames + dirnames:
+            if old in name and not (name in SKIP_FILES and Path(dirpath) == root):
+                todo.append(Path(dirpath) / name)
+    renamed = []
+    for src in sorted(todo, key=lambda p: len(p.parts), reverse=True):  # deepest first
+        dst = src.with_name(src.name.replace(old, new))
+        if dst.exists():
+            raise SystemExit(f"rename: {dst} already exists")
+        src.rename(dst)  # keeps the mode (the launcher stays executable)
+        renamed.append(str(dst.relative_to(root)))
+    return {"old": old, "new": new, "files": changed, "renamed": sorted(renamed)}
 
 
 def main(argv=None) -> int:
@@ -83,7 +94,8 @@ def main(argv=None) -> int:
     ap.add_argument("--root", default=str(Path(__file__).resolve().parents[1]))
     a = ap.parse_args(argv)
     res = rename(Path(a.root).resolve(), a.newname)
-    print(f"renamed {res['old']} -> {res['new']} ({res['files']} files rewritten)")
+    print(f"renamed {res['old']} -> {res['new']} ({res['files']} files rewritten; moved: "
+          f"{', '.join(res.get('renamed', [])) or 'nothing'})")
     return 0
 
 

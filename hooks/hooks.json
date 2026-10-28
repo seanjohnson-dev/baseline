@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/baseline",
+            "args": ["hook", "post-tool-failure"],
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

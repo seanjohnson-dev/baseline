@@ -1,4 +1,5 @@
 """The product name lives only in brand.py, and scripts/rename.py can change it everywhere."""
+import json
 import os
 import re
 import shutil
@@ -61,6 +62,19 @@ class RenameTest(unittest.TestCase):
             self.assertTrue(os.access(copy / "bin" / new, os.X_OK))
             self.assertIn(f'NAME = "{new}"', (copy / new / "brand.py").read_text())
             self.assertEqual(occurrences(copy, brand.NAME), [], "old name left behind")
+            # the Claude Code plugin follows the rename
+            plugin = json.loads((copy / ".claude-plugin" / "plugin.json").read_text())
+            market = json.loads((copy / ".claude-plugin" / "marketplace.json").read_text())
+            self.assertEqual(plugin["name"], new)
+            self.assertEqual([p["name"] for p in market["plugins"]], [new])
+            hook = json.loads((copy / "hooks" / "hooks.json").read_text())["hooks"]["PostToolUseFailure"][0]["hooks"][0]
+            self.assertEqual(hook["command"], "${CLAUDE_PLUGIN_ROOT}/bin/" + new)
+            self.assertEqual(hook["args"], ["hook", "post-tool-failure"])
+            skill = (copy / "skills" / new / "SKILL.md").read_text()
+            self.assertIn(f"\nname: {new}\n", skill)
+            self.assertIn(f"/bin/{new}\" check", skill)
+            self.assertTrue((copy / "commands" / f"{new}.md").exists())
+            self.assertFalse((copy / "skills" / brand.NAME).exists())
             out = subprocess.run([sys.executable, str(copy / "bin" / new), "version"], capture_output=True, text=True)
             self.assertEqual(out.returncode, 0, out.stderr)
             self.assertTrue(out.stdout.startswith(new + " "))
