@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""Thin launcher: finds the package next to this bin/ dir (the one holding brand.py) and runs it."""
+import importlib
+import os
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def _package():
+    for name in sorted(os.listdir(ROOT)):
+        d = os.path.join(ROOT, name)
+        if os.path.isfile(os.path.join(d, "brand.py")) and os.path.isfile(os.path.join(d, "__main__.py")):
+            return name
+    sys.exit("launcher: package not found next to " + os.path.dirname(os.path.realpath(__file__)))
+
+
+if __name__ == "__main__":
+    sys.path.insert(0, ROOT)
+    sys.exit(importlib.import_module(_package() + ".cli").main())
