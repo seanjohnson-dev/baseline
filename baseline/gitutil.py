@@ -119,6 +119,23 @@ class BaseInfo:
     warning: str = ""
 
 
+def base_warning(root: Path, base_opt: str, sha: str, head: str) -> str:
+    """'' when --base is in HEAD's history (the ordinary case); else what the comparison will include."""
+    if sha == head or is_ancestor(root, sha, head):
+        return ""
+    if is_ancestor(root, head, sha):
+        return (f"`--base {base_opt}` is ahead of HEAD (HEAD is an older commit of {base_opt}), so changes made "
+                f"on {base_opt} after HEAD show up as if this change had undone them. To compare against HEAD "
+                f"itself, use `--base HEAD`.")
+    mb = merge_base(root, "HEAD", sha)
+    if not mb:
+        return (f"`--base {base_opt}` shares no history with this branch, so the comparison is between two "
+                f"unrelated trees, not just this branch's own changes.")
+    return (f"`--base {base_opt}` is not part of this branch's history (the branches have diverged), so the "
+            f"comparison may include changes that exist on {base_opt} but not here. For just this branch's own "
+            f"changes use `--base {short(mb)}` (the merge-base: `git merge-base HEAD {base_opt}`).")
+
+
 def resolve_base(root: Path, base_opt: Optional[str]) -> BaseInfo:
     head = head_sha(root)
     if head is None:
@@ -127,11 +144,7 @@ def resolve_base(root: Path, base_opt: Optional[str]) -> BaseInfo:
         sha = rev_parse(root, base_opt)
         if not sha:
             raise GitError(f"--base {base_opt!r} does not name a commit")
-        warning = ""
-        if not is_ancestor(root, sha, head):
-            warning = (f"base {base_opt} is not an ancestor of HEAD; differences may include commits "
-                       f"that are not part of this change (try --base $(git merge-base HEAD {base_opt}))")
-        return BaseInfo(sha, base_opt, f"--base {base_opt}", warning)
+        return BaseInfo(sha, base_opt, f"--base {base_opt}", base_warning(root, base_opt, sha, head))
     dflt = default_branch(root)
     if dflt is None:
         return BaseInfo(head, "HEAD", "no default branch (origin/HEAD, main, master) found; comparing "

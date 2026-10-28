@@ -70,7 +70,28 @@ class BaseResolutionTest(unittest.TestCase):
         write(self.repo, {"o.txt": "o\n"})
         commit(self.repo, "other")
         sh(["git", "checkout", "-q", "main"], self.repo)
-        self.assertIn("not an ancestor", g.resolve_base(self.repo, "other").warning)
+        w = g.resolve_base(self.repo, "other").warning
+        self.assertIn("`--base other` is ahead of HEAD", w)
+        self.assertIn("--base HEAD", w)
+        # diverged: says so, and names the merge-base by its sha
+        write(self.repo, {"m.txt": "m\n"})
+        commit(self.repo, "main moves on")
+        w = g.resolve_base(self.repo, "other").warning
+        self.assertEqual(w, "`--base other` is not part of this branch's history (the branches have diverged), so "
+                            "the comparison may include changes that exist on other but not here. For just this "
+                            f"branch's own changes use `--base {g.short(self.main)}` (the merge-base: "
+                            "`git merge-base HEAD other`).")
+
+    def test_no_warning_in_the_ordinary_cases(self):
+        write(self.repo, {"b.txt": "b\n"})
+        commit(self.repo, "second")
+        for base in ("HEAD", "HEAD~1", "main", self.main):
+            self.assertEqual(g.resolve_base(self.repo, base).warning, "", base)
+        sh(["git", "checkout", "-q", "-b", "feature"], self.repo)
+        write(self.repo, {"f.txt": "f\n"})
+        commit(self.repo, "feature")
+        self.assertEqual(g.resolve_base(self.repo, None).warning, "")
+        self.assertEqual(g.resolve_base(self.repo, "main").warning, "")
 
     def test_unborn_head(self):
         repo = Path(__import__("tempfile").mkdtemp())

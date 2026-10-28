@@ -55,6 +55,10 @@ All notable changes to this project are documented here. The format follows
   test runs), 5 old failures incl. a flaky one 48 s -> 22 s; identical verdicts and exit codes. New test:
   `tests/test_confirm.py` (a counting stand-in jest: invocations and test runs bounded, a flaky test stays
   FLAKY).
+- The warning for a `--base` outside HEAD's history now says what it means and only appears then: diverged
+  branches ("`--base origin/main` is not part of this branch's history (the branches have diverged) ... use
+  `--base <merge-base sha>`"), a base ahead of HEAD, or unrelated history. `tests/test_git.py`
+  `test_explicit_base_not_ancestor_warns` asserted the old wording ("not an ancestor") and was updated.
 - Every child runs with `CI=true` (set when unset or false-like) and stdin from /dev/null, so watch modes
   (Create React App's `npm test` without CI) and prompts can't hang a check.
 - Whole commands cost fewer runs: head twice, base once when both fail (was twice each); a second base run
