@@ -11,7 +11,7 @@ from pathlib import Path
 
 from _support import PKG, ROOT, brand
 
-IGNORE = shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", "*.pyc")
+IGNORE = shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", "*.pyc", "_work", "rivals")
 
 
 def occurrences(root: Path, word: str):
@@ -36,11 +36,12 @@ def occurrences(root: Path, word: str):
 
 class NameHygieneTest(unittest.TestCase):
     def test_name_not_hard_coded_in_code(self):
-        """Inside the package, bin/ and scripts/, only brand.py may spell the name."""
+        """Inside the package, bin/, scripts/ and bench/ code, only brand.py may spell the name."""
         offenders = []
-        for top in (ROOT / PKG, ROOT / "bin", ROOT / "scripts"):
+        for top in (ROOT / PKG, ROOT / "bin", ROOT / "scripts", ROOT / "bench"):
             for p in top.rglob("*"):
-                if p.is_file() and p.suffix in (".py", "") and p.name != "brand.py" and "__pycache__" not in p.parts:
+                if (p.is_file() and p.suffix in (".py", ".sh", "") and p.name != "brand.py" and "__pycache__" not in p.parts
+                        and not {"_work", "rivals"} & set(p.parts)):
                     text = p.read_text(encoding="utf-8", errors="replace")
                     if re.search(r"\b" + re.escape(brand.NAME) + r"\b", text, re.I):
                         offenders.append(str(p.relative_to(ROOT)))
@@ -74,6 +75,19 @@ class RenameTest(unittest.TestCase):
             self.assertIn(f"/bin/{new}\" check", skill)
             self.assertIn(f"[{new}] Per-test verdicts", skill)
             self.assertTrue((copy / "commands" / f"{new}.md").exists())
+            # docs and the published benchmark follow too: result files, scorecard and the harness's tool key
+            self.assertIn(new.capitalize(), (copy / "README.md").read_text())
+            self.assertIn(new.capitalize(), (copy / "CHANGELOG.md").read_text())
+            old_results = sorted((ROOT / "bench" / "results").glob(brand.NAME + "-*.json"))
+            self.assertTrue(old_results, "bench/results has no result files for this tool")
+            for f in old_results:
+                d = json.loads((copy / "bench" / "results" / f.name.replace(brand.NAME, new)).read_text())
+                self.assertEqual(d["tool"], new)
+            card = json.loads((copy / "bench" / "results" / "scorecard.json").read_text())
+            self.assertIn(new, card["tools"])
+            h = subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, 'bench'); import harness; print(harness.SELF)"],
+                               cwd=str(copy), capture_output=True, text=True)
+            self.assertEqual(h.stdout.strip(), new, h.stderr)
             self.assertFalse((copy / "commands" / f"{brand.NAME}.md").exists())
             out = subprocess.run([sys.executable, str(copy / "bin" / new), "version"], capture_output=True, text=True)
             self.assertEqual(out.returncode, 0, out.stderr)

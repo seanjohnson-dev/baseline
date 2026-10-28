@@ -1,0 +1,361 @@
+{
+ "tool": "baseline",
+ "eco": "go",
+ "mode": "dirty",
+ "trials": 10,
+ "started": "2026-10-28T12:32:24+02:00",
+ "load_before": "9.88, 5.49, 3.63",
+ "load_after": "9.52, 5.81, 3.79",
+ "tool_version": {
+  "version": "baseline 0.1.0",
+  "commit": "5f586d2"
+ },
+ "seconds": [
+  2.69,
+  2.67,
+  2.6,
+  2.59,
+  2.55,
+  2.6,
+  2.6,
+  3.01,
+  2.84,
+  2.91
+ ],
+ "truth": {
+  "example.com/shop/cart::TestTotalPlain": "PASS",
+  "example.com/shop/cart::TestNewDiscountPercent": "NEW",
+  "example.com/shop/tax::TestTaxBasic": "PASS",
+  "example.com/shop/tax::TestPreTaxRounding": "PRE",
+  "example.com/shop/shipping::TestPreChangedShipping": "PRE_CHANGED",
+  "example.com/shop/report::TestNewCollectSummary": "NEW_COLLECT",
+  "example.com/shop/flaky::TestFlakyRandom": "FLAKY",
+  "example.com/shop/flaky::TestFlakyTiming": "FLAKY",
+  "example.com/shop/envtests::TestEnvModule": "ENV",
+  "example.com/shop/envtests::TestEnvVar": "ENV",
+  "example.com/shop/envtests::TestEnvService": "ENV",
+  "example.com/shop/control::TestControlA": "PASS",
+  "example.com/shop/control::TestControlB": "PASS"
+ },
+ "labels": [
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": null,
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "ENV"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "ENV"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  }
+ ],
+ "raw_trial1": "{\n \"tool\": \"baseline\",\n \"version\": \"0.1.0\",\n \"schema\": 1,\n \"exit_code\": 1,\n \"summary\": {\n  \"new\": 2,\n  \"pre_existing\": 1,\n  \"pre_existing_error_changed\": 1,\n  \"flaky\": 1,\n  \"environment\": 3,\n  \"unknown\": 0,\n  \"tests_total\": 12,\n  \"tests_passed\": 6,\n  \"tests_failed\": 6,\n  \"tests_skipped\": 0,\n  \"load_errors\": 1,\n  \"fixed\": 0,\n  \"missing\": 0,\n  \"flaky_surfaced\": 1\n },\n \"base\": {\n  \"sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n  \"short\": \"37d0d5e\",\n  \"ref\": \"HEAD\",\n  \"how\": \"on the default branch main; comparing the working tree against HEAD\"\n },\n \"head\": {\n  \"sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n  \"short\": \"37d0d5e\",\n  \"dirty\": true\n },\n \"runner\": {\n  \"name\": \"go\",\n  \"command\": [\n   \"go\",\n   \"test\",\n   \"-count=1\",\n   \"./...\"\n  ],\n  \"per_test\": true,\n  \"cwd\": \".\"\n },\n \"policy\": {\n  \"head_runs\": 5,\n  \"base_required\": 5,\n  \"base_confirm\": 10,\n  \"max_runs\": 15,\n  \"confirm_budget_hit\": false,\n  \"flaky_hunt\": 0\n },\n \"concurrency\": {\n  \"serial\": false,\n  \"forced\": false,\n  \"collision\": \"\"\n },\n \"test_runs\": 115,\n \"cache\": {\n  \"enabled\": false,\n  \"hit\": false\n },\n \"results\": [\n  {\n   \"id\": \"example.com/shop/cart::TestNewDiscountPercent\",\n   \"kind\": \"test\",\n   \"verdict\": \"new\",\n   \"reason\": \"Passed all 10 runs on base but failed all 5 runs on head \\u2014 this change broke it.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"cart_test.go:<L>: got 99.9 want 90\",\n    \"error_raw\": \"=== RUN   TestNewDiscountPercent\\n    cart_test.go:13: got 99.9 want 90\\n--- FAIL: TestNewDiscountPercent (0.00s)\",\n    \"message\": \"cart_test.go:13: got 99.9 want 90\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 10,\n    \"failed\": 0,\n    \"passed\": 10,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"\",\n    \"error_raw\": \"\",\n    \"message\": \"\",\n    \"distinct_errors\": 0\n   },\n   \"runs_total\": 15,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": true,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/report\",\n   \"kind\": \"load_error\",\n   \"verdict\": \"new\",\n   \"reason\": \"Loads fine on base but fails to load on head (5/5) \\u2014 this change broke it; 1 test(s) in it can't run.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"report/report_test.go:<L>:<C>: undefined: Summary\",\n    \"error_raw\": \"# example.com/shop/report [example.com/shop/report.test]\\nreport/report_test.go:6:5: undefined: Summary\",\n    \"message\": \"report/report_test.go:6:5: undefined: Summary\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 5,\n    \"failed\": 0,\n    \"passed\": 5,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"\",\n    \"error_raw\": \"\",\n    \"message\": \"\",\n    \"distinct_errors\": 0\n   },\n   \"runs_total\": 10,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [\n    \"example.com/shop/report::TestNewCollectSummary\"\n   ],\n   \"closure_changed\": null,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/shipping::TestPreChangedShipping\",\n   \"kind\": \"test\",\n   \"verdict\": \"pre_existing_error_changed\",\n   \"reason\": \"Failed on base too (10/10), but the error is different now \\u2014 still failing, check this change didn't make it worse.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"shipping_test.go:<L>: got 6 want 7\",\n    \"error_raw\": \"=== RUN   TestPreChangedShipping\\n    shipping_test.go:7: got 6 want 7\\n--- FAIL: TestPreChangedShipping (0.00s)\",\n    \"message\": \"shipping_test.go:7: got 6 want 7\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 10,\n    \"failed\": 10,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"shipping_test.go:<L>: got 5 want 7\",\n    \"error_raw\": \"=== RUN   TestPreChangedShipping\\n    shipping_test.go:7: got 5 want 7\\n--- FAIL: TestPreChangedShipping (0.00s)\",\n    \"message\": \"shipping_test.go:7: got 5 want 7\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 15,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": true,\n   \"similarity\": 0.971,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/tax::TestPreTaxRounding\",\n   \"kind\": \"test\",\n   \"verdict\": \"pre_existing\",\n   \"reason\": \"Fails the same way on base (10/10) and head (5/5) \\u2014 already broken before this change.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"tax_test.go:<L>: got 1.51 want 1.5\",\n    \"error_raw\": \"=== RUN   TestPreTaxRounding\\n    tax_test.go:13: got 1.51 want 1.5\\n--- FAIL: TestPreTaxRounding (0.00s)\",\n    \"message\": \"tax_test.go:13: got 1.51 want 1.5\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 10,\n    \"failed\": 10,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"tax_test.go:<L>: got 1.51 want 1.5\",\n    \"error_raw\": \"=== RUN   TestPreTaxRounding\\n    tax_test.go:13: got 1.51 want 1.5\\n--- FAIL: TestPreTaxRounding (0.00s)\",\n    \"message\": \"tax_test.go:13: got 1.51 want 1.5\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 15,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/envtests::TestEnvModule\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (10/10) and head (5/5) with an environment error (executable psql-not-installed not found) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"env_test.go:<L>: required tool missing: exec: \\\"psql-not-installed\\\": executable file not found in $PATH\",\n    \"error_raw\": \"=== RUN   TestEnvModule\\n    env_test.go:14: required tool missing: exec: \\\"psql-not-installed\\\": executable file not found in $PATH\\n--- FAIL: TestEnvModule (0.00s)\",\n    \"message\": \"env_test.go:14: required tool missing: exec: \\\"psql-not-installed\\\": executable file not found in $PATH\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 10,\n    \"failed\": 10,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"env_test.go:<L>: required tool missing: exec: \\\"psql-not-installed\\\": executable file not found in $PATH\",\n    \"error_raw\": \"=== RUN   TestEnvModule\\n    env_test.go:14: required tool missing: exec: \\\"psql-not-installed\\\": executable file not found in $PATH\\n--- FAIL: TestEnvModule (0.00s)\",\n    \"message\": \"env_test.go:14: required tool missing: exec: \\\"psql-not-installed\\\": executable file not found in $PATH\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 15,\n   \"env_class\": {\n    \"class\": \"missing_executable\",\n    \"detail\": \"executable psql-not-installed not found\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/envtests::TestEnvService\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (10/10) and head (5/5) with an environment error (service at 127.0.0.1:<PORT> is not reachable (connection refused)) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"env_test.go:<L>: dial: dial tcp 127.0.0.1:<PORT>: connect: connection refused\",\n    \"error_raw\": \"=== RUN   TestEnvService\\n    env_test.go:27: dial: dial tcp 127.0.0.1:59999: connect: connection refused\\n--- FAIL: TestEnvService (0.00s)\",\n    \"message\": \"env_test.go:27: dial: dial tcp 127.0.0.1:59999: connect: connection refused\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 10,\n    \"failed\": 10,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"env_test.go:<L>: dial: dial tcp 127.0.0.1:<PORT>: connect: connection refused\",\n    \"error_raw\": \"=== RUN   TestEnvService\\n    env_test.go:27: dial: dial tcp 127.0.0.1:59999: connect: connection refused\\n--- FAIL: TestEnvService (0.00s)\",\n    \"message\": \"env_test.go:27: dial: dial tcp 127.0.0.1:59999: connect: connection refused\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 15,\n   \"env_class\": {\n    \"class\": \"service_unavailable\",\n    \"detail\": \"service at 127.0.0.1:<PORT> is not reachable (connection refused)\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/envtests::TestEnvVar\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (10/10) and head (5/5) with an environment error (environment variable DATABASE_URL is not set) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"env_test.go:<L>: DATABASE_URL not set\",\n    \"error_raw\": \"=== RUN   TestEnvVar\\n    env_test.go:20: DATABASE_URL not set\\n--- FAIL: TestEnvVar (0.00s)\",\n    \"message\": \"env_test.go:20: DATABASE_URL not set\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 10,\n    \"failed\": 10,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"env_test.go:<L>: DATABASE_URL not set\",\n    \"error_raw\": \"=== RUN   TestEnvVar\\n    env_test.go:20: DATABASE_URL not set\\n--- FAIL: TestEnvVar (0.00s)\",\n    \"message\": \"env_test.go:20: DATABASE_URL not set\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 15,\n   \"env_class\": {\n    \"class\": \"missing_env_var\",\n    \"detail\": \"environment variable DATABASE_URL is not set\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"example.com/shop/flaky::TestFlakyRandom\",\n   \"kind\": \"test\",\n   \"verdict\": \"flaky\",\n   \"reason\": \"Passed 2 and failed 1 of 3 runs on head with the same code \\u2014 flaky (not counted as a head failure; it passed in the full run).\",\n   \"head\": {\n    \"runs\": 3,\n    \"failed\": 1,\n    \"passed\": 2,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"flaky_test.go:<L>: unlucky\",\n    \"error_raw\": \"=== RUN   TestFlakyRandom\\n    flaky_test.go:12: unlucky\\n--- FAIL: TestFlakyRandom (0.00s)\",\n    \"message\": \"flaky_test.go:12: unlucky\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 2,\n    \"failed\": 1,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 1,\n    \"error\": \"flaky_test.go:<L>: unlucky\",\n    \"error_raw\": \"=== RUN   TestFlakyRandom\\n    flaky_test.go:12: unlucky\\n--- FAIL: TestFlakyRandom (0.00s)\",\n    \"message\": \"flaky_test.go:12: unlucky\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 5,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": \"head\",\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"surfaced\": true,\n   \"base_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"head_sha\": \"37d0d5e600f3f6a463154cf4d83e9c5a38ca52ed\",\n   \"dirty\": true\n  }\n ],\n \"fixed\": [],\n \"flaky_passing\": [\n  \"example.com/shop/flaky::TestFlakyRandom\"\n ],\n \"missing\": [],\n \"warnings\": [],\n \"notes\": [],\n \"duration_s\": 2.62\n}"
+}

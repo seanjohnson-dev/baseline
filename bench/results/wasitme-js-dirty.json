@@ -1,0 +1,368 @@
+{
+ "tool": "wasitme",
+ "eco": "js",
+ "mode": "dirty",
+ "trials": 10,
+ "started": "2026-10-28T12:33:23+02:00",
+ "load_before": "7.73, 5.70, 3.82",
+ "load_after": "6.55, 5.61, 3.84",
+ "tool_version": {
+  "commit": "2f426ef811ffb2db3040746f63681a484bba2118",
+  "commit_date": "2026-10-09"
+ },
+ "seconds": [
+  2.16,
+  2.21,
+  2.23,
+  2.17,
+  2.19,
+  2.22,
+  2.23,
+  2.25,
+  2.22,
+  2.19
+ ],
+ "truth": {
+  "test/cart.test.js > total plain": "PASS",
+  "test/cart.test.js > new discount percent": "NEW",
+  "test/tax.test.js > tax basic": "PASS",
+  "test/tax.test.js > pre tax rounding": "PRE",
+  "test/shipping.test.js > pre changed shipping": "PRE_CHANGED",
+  "test/report.test.js": "NEW_COLLECT",
+  "test/flaky.test.js > flaky random": "FLAKY",
+  "test/flaky.test.js > flaky timing": "FLAKY",
+  "test/env.test.js > env module": "ENV",
+  "test/env.test.js > env var": "ENV",
+  "test/env.test.js > env service": "ENV",
+  "test/control.test.js > control a": "PASS",
+  "test/control.test.js > control b": "PASS"
+ },
+ "labels": [
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "PRE"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "PRE"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "PRE"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "PRE"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "PRE"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "PRE"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": null,
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "FIXED"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "PRE"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/report.test.js": null,
+   "test/flaky.test.js > flaky random": null,
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "FIXED",
+    "NEW"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  }
+ ],
+ "raw_trial1": "wasitme: `npx vitest run`\n- base HEAD (6aaecdae6): exit 1, 6 failure(s)\n- current tree: exit 1, 7 failure(s)\n- INTRODUCED (fail now, passed on base): env module 6ms, flaky random 4ms, new discount percent 5ms, pre tax rounding 5ms\n- PRE-EXISTING (fail on base too): env service 2ms, env var 1ms, pre changed shipping 6ms\n- FIXED (failed on base, pass now): env module 9ms, flaky random 5ms, pre tax rounding 6ms\n- shared into the worktree: node_modules\nwasitme: running on the current tree\u2026\nwasitme: running on HEAD (6aaecdae6) in a temporary worktree\u2026\n"
+}

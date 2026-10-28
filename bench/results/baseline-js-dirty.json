@@ -1,0 +1,367 @@
+{
+ "tool": "baseline",
+ "eco": "js",
+ "mode": "dirty",
+ "trials": 10,
+ "started": "2026-10-28T12:30:31+02:00",
+ "load_before": "7.13, 2.77, 2.60",
+ "load_after": "10.40, 5.10, 3.44",
+ "tool_version": {
+  "version": "baseline 0.1.0",
+  "commit": "5f586d2"
+ },
+ "seconds": [
+  9.78,
+  7.89,
+  8.35,
+  7.96,
+  8.09,
+  8.28,
+  7.87,
+  8.01,
+  7.67,
+  8.49
+ ],
+ "truth": {
+  "test/cart.test.js > total plain": "PASS",
+  "test/cart.test.js > new discount percent": "NEW",
+  "test/tax.test.js > tax basic": "PASS",
+  "test/tax.test.js > pre tax rounding": "PRE",
+  "test/shipping.test.js > pre changed shipping": "PRE_CHANGED",
+  "test/report.test.js": "NEW_COLLECT",
+  "test/flaky.test.js > flaky random": "FLAKY",
+  "test/flaky.test.js > flaky timing": "FLAKY",
+  "test/env.test.js > env module": "ENV",
+  "test/env.test.js > env var": "ENV",
+  "test/env.test.js > env service": "ENV",
+  "test/control.test.js > control a": "PASS",
+  "test/control.test.js > control b": "PASS"
+ },
+ "labels": [
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": null,
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FLAKY"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FLAKY"
+   ],
+   "test/env.test.js > env module": [
+    "ENV"
+   ],
+   "test/env.test.js > env var": [
+    "ENV"
+   ],
+   "test/env.test.js > env service": [
+    "ENV"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  }
+ ],
+ "raw_trial1": "{\n \"tool\": \"baseline\",\n \"version\": \"0.1.0\",\n \"schema\": 1,\n \"exit_code\": 1,\n \"summary\": {\n  \"new\": 2,\n  \"pre_existing\": 1,\n  \"pre_existing_error_changed\": 1,\n  \"flaky\": 2,\n  \"environment\": 3,\n  \"unknown\": 0,\n  \"tests_total\": 12,\n  \"tests_passed\": 6,\n  \"tests_failed\": 6,\n  \"tests_skipped\": 0,\n  \"load_errors\": 1,\n  \"fixed\": 0,\n  \"missing\": 0,\n  \"flaky_surfaced\": 2\n },\n \"base\": {\n  \"sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n  \"short\": \"6aaecda\",\n  \"ref\": \"HEAD\",\n  \"how\": \"on the default branch main; comparing the working tree against HEAD\"\n },\n \"head\": {\n  \"sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n  \"short\": \"6aaecda\",\n  \"dirty\": true\n },\n \"runner\": {\n  \"name\": \"vitest\",\n  \"command\": [\n   \"npx\",\n   \"vitest\",\n   \"run\"\n  ],\n  \"per_test\": true,\n  \"cwd\": \".\"\n },\n \"policy\": {\n  \"head_runs\": 5,\n  \"base_required\": 5,\n  \"base_confirm\": 10,\n  \"max_runs\": 15,\n  \"confirm_budget_hit\": true,\n  \"flaky_hunt\": 0\n },\n \"concurrency\": {\n  \"serial\": false,\n  \"forced\": false,\n  \"collision\": \"\"\n },\n \"test_runs\": 106,\n \"cache\": {\n  \"enabled\": false,\n  \"hit\": false\n },\n \"results\": [\n  {\n   \"id\": \"test/cart.test.js > new discount percent\",\n   \"kind\": \"test\",\n   \"verdict\": \"new\",\n   \"reason\": \"Passed all 8 runs on base but failed all 5 runs on head \\u2014 this change broke it.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected 99.9 to be 90 // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected 99.9 to be 90 // Object.is equality\\n    at <work>/js-shop-dirty/test/cart.test.js:4:69\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 99.9 to be 90 // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 8,\n    \"failed\": 0,\n    \"passed\": 8,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"\",\n    \"error_raw\": \"\",\n    \"message\": \"\",\n    \"distinct_errors\": 0\n   },\n   \"runs_total\": 13,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": true,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/report.test.js\",\n   \"kind\": \"load_error\",\n   \"verdict\": \"new\",\n   \"reason\": \"Loads fine on base but fails to load on head (5/5) \\u2014 this change broke it; 1 test(s) in it can't run.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"Cannot find module '../src/report.js' imported from 'test/report.test.js'\",\n    \"error_raw\": \"Cannot find module '../src/report.js' imported from '<work>/js-shop-dirty/test/report.test.js'\",\n    \"message\": \"Cannot find module '../src/report.js' imported from '<work>/js-shop-dirty/test/report.test.js'\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 5,\n    \"failed\": 0,\n    \"passed\": 5,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"\",\n    \"error_raw\": \"\",\n    \"message\": \"\",\n    \"distinct_errors\": 0\n   },\n   \"runs_total\": 10,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [\n    \"test/report.test.js > new collect summary\"\n   ],\n   \"closure_changed\": null,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/shipping.test.js > pre changed shipping\",\n   \"kind\": \"test\",\n   \"verdict\": \"pre_existing_error_changed\",\n   \"reason\": \"Failed on base too (8/8), but the error is different now \\u2014 still failing, check this change didn't make it worse.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected 6 to be 7 // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected 6 to be 7 // Object.is equality\\n    at <work>/js-shop-dirty/test/shipping.test.js:3:58\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 6 to be 7 // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 8,\n    \"failed\": 8,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected 5 to be 7 // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected 5 to be 7 // Object.is equality\\n    at /tmp/baseline-wt-d6co4gul/wt/test/shipping.test.js:3:58\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 5 to be 7 // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 13,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": true,\n   \"similarity\": 0.982,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/tax.test.js > pre tax rounding\",\n   \"kind\": \"test\",\n   \"verdict\": \"pre_existing\",\n   \"reason\": \"Fails the same way on base (8/8) and head (5/5) \\u2014 already broken before this change.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected 1.51 to be 1.5 // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected 1.51 to be 1.5 // Object.is equality\\n    at <work>/js-shop-dirty/test/tax.test.js:4:50\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 1.51 to be 1.5 // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 8,\n    \"failed\": 8,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected 1.51 to be 1.5 // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected 1.51 to be 1.5 // Object.is equality\\n    at /tmp/baseline-wt-d6co4gul/wt/test/tax.test.js:4:50\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 1.51 to be 1.5 // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 13,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/env.test.js > env module\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (8/8) and head (5/5) with an environment error (package 'pg-not-installed' is not installed) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"Error: Cannot find package 'pg-not-installed' imported from 'test/env.test.js'\",\n    \"error_raw\": \"Error: Cannot find package 'pg-not-installed' imported from '<work>/js-shop-dirty/test/env.test.js'\\n    at VitestExecutor._fetchModule (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:247:19)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at VitestExecutor.directRequest (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:268:44)\\n    at VitestExecutor.cachedRequest (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:189:11)\\n    at VitestExecutor.dependencyRequest (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:239:10)\\n    at <work>/js-shop-dirty/test/env.test.js:3:34\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20\",\n    \"message\": \"Error: Cannot find package 'pg-not-installed' imported from '<work>/js-shop-dirty/test/env.test.js'\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 8,\n    \"failed\": 8,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"Error: Cannot find package 'pg-not-installed' imported from 'test/env.test.js'\",\n    \"error_raw\": \"Error: Cannot find package 'pg-not-installed' imported from '/tmp/baseline-wt-d6co4gul/wt/test/env.test.js'\\n    at VitestExecutor._fetchModule (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:247:19)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at VitestExecutor.directRequest (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:268:44)\\n    at VitestExecutor.cachedRequest (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:189:11)\\n    at VitestExecutor.dependencyRequest (file://<work>/js-shop-dirty/node_modules/vite-node/dist/client.mjs:239:10)\\n    at /tmp/baseline-wt-d6co4gul/wt/test/env.test.js:3:34\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20\",\n    \"message\": \"Error: Cannot find package 'pg-not-installed' imported from '/tmp/baseline-wt-d6co4gul/wt/test/env.test.js'\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 13,\n   \"env_class\": {\n    \"class\": \"missing_module\",\n    \"detail\": \"package 'pg-not-installed' is not installed\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": null,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/env.test.js > env service\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (8/8) and head (5/5) with an environment error (service at 127.0.0.1:<PORT> is not reachable (connection refused)) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"Error: connect ECONNREFUSED 127.0.0.1:<PORT>\",\n    \"error_raw\": \"Error: connect ECONNREFUSED 127.0.0.1:59999\\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1608:16)\",\n    \"message\": \"Error: connect ECONNREFUSED 127.0.0.1:59999\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 8,\n    \"failed\": 8,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"Error: connect ECONNREFUSED 127.0.0.1:<PORT>\",\n    \"error_raw\": \"Error: connect ECONNREFUSED 127.0.0.1:59999\\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1608:16)\",\n    \"message\": \"Error: connect ECONNREFUSED 127.0.0.1:59999\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 13,\n   \"env_class\": {\n    \"class\": \"service_unavailable\",\n    \"detail\": \"service at 127.0.0.1:<PORT> is not reachable (connection refused)\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": null,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/env.test.js > env var\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (8/8) and head (5/5) with an environment error (environment variable DATABASE_URL is not set) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"TypeError: Cannot read properties of undefined (reading 'startsWith')\",\n    \"error_raw\": \"TypeError: Cannot read properties of undefined (reading 'startsWith')\\n    at <work>/js-shop-dirty/test/env.test.js:4:57\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"TypeError: Cannot read properties of undefined (reading 'startsWith')\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 8,\n    \"failed\": 8,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"TypeError: Cannot read properties of undefined (reading 'startsWith')\",\n    \"error_raw\": \"TypeError: Cannot read properties of undefined (reading 'startsWith')\\n    at /tmp/baseline-wt-d6co4gul/wt/test/env.test.js:4:57\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"TypeError: Cannot read properties of undefined (reading 'startsWith')\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 13,\n   \"env_class\": {\n    \"class\": \"missing_env_var\",\n    \"detail\": \"environment variable DATABASE_URL is not set\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": null,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/flaky.test.js > flaky random\",\n   \"kind\": \"test\",\n   \"verdict\": \"flaky\",\n   \"reason\": \"Passed 1 and failed 1 of 2 runs on head with the same code \\u2014 flaky (not counted as a head failure; it passed in the full run).\",\n   \"head\": {\n    \"runs\": 2,\n    \"failed\": 1,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected 0.004452922076776833 to be greater than 0.5\",\n    \"error_raw\": \"AssertionError: expected 0.004452922076776833 to be greater than 0.5\\n    at <work>/js-shop-dirty/test/flaky.test.js:2:52\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 0.004452922076776833 to be greater than 0.5\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 2,\n    \"failed\": 1,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 1,\n    \"error\": \"AssertionError: expected 0.01368986231053837 to be greater than 0.5\",\n    \"error_raw\": \"AssertionError: expected 0.01368986231053837 to be greater than 0.5\\n    at /tmp/baseline-wt-d6co4gul/wt/test/flaky.test.js:2:52\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20\\n    at new Promise (<anonymous>)\\n    at runWithTimeout (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10)\\n    at runTest (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at runSuite (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8)\\n    at runFiles (file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3)\",\n    \"message\": \"AssertionError: expected 0.01368986231053837 to be greater than 0.5\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 4,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": \"head\",\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"surfaced\": true,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  },\n  {\n   \"id\": \"test/flaky.test.js > flaky timing\",\n   \"kind\": \"test\",\n   \"verdict\": \"flaky\",\n   \"reason\": \"Passed 5 and failed 1 of 6 runs on head with the same code \\u2014 flaky (not counted as a head failure; it passed in the full run).\",\n   \"head\": {\n    \"runs\": 6,\n    \"failed\": 1,\n    \"passed\": 5,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: expected false to be true // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected false to be true // Object.is equality\\n    at <work>/js-shop-dirty/test/flaky.test.js:7:16\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20\",\n    \"message\": \"AssertionError: expected false to be true // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 4,\n    \"failed\": 3,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 1,\n    \"error\": \"AssertionError: expected false to be true // Object.is equality\",\n    \"error_raw\": \"AssertionError: expected false to be true // Object.is equality\\n    at /tmp/baseline-wt-d6co4gul/wt/test/flaky.test.js:7:16\\n    at file://<work>/js-shop-dirty/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20\",\n    \"message\": \"AssertionError: expected false to be true // Object.is equality\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 10,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": \"head\",\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"surfaced\": true,\n   \"base_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"head_sha\": \"6aaecdae6599b4571cbb8f3ffaa825dd131d9e89\",\n   \"dirty\": true\n  }\n ],\n \"fixed\": [],\n \"flaky_passing\": [\n  \"test/flaky.test.js > flaky random\",\n  \"test/flaky.test.js > flaky timing\"\n ],\n \"missing\": [],\n \"warnings\": [],\n \"notes\": [],\n \"duration_s\": 9.72\n}"
+}

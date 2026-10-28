@@ -1,0 +1,15 @@
+{
+  "tests/test_cart.py::test_total_plain": "PASS",
+  "tests/test_cart.py::test_new_discount_percent": "NEW",
+  "tests/test_tax.py::test_tax_basic": "PASS",
+  "tests/test_tax.py::test_pre_tax_rounding": "PRE",
+  "tests/test_shipping.py::test_pre_changed_shipping": "PRE_CHANGED",
+  "tests/test_report.py": "NEW_COLLECT",
+  "tests/test_flaky.py::test_flaky_random": "FLAKY",
+  "tests/test_flaky.py::test_flaky_timing": "FLAKY",
+  "tests/test_env.py::test_env_module": "ENV",
+  "tests/test_env.py::test_env_var": "ENV",
+  "tests/test_env.py::test_env_service": "ENV",
+  "tests/test_control.py::test_control_a": "PASS",
+  "tests/test_control.py::test_control_b": "PASS"
+}

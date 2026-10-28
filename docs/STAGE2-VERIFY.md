@@ -104,7 +104,7 @@ fired because agents pipe/chain test commands (now also PostToolUse), and a skil
 
 ## Secrets scan
 
-`grep` over all tracked and new files for `/home/box`, the user's email, API-key/token/private-key
+`grep` over all tracked and new files for the home-directory path, the user's email, API-key/token/private-key
 patterns, cloud keys and e-mail addresses (other than `noreply`/`example.invalid`): nothing. The only
 local paths are `/workspace/...` in `docs/live-demo.md` (the exact command and the verbatim hook
 output, as required) and in the stage-1 `SPEC.md`. `.gitignore` now also ignores `.claude/` and

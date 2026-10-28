@@ -1,0 +1,917 @@
+{
+ "rules": "Each fixture test has one ground-truth case; per trial a tool's verdict for it is correct if:\n- NEW: labelled new/introduced/broken-by-change, nothing else (preexisting-proof: new_failure; a test that\n  is also reported missing still counts).\n- NEW_COLLECT (the test file no longer imports/compiles): the file or package reported as a new failure.\n- PRE: labelled pre-existing / same-failure-observed-before, nothing else.\n- PRE_CHANGED (fails on base too, but with a different error): flagged as changed (this tool:\n  pre_existing_error_changed; preexisting-proof: changed_failure) or as new. Labelled plain pre-existing = wrong.\n- FLAKY: labelled flaky. FLAKY_NOT_NEW: the flaky test was not labelled new (any other label or none is fine).\n- ENV (missing module, missing env var, service down): labelled environment, distinct from pre-existing.\n- PASS: not reported at all.\nLabel mapping: wasitme INTRODUCED=new, PRE-EXISTING=pre; flake-or-fault broken-by-change=new, pre-existing=pre,\nflaky=flaky; preexisting-proof new_failure=new, changed_failure=changed, same_failure_observed_before=pre;\nthis tool new/pre_existing/pre_existing_error_changed/flaky/environment as named. \"not a goal\" = the tool's own\nREADME does not claim that case; the number is shown anyway. Time = median wall seconds per run of the tool\n(one run = everything the tool does to give its verdicts, including its base run and reruns).",
+ "tools": {
+  "baseline": {
+   "name": "Baseline",
+   "version": {
+    "version": "baseline 0.1.0",
+    "commit": "5f586d2"
+   },
+   "trials_per_combo": [
+    10
+   ],
+   "not_a_goal": [],
+   "scores": {
+    "all": {
+     "NEW": [
+      60,
+      60
+     ],
+     "NEW_COLLECT": [
+      60,
+      60
+     ],
+     "PRE": [
+      60,
+      60
+     ],
+     "PRE_CHANGED": [
+      60,
+      60
+     ],
+     "FLAKY": [
+      95,
+      120
+     ],
+     "FLAKY_NOT_NEW": [
+      120,
+      120
+     ],
+     "ENV": [
+      180,
+      180
+     ],
+     "PASS": [
+      240,
+      240
+     ],
+     "median_s": 2.7
+    },
+    "py": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      20,
+      20
+     ],
+     "FLAKY": [
+      31,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      40,
+      40
+     ],
+     "ENV": [
+      60,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 2.16
+    },
+    "js": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      20,
+      20
+     ],
+     "FLAKY": [
+      35,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      40,
+      40
+     ],
+     "ENV": [
+      60,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 7.96
+    },
+    "go": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      20,
+      20
+     ],
+     "FLAKY": [
+      29,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      40,
+      40
+     ],
+     "ENV": [
+      60,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 2.7
+    }
+   }
+  },
+  "wasitme": {
+   "name": "wasitme",
+   "version": {
+    "commit": "2f426ef811ffb2db3040746f63681a484bba2118",
+    "commit_date": "2026-10-09"
+   },
+   "trials_per_combo": [
+    10
+   ],
+   "not_a_goal": [
+    "ENV",
+    "FLAKY",
+    "PRE_CHANGED"
+   ],
+   "scores": {
+    "all": {
+     "NEW": [
+      60,
+      60
+     ],
+     "NEW_COLLECT": [
+      0,
+      60
+     ],
+     "PRE": [
+      49,
+      60
+     ],
+     "PRE_CHANGED": [
+      0,
+      60
+     ],
+     "FLAKY": [
+      0,
+      120
+     ],
+     "FLAKY_NOT_NEW": [
+      96,
+      120
+     ],
+     "ENV": [
+      0,
+      180
+     ],
+     "PASS": [
+      240,
+      240
+     ],
+     "median_s": 0.44
+    },
+    "py": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      0,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      0,
+      20
+     ],
+     "FLAKY": [
+      0,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      33,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 0.41
+    },
+    "js": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      0,
+      20
+     ],
+     "PRE": [
+      9,
+      20
+     ],
+     "PRE_CHANGED": [
+      0,
+      20
+     ],
+     "FLAKY": [
+      0,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      26,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 2.26
+    },
+    "go": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      0,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      0,
+      20
+     ],
+     "FLAKY": [
+      0,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      37,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 0.43
+    }
+   }
+  },
+  "fof": {
+   "name": "flake-or-fault",
+   "version": {
+    "commit": "617855cfea8ad44a8cafbc6a87495ff5d4cd07d9",
+    "commit_date": "2026-10-06"
+   },
+   "trials_per_combo": [
+    10
+   ],
+   "not_a_goal": [
+    "ENV",
+    "PRE_CHANGED"
+   ],
+   "scores": {
+    "all": {
+     "NEW": [
+      60,
+      60
+     ],
+     "NEW_COLLECT": [
+      40,
+      60
+     ],
+     "PRE": [
+      60,
+      60
+     ],
+     "PRE_CHANGED": [
+      0,
+      60
+     ],
+     "FLAKY": [
+      119,
+      120
+     ],
+     "FLAKY_NOT_NEW": [
+      120,
+      120
+     ],
+     "ENV": [
+      0,
+      180
+     ],
+     "PASS": [
+      240,
+      240
+     ],
+     "median_s": 2.88
+    },
+    "py": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      0,
+      20
+     ],
+     "FLAKY": [
+      39,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      40,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 2.88
+    },
+    "js": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      0,
+      20
+     ],
+     "FLAKY": [
+      40,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      40,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 16.34
+    },
+    "go": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      0,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      0,
+      20
+     ],
+     "FLAKY": [
+      40,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      40,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 2.69
+    }
+   }
+  },
+  "pp": {
+   "name": "preexisting-proof",
+   "version": {
+    "commit": "c321dfe9c5fd49f1d5cc970e4b89e00c030a17d8",
+    "commit_date": "2026-10-23"
+   },
+   "trials_per_combo": [
+    10
+   ],
+   "not_a_goal": [
+    "ENV",
+    "FLAKY"
+   ],
+   "scores": {
+    "all": {
+     "NEW": [
+      60,
+      60
+     ],
+     "NEW_COLLECT": [
+      60,
+      60
+     ],
+     "PRE": [
+      40,
+      60
+     ],
+     "PRE_CHANGED": [
+      60,
+      60
+     ],
+     "FLAKY": [
+      0,
+      120
+     ],
+     "FLAKY_NOT_NEW": [
+      94,
+      120
+     ],
+     "ENV": [
+      0,
+      180
+     ],
+     "PASS": [
+      240,
+      240
+     ],
+     "median_s": 0.61
+    },
+    "py": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      20,
+      20
+     ],
+     "FLAKY": [
+      0,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      30,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 0.6
+    },
+    "js": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      20,
+      20
+     ],
+     "PRE_CHANGED": [
+      20,
+      20
+     ],
+     "FLAKY": [
+      0,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      33,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 2.53
+    },
+    "go": {
+     "NEW": [
+      20,
+      20
+     ],
+     "NEW_COLLECT": [
+      20,
+      20
+     ],
+     "PRE": [
+      0,
+      20
+     ],
+     "PRE_CHANGED": [
+      20,
+      20
+     ],
+     "FLAKY": [
+      0,
+      40
+     ],
+     "FLAKY_NOT_NEW": [
+      31,
+      40
+     ],
+     "ENV": [
+      0,
+      60
+     ],
+     "PASS": [
+      80,
+      80
+     ],
+     "median_s": 0.6
+    }
+   }
+  }
+ },
+ "runs": [
+  {
+   "file": "baseline-go-branch.json",
+   "tool": "baseline",
+   "eco": "go",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 2.805,
+   "max_s": 3.69,
+   "started": "2026-10-28T12:31:53+02:00",
+   "load_before": "10.40, 5.10, 3.44",
+   "load_after": "9.88, 5.49, 3.63"
+  },
+  {
+   "file": "baseline-go-dirty.json",
+   "tool": "baseline",
+   "eco": "go",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 2.635,
+   "max_s": 3.01,
+   "started": "2026-10-28T12:32:24+02:00",
+   "load_before": "9.88, 5.49, 3.63",
+   "load_after": "9.52, 5.81, 3.79"
+  },
+  {
+   "file": "baseline-js-branch.json",
+   "tool": "baseline",
+   "eco": "js",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 7.735,
+   "max_s": 9.04,
+   "started": "2026-10-28T12:29:10+02:00",
+   "load_before": "1.41, 0.87, 2.03",
+   "load_after": "7.13, 2.77, 2.60"
+  },
+  {
+   "file": "baseline-js-dirty.json",
+   "tool": "baseline",
+   "eco": "js",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 8.05,
+   "max_s": 9.78,
+   "started": "2026-10-28T12:30:31+02:00",
+   "load_before": "7.13, 2.77, 2.60",
+   "load_after": "10.40, 5.10, 3.44"
+  },
+  {
+   "file": "baseline-py-branch.json",
+   "tool": "baseline",
+   "eco": "py",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 2.21,
+   "max_s": 2.68,
+   "started": "2026-10-28T12:28:26+02:00",
+   "load_before": "0.29, 0.63, 2.01",
+   "load_after": "0.88, 0.73, 2.02"
+  },
+  {
+   "file": "baseline-py-dirty.json",
+   "tool": "baseline",
+   "eco": "py",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 2.0949999999999998,
+   "max_s": 2.44,
+   "started": "2026-10-28T12:28:49+02:00",
+   "load_before": "0.88, 0.73, 2.02",
+   "load_after": "1.41, 0.87, 2.03"
+  },
+  {
+   "file": "fof-go-branch.json",
+   "tool": "fof",
+   "eco": "go",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 2.69,
+   "max_s": 2.72,
+   "started": "2026-10-28T12:41:36+02:00",
+   "load_before": "4.69, 4.40, 3.82",
+   "load_after": "6.57, 4.85, 3.98"
+  },
+  {
+   "file": "fof-go-dirty.json",
+   "tool": "fof",
+   "eco": "go",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 2.665,
+   "max_s": 2.74,
+   "started": "2026-10-28T12:42:03+02:00",
+   "load_before": "6.57, 4.85, 3.98",
+   "load_after": "6.02, 4.88, 4.02"
+  },
+  {
+   "file": "fof-js-branch.json",
+   "tool": "fof",
+   "eco": "js",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 16.354999999999997,
+   "max_s": 17.62,
+   "started": "2026-10-28T12:36:08+02:00",
+   "load_before": "2.12, 4.20, 3.56",
+   "load_after": "4.52, 4.25, 3.67"
+  },
+  {
+   "file": "fof-js-dirty.json",
+   "tool": "fof",
+   "eco": "js",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 16.29,
+   "max_s": 17.45,
+   "started": "2026-10-28T12:38:52+02:00",
+   "load_before": "4.52, 4.25, 3.67",
+   "load_after": "4.69, 4.40, 3.82"
+  },
+  {
+   "file": "fof-py-branch.json",
+   "tool": "fof",
+   "eco": "py",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 2.865,
+   "max_s": 2.97,
+   "started": "2026-10-28T12:35:10+02:00",
+   "load_before": "3.62, 4.83, 3.71",
+   "load_after": "2.72, 4.52, 3.64"
+  },
+  {
+   "file": "fof-py-dirty.json",
+   "tool": "fof",
+   "eco": "py",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 2.9000000000000004,
+   "max_s": 3.05,
+   "started": "2026-10-28T12:35:39+02:00",
+   "load_before": "2.72, 4.52, 3.64",
+   "load_after": "2.12, 4.20, 3.56"
+  },
+  {
+   "file": "pp-go-branch.json",
+   "tool": "pp",
+   "eco": "go",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 0.61,
+   "max_s": 0.65,
+   "started": "2026-10-28T12:34:57+02:00",
+   "load_before": "3.35, 4.85, 3.70",
+   "load_after": "3.24, 4.80, 3.69"
+  },
+  {
+   "file": "pp-go-dirty.json",
+   "tool": "pp",
+   "eco": "go",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 0.6,
+   "max_s": 0.65,
+   "started": "2026-10-28T12:35:04+02:00",
+   "load_before": "3.24, 4.80, 3.69",
+   "load_after": "3.62, 4.83, 3.71"
+  },
+  {
+   "file": "pp-js-branch.json",
+   "tool": "pp",
+   "eco": "js",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 2.61,
+   "max_s": 2.79,
+   "started": "2026-10-28T12:34:06+02:00",
+   "load_before": "5.32, 5.39, 3.81",
+   "load_after": "4.57, 5.19, 3.78"
+  },
+  {
+   "file": "pp-js-dirty.json",
+   "tool": "pp",
+   "eco": "js",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 2.525,
+   "max_s": 2.71,
+   "started": "2026-10-28T12:34:32+02:00",
+   "load_before": "4.57, 5.19, 3.78",
+   "load_after": "3.35, 4.85, 3.70"
+  },
+  {
+   "file": "pp-py-branch.json",
+   "tool": "pp",
+   "eco": "py",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 0.6,
+   "max_s": 0.62,
+   "started": "2026-10-28T12:33:54+02:00",
+   "load_before": "6.27, 5.56, 3.84",
+   "load_after": "5.70, 5.46, 3.82"
+  },
+  {
+   "file": "pp-py-dirty.json",
+   "tool": "pp",
+   "eco": "py",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 0.6,
+   "max_s": 0.64,
+   "started": "2026-10-28T12:34:00+02:00",
+   "load_before": "5.70, 5.46, 3.82",
+   "load_after": "5.32, 5.39, 3.81"
+  },
+  {
+   "file": "wasitme-go-branch.json",
+   "tool": "wasitme",
+   "eco": "go",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 0.435,
+   "max_s": 0.47,
+   "started": "2026-10-28T12:33:45+02:00",
+   "load_before": "6.55, 5.61, 3.84",
+   "load_after": "6.27, 5.56, 3.84"
+  },
+  {
+   "file": "wasitme-go-dirty.json",
+   "tool": "wasitme",
+   "eco": "go",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 0.435,
+   "max_s": 0.47,
+   "started": "2026-10-28T12:33:50+02:00",
+   "load_before": "6.27, 5.56, 3.84",
+   "load_after": "6.27, 5.56, 3.84"
+  },
+  {
+   "file": "wasitme-js-branch.json",
+   "tool": "wasitme",
+   "eco": "js",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 2.37,
+   "max_s": 2.51,
+   "started": "2026-10-28T12:32:59+02:00",
+   "load_before": "8.36, 5.68, 3.77",
+   "load_after": "7.73, 5.70, 3.82"
+  },
+  {
+   "file": "wasitme-js-dirty.json",
+   "tool": "wasitme",
+   "eco": "js",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 2.215,
+   "max_s": 2.25,
+   "started": "2026-10-28T12:33:23+02:00",
+   "load_before": "7.73, 5.70, 3.82",
+   "load_after": "6.55, 5.61, 3.84"
+  },
+  {
+   "file": "wasitme-py-branch.json",
+   "tool": "wasitme",
+   "eco": "py",
+   "mode": "branch",
+   "trials": 10,
+   "median_s": 0.41,
+   "max_s": 0.45,
+   "started": "2026-10-28T12:32:51+02:00",
+   "load_before": "9.52, 5.81, 3.79",
+   "load_after": "8.91, 5.74, 3.78"
+  },
+  {
+   "file": "wasitme-py-dirty.json",
+   "tool": "wasitme",
+   "eco": "py",
+   "mode": "dirty",
+   "trials": 10,
+   "median_s": 0.415,
+   "max_s": 0.43,
+   "started": "2026-10-28T12:32:55+02:00",
+   "load_before": "8.91, 5.74, 3.78",
+   "load_after": "8.36, 5.68, 3.77"
+  }
+ ]
+}

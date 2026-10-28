@@ -1,0 +1,373 @@
+{
+ "tool": "fof",
+ "eco": "py",
+ "mode": "dirty",
+ "trials": 10,
+ "started": "2026-10-28T12:35:39+02:00",
+ "load_before": "2.72, 4.52, 3.64",
+ "load_after": "2.12, 4.20, 3.56",
+ "tool_version": {
+  "commit": "617855cfea8ad44a8cafbc6a87495ff5d4cd07d9",
+  "commit_date": "2026-10-06"
+ },
+ "seconds": [
+  2.89,
+  3.02,
+  3.05,
+  2.92,
+  2.85,
+  2.88,
+  2.91,
+  2.86,
+  2.91,
+  2.82
+ ],
+ "truth": {
+  "tests/test_cart.py::test_total_plain": "PASS",
+  "tests/test_cart.py::test_new_discount_percent": "NEW",
+  "tests/test_tax.py::test_tax_basic": "PASS",
+  "tests/test_tax.py::test_pre_tax_rounding": "PRE",
+  "tests/test_shipping.py::test_pre_changed_shipping": "PRE_CHANGED",
+  "tests/test_report.py": "NEW_COLLECT",
+  "tests/test_flaky.py::test_flaky_random": "FLAKY",
+  "tests/test_flaky.py::test_flaky_timing": "FLAKY",
+  "tests/test_env.py::test_env_module": "ENV",
+  "tests/test_env.py::test_env_var": "ENV",
+  "tests/test_env.py::test_env_service": "ENV",
+  "tests/test_control.py::test_control_a": "PASS",
+  "tests/test_control.py::test_control_b": "PASS"
+ },
+ "labels": [
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "PRE"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "PRE"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "PRE"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "PRE"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  }
+ ],
+ "raw_trial1": "run 1/10: exit=1 tests=13 failed=8 (0.18s)\nrun 2/10: exit=1 tests=13 failed=9 (0.19s)\nrun 3/10: exit=1 tests=13 failed=9 (0.18s)\nrun 4/10: exit=1 tests=13 failed=8 (0.2s)\nrun 5/10: exit=1 tests=13 failed=8 (0.18s)\nrun 6/10: exit=1 tests=13 failed=8 (0.17s)\nrun 7/10: exit=1 tests=13 failed=8 (0.21s)\nrun 8/10: exit=1 tests=13 failed=9 (0.18s)\nrun 9/10: exit=1 tests=13 failed=9 (0.19s)\nrun 10/10: exit=1 tests=13 failed=7 (0.18s)\n\nrun 1/5: exit=1 tests=13 failed=6 (0.19s)\nrun 2/5: exit=1 tests=13 failed=6 (0.17s)\nrun 3/5: exit=1 tests=13 failed=6 (0.17s)\nrun 4/5: exit=1 tests=13 failed=6 (0.18s)\nrun 5/5: exit=1 tests=13 failed=6 (0.17s)\n\nhead runs: 10 | base runs: 5\nbroken-by-change    tests.test_cart::test_new_discount_percent\n                    failed 10/10 on head, passed 5/5 on base\nbroken-by-change    tests.test_report\n                    only exists on head (new or renamed test) and fails\nflaky               tests.test_flaky::test_flaky_random\n                    failed 5 of 10 runs on the same code\nflaky               tests.test_flaky::test_flaky_timing\n                    failed 8 of 10 runs on the same code; also failed 5/5 on base\npre-existing        tests.test_env::test_env_module\n                    fails on base too (5/5)\npre-existing        tests.test_env::test_env_service\n                    fails on base too (5/5)\npre-existing        tests.test_env::test_env_var\n                    fails on base too (5/5)\npre-existing        tests.test_shipping::test_pre_changed_shipping\n                    fails on base too (5/5)\npre-existing        tests.test_tax::test_pre_tax_rounding\n                    fails on base too (5/5)\n4 test(s) passed every run (each could still fail up to 26% of the time at 95% confidence with only 10 runs)\nsummary: broken-by-change=2, flaky=2, pre-existing=5, pass=4\n"
+}

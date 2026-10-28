@@ -1,0 +1,15 @@
+{
+  "test/cart.test.js > total plain": "PASS",
+  "test/cart.test.js > new discount percent": "NEW",
+  "test/tax.test.js > tax basic": "PASS",
+  "test/tax.test.js > pre tax rounding": "PRE",
+  "test/shipping.test.js > pre changed shipping": "PRE_CHANGED",
+  "test/report.test.js": "NEW_COLLECT",
+  "test/flaky.test.js > flaky random": "FLAKY",
+  "test/flaky.test.js > flaky timing": "FLAKY",
+  "test/env.test.js > env module": "ENV",
+  "test/env.test.js > env var": "ENV",
+  "test/env.test.js > env service": "ENV",
+  "test/control.test.js > control a": "PASS",
+  "test/control.test.js > control b": "PASS"
+}

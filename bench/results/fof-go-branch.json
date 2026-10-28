@@ -1,0 +1,353 @@
+{
+ "tool": "fof",
+ "eco": "go",
+ "mode": "branch",
+ "trials": 10,
+ "started": "2026-10-28T12:41:36+02:00",
+ "load_before": "4.69, 4.40, 3.82",
+ "load_after": "6.57, 4.85, 3.98",
+ "tool_version": {
+  "commit": "617855cfea8ad44a8cafbc6a87495ff5d4cd07d9",
+  "commit_date": "2026-10-06"
+ },
+ "seconds": [
+  2.71,
+  2.65,
+  2.72,
+  2.62,
+  2.69,
+  2.7,
+  2.65,
+  2.66,
+  2.69,
+  2.71
+ ],
+ "truth": {
+  "example.com/shop/cart::TestTotalPlain": "PASS",
+  "example.com/shop/cart::TestNewDiscountPercent": "NEW",
+  "example.com/shop/tax::TestTaxBasic": "PASS",
+  "example.com/shop/tax::TestPreTaxRounding": "PRE",
+  "example.com/shop/shipping::TestPreChangedShipping": "PRE_CHANGED",
+  "example.com/shop/report::TestNewCollectSummary": "NEW_COLLECT",
+  "example.com/shop/flaky::TestFlakyRandom": "FLAKY",
+  "example.com/shop/flaky::TestFlakyTiming": "FLAKY",
+  "example.com/shop/envtests::TestEnvModule": "ENV",
+  "example.com/shop/envtests::TestEnvVar": "ENV",
+  "example.com/shop/envtests::TestEnvService": "ENV",
+  "example.com/shop/control::TestControlA": "PASS",
+  "example.com/shop/control::TestControlB": "PASS"
+ },
+ "labels": [
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "PRE"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "PRE"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": null,
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "FLAKY"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "FLAKY"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "PRE"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "PRE"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  }
+ ],
+ "raw_trial1": "run 1/10: exit=1 tests=12 failed=7 (0.2s)\nrun 2/10: exit=1 tests=12 failed=7 (0.16s)\nrun 3/10: exit=1 tests=12 failed=8 (0.16s)\nrun 4/10: exit=1 tests=12 failed=7 (0.15s)\nrun 5/10: exit=1 tests=12 failed=6 (0.16s)\nrun 6/10: exit=1 tests=12 failed=7 (0.17s)\nrun 7/10: exit=1 tests=12 failed=8 (0.17s)\nrun 8/10: exit=1 tests=12 failed=7 (0.18s)\nrun 9/10: exit=1 tests=12 failed=6 (0.17s)\nrun 10/10: exit=1 tests=12 failed=6 (0.16s)\n\nrun 1/5: exit=1 tests=13 failed=7 (0.21s)\nrun 2/5: exit=1 tests=13 failed=7 (0.16s)\nrun 3/5: exit=1 tests=13 failed=5 (0.17s)\nrun 4/5: exit=1 tests=13 failed=5 (0.16s)\nrun 5/5: exit=1 tests=13 failed=7 (0.16s)\n\nhead runs: 10 | base runs: 5\nbroken-by-change    example.com/shop/cart::TestNewDiscountPercent\n                    failed 10/10 on head, passed 5/5 on base\nflaky               example.com/shop/flaky::TestFlakyRandom\n                    failed 5 of 10 runs on the same code; also failed 3/5 on base\nflaky               example.com/shop/flaky::TestFlakyTiming\n                    failed 4 of 10 runs on the same code; also failed 3/5 on base\npre-existing        example.com/shop/envtests::TestEnvModule\n                    fails on base too (5/5)\npre-existing        example.com/shop/envtests::TestEnvService\n                    fails on base too (5/5)\npre-existing        example.com/shop/envtests::TestEnvVar\n                    fails on base too (5/5)\npre-existing        example.com/shop/shipping::TestPreChangedShipping\n                    fails on base too (5/5)\npre-existing        example.com/shop/tax::TestPreTaxRounding\n                    fails on base too (5/5)\n4 test(s) passed every run (each could still fail up to 26% of the time at 95% confidence with only 10 runs)\nsummary: broken-by-change=1, flaky=2, pre-existing=5, pass=4\n"
+}

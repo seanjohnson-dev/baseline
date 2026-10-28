@@ -1,0 +1,5 @@
+{
+  "py": "python -m pytest -q -p no:cacheprovider --continue-on-collection-errors",
+  "js": "npx vitest run",
+  "go": "go test -count=1 ./..."
+}

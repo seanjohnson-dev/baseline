@@ -1,0 +1,375 @@
+{
+ "tool": "pp",
+ "eco": "js",
+ "mode": "dirty",
+ "trials": 10,
+ "started": "2026-10-28T12:34:32+02:00",
+ "load_before": "4.57, 5.19, 3.78",
+ "load_after": "3.35, 4.85, 3.70",
+ "tool_version": {
+  "commit": "c321dfe9c5fd49f1d5cc970e4b89e00c030a17d8",
+  "commit_date": "2026-10-23"
+ },
+ "seconds": [
+  2.71,
+  2.59,
+  2.47,
+  2.53,
+  2.53,
+  2.52,
+  2.51,
+  2.53,
+  2.52,
+  2.37
+ ],
+ "truth": {
+  "test/cart.test.js > total plain": "PASS",
+  "test/cart.test.js > new discount percent": "NEW",
+  "test/tax.test.js > tax basic": "PASS",
+  "test/tax.test.js > pre tax rounding": "PRE",
+  "test/shipping.test.js > pre changed shipping": "PRE_CHANGED",
+  "test/report.test.js": "NEW_COLLECT",
+  "test/flaky.test.js > flaky random": "FLAKY",
+  "test/flaky.test.js > flaky timing": "FLAKY",
+  "test/env.test.js > env module": "ENV",
+  "test/env.test.js > env var": "ENV",
+  "test/env.test.js > env service": "ENV",
+  "test/control.test.js > control a": "PASS",
+  "test/control.test.js > control b": "PASS"
+ },
+ "labels": [
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "PRE"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "PRE"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "CHANGED"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "CHANGED"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": null,
+   "test/flaky.test.js > flaky timing": [
+    "FIXED"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "FIXED"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "NEW"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FIXED"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "CHANGED"
+   ],
+   "test/flaky.test.js > flaky timing": null,
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "CHANGED"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FIXED"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  },
+  {
+   "test/cart.test.js > total plain": null,
+   "test/cart.test.js > new discount percent": [
+    "NEW"
+   ],
+   "test/tax.test.js > tax basic": null,
+   "test/tax.test.js > pre tax rounding": [
+    "PRE"
+   ],
+   "test/shipping.test.js > pre changed shipping": [
+    "CHANGED"
+   ],
+   "test/report.test.js": [
+    "MISSING",
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky random": [
+    "NEW"
+   ],
+   "test/flaky.test.js > flaky timing": [
+    "FIXED"
+   ],
+   "test/env.test.js > env module": [
+    "CHANGED"
+   ],
+   "test/env.test.js > env var": [
+    "PRE"
+   ],
+   "test/env.test.js > env service": [
+    "PRE"
+   ],
+   "test/control.test.js > control a": null,
+   "test/control.test.js > control b": null
+  }
+ ],
+ "raw_trial1": "capture before: rc=1 {\"receipt\": \"/tmp/bench-pp-obuh6xv8/before/receipt.json\", \"test_returncode\": 1, \"report_created\": true, \"timed_out\": false}\ncapture after: rc=1 {\"receipt\": \"/tmp/bench-pp-obuh6xv8/after/receipt.json\", \"test_returncode\": 1, \"report_created\": true, \"timed_out\": false}\n# Failure evidence\n\nComparable receipts: yes\nBefore: {'pass': 7, 'failure': 6}; after: {'pass': 4, 'failure': 9}\n\n\n## changed_failure: 2\n- 2be6eeda3af7 \"test/env.test.js / test/env.test.js / env module\": failure -> failure\n- 5d9dd05fe619 \"test/shipping.test.js / test/shipping.test.js / pre changed shipping\": failure -> failure\n\n## new_failure: 3\n- 24103977c7ce \"test/report.test.js / test/report.test.js / test/report.test.js\": absent -> failure\n- 32eec595c7b0 \"test/cart.test.js / test/cart.test.js / new discount percent\": pass -> failure\n- a127325588af \"test/flaky.test.js / test/flaky.test.js / flaky random\": pass -> failure\n\n## other_missing: 1\n- 00efb00355d3 \"test/report.test.js / test/report.test.js / new collect summary\": pass -> absent\n\n## same_failure_observed_before: 4\n- 281b400d56d3 \"test/env.test.js / test/env.test.js / env service\": failure -> failure\n- 385f74369502 \"test/flaky.test.js / test/flaky.test.js / flaky timing\": failure -> failure\n- d7a71eba8df0 \"test/env.test.js / test/env.test.js / env var\": failure -> failure\n- ec99a5e8f90c \"test/tax.test.js / test/tax.test.js / pre tax rounding\": failure -> failure\n\n- Observed before is not proof of causality or permission to ignore it.\n- Environment and test scope labels are caller-declared, not attested.\n- Exact signatures deliberately retain numbers/paths; noisy changes need inspection.\n- Local hashes detect accidental artifact changes; receipts are not signed.\n"
+}

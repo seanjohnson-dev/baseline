@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""Score every result file in $BENCH_RESULTS (default bench/results/) against ground truth.
+
+Writes scorecard.json and scorecard.md next to the results. A cell is "correct trials / trials x cases";
+the rules are in RULES below (and in bench/README.md).
+"""
+import json, os, statistics, sys
+from collections import defaultdict
+from pathlib import Path
+
+BENCH = Path(__file__).resolve().parent
+sys.path.insert(0, str(BENCH))
+import harness  # noqa: E402
+
+RES = harness.RES
+CASES = ["NEW", "NEW_COLLECT", "PRE", "PRE_CHANGED", "FLAKY", "FLAKY_NOT_NEW", "ENV", "PASS"]
+NAMES = {harness.SELF: harness.SELF.capitalize(), "wasitme": "wasitme", "fof": "flake-or-fault", "pp": "preexisting-proof"}
+ORDER = [harness.SELF, "wasitme", "fof", "pp"]
+# cases a tool does not claim to handle (from its own README); still scored, marked "not a goal"
+NOT_A_GOAL = {
+    "wasitme": {"PRE_CHANGED", "FLAKY", "ENV"},
+    "fof": {"PRE_CHANGED", "ENV"},
+    "pp": {"FLAKY", "ENV"},
+}
+RULES = """\
+Each fixture test has one ground-truth case; per trial a tool's verdict for it is correct if:
+- NEW: labelled new/introduced/broken-by-change, nothing else (preexisting-proof: new_failure; a test that
+  is also reported missing still counts).
+- NEW_COLLECT (the test file no longer imports/compiles): the file or package reported as a new failure.
+- PRE: labelled pre-existing / same-failure-observed-before, nothing else.
+- PRE_CHANGED (fails on base too, but with a different error): flagged as changed (this tool:
+  pre_existing_error_changed; preexisting-proof: changed_failure) or as new. Labelled plain pre-existing = wrong.
+- FLAKY: labelled flaky. FLAKY_NOT_NEW: the flaky test was not labelled new (any other label or none is fine).
+- ENV (missing module, missing env var, service down): labelled environment, distinct from pre-existing.
+- PASS: not reported at all.
+Label mapping: wasitme INTRODUCED=new, PRE-EXISTING=pre; flake-or-fault broken-by-change=new, pre-existing=pre,
+flaky=flaky; preexisting-proof new_failure=new, changed_failure=changed, same_failure_observed_before=pre;
+this tool new/pre_existing/pre_existing_error_changed/flaky/environment as named. "not a goal" = the tool's own
+README does not claim that case; the number is shown anyway. Time = median wall seconds per run of the tool
+(one run = everything the tool does to give its verdicts, including its base run and reruns)."""
+
+
+def ok(case, labs):
+    labs = set(labs or [])
+    if case in ("NEW", "NEW_COLLECT"): return labs in ({"NEW"}, {"NEW", "MISSING"})
+    if case == "PRE": return labs == {"PRE"}
+    if case == "PRE_CHANGED": return labs in ({"CHANGED"}, {"NEW"})
+    if case == "FLAKY": return labs == {"FLAKY"}
+    if case == "FLAKY_NOT_NEW": return "NEW" not in labs
+    if case == "ENV": return labs == {"ENV"}
+    if case == "PASS": return not labs
+
+
+def main():
+    files = sorted(f for f in RES.glob("*-*-*.json") if f.name.count("-") >= 2)
+    cells = defaultdict(lambda: defaultdict(lambda: [0, 0]))   # (tool, eco|all) -> case -> [ok, n]
+    secs = defaultdict(list); trials = defaultdict(set); meta = {}; runs = []
+    for f in files:
+        d = json.loads(f.read_text())
+        if "labels" not in d: continue
+        t = d["tool"]; meta[t] = d.get("tool_version", {}); trials[t].add(d["trials"])
+        runs.append({"file": f.name, "tool": t, "eco": d["eco"], "mode": d["mode"], "trials": d["trials"],
+                     "median_s": statistics.median(d["seconds"]), "max_s": max(d["seconds"]), "started": d.get("started"),
+                     "load_before": d.get("load_before"), "load_after": d.get("load_after")})
+        for tr in d["labels"]:
+            for k, case in d["truth"].items():
+                for c in ([case, "FLAKY_NOT_NEW"] if case == "FLAKY" else [case]):
+                    for key in ((t, d["eco"]), (t, "all")):
+                        cells[key][c][1] += 1; cells[key][c][0] += ok(c, tr[k])
+        secs[(t, d["eco"])].extend(d["seconds"]); secs[(t, "all")].extend(d["seconds"])
+    tools = [t for t in ORDER if (t, "all") in cells]
+    out = {"rules": RULES, "tools": {}, "runs": runs}
+    for t in tools:
+        out["tools"][t] = {"name": NAMES[t], "version": meta[t], "trials_per_combo": sorted(trials[t]),
+                           "not_a_goal": sorted(NOT_A_GOAL.get(t, [])), "scores": {}}
+        for eco in ("all", "py", "js", "go"):
+            if (t, eco) not in cells: continue
+            out["tools"][t]["scores"][eco] = {c: cells[(t, eco)][c] for c in CASES}
+            out["tools"][t]["scores"][eco]["median_s"] = round(statistics.median(secs[(t, eco)]), 2)
+    (RES / "scorecard.json").write_text(json.dumps(out, indent=1) + "\n")
+
+    def cell(t, eco, c):
+        k, n = cells[(t, eco)][c]
+        s = f"{k}/{n} ({round(100 * k / n)}%)" if n else "-"
+        return s + (" not a goal" if c in NOT_A_GOAL.get(t, ()) else "")
+    md = ["# Scorecard", "", "Generated by `python3 bench/score.py` from the result files in this directory.", "", "## Rules", "", RULES, ""]
+    hdr = "| tool | N | " + " | ".join(CASES) + " | median s |"
+    sep = "|" + "---|" * (len(CASES) + 3)
+    md += ["## All ecosystems and modes", "", hdr, sep]
+    for t in tools:
+        md.append(f"| {NAMES[t]} | {','.join(map(str, sorted(trials[t])))} | " + " | ".join(cell(t, 'all', c) for c in CASES)
+                  + f" | {out['tools'][t]['scores']['all']['median_s']} |")
+    for eco in ("py", "js", "go"):
+        md += ["", f"## {eco}", "", hdr, sep]
+        for t in tools:
+            if (t, eco) in cells:
+                md.append(f"| {NAMES[t]} | {','.join(map(str, sorted(trials[t])))} | " + " | ".join(cell(t, eco, c) for c in CASES)
+                          + f" | {out['tools'][t]['scores'][eco]['median_s']} |")
+    md += ["", "N = trials per ecosystem x mode (each trial scores 13 tests: 1 NEW, 1 NEW_COLLECT, 1 PRE, 1 PRE_CHANGED, 2 FLAKY, 3 ENV, 4 PASS).",
+           "", "## Versions", ""]
+    for t in tools:
+        v = meta[t]
+        md.append(f"- {NAMES[t]}: " + ", ".join(f"{k} {v[k]}" for k in v))
+    load = RES / "load.txt"
+    if load.exists():
+        md += ["", "## Machine load (`uptime` load averages, 1/5/15 min)", "", "```", load.read_text().strip(), "```"]
+    md += ["", "## Runs", "", "| file | trials | median s | max s | load before | load after |", "|---|---|---|---|---|---|"]
+    for r in runs:
+        md.append(f"| {r['file']} | {r['trials']} | {r['median_s']} | {r['max_s']} | {r['load_before']} | {r['load_after']} |")
+    (RES / "scorecard.md").write_text("\n".join(md) + "\n")
+    print("\n".join(md[md.index("## All ecosystems and modes"):md.index("## All ecosystems and modes") + 4 + len(tools)]))
+
+
+if __name__ == "__main__":
+    main()

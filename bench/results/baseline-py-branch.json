@@ -1,0 +1,363 @@
+{
+ "tool": "baseline",
+ "eco": "py",
+ "mode": "branch",
+ "trials": 10,
+ "started": "2026-10-28T12:28:26+02:00",
+ "load_before": "0.29, 0.63, 2.01",
+ "load_after": "0.88, 0.73, 2.02",
+ "tool_version": {
+  "version": "baseline 0.1.0",
+  "commit": "5f586d2"
+ },
+ "seconds": [
+  2.68,
+  2.16,
+  2.08,
+  2.0,
+  2.22,
+  2.21,
+  2.15,
+  2.21,
+  2.21,
+  2.55
+ ],
+ "truth": {
+  "tests/test_cart.py::test_total_plain": "PASS",
+  "tests/test_cart.py::test_new_discount_percent": "NEW",
+  "tests/test_tax.py::test_tax_basic": "PASS",
+  "tests/test_tax.py::test_pre_tax_rounding": "PRE",
+  "tests/test_shipping.py::test_pre_changed_shipping": "PRE_CHANGED",
+  "tests/test_report.py": "NEW_COLLECT",
+  "tests/test_flaky.py::test_flaky_random": "FLAKY",
+  "tests/test_flaky.py::test_flaky_timing": "FLAKY",
+  "tests/test_env.py::test_env_module": "ENV",
+  "tests/test_env.py::test_env_var": "ENV",
+  "tests/test_env.py::test_env_service": "ENV",
+  "tests/test_control.py::test_control_a": "PASS",
+  "tests/test_control.py::test_control_b": "PASS"
+ },
+ "labels": [
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": null,
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": null,
+   "tests/test_flaky.py::test_flaky_timing": null,
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": null,
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": null,
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  },
+  {
+   "tests/test_cart.py::test_total_plain": null,
+   "tests/test_cart.py::test_new_discount_percent": [
+    "NEW"
+   ],
+   "tests/test_tax.py::test_tax_basic": null,
+   "tests/test_tax.py::test_pre_tax_rounding": [
+    "PRE"
+   ],
+   "tests/test_shipping.py::test_pre_changed_shipping": [
+    "CHANGED"
+   ],
+   "tests/test_report.py": [
+    "NEW"
+   ],
+   "tests/test_flaky.py::test_flaky_random": [
+    "FLAKY"
+   ],
+   "tests/test_flaky.py::test_flaky_timing": [
+    "FLAKY"
+   ],
+   "tests/test_env.py::test_env_module": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_var": [
+    "ENV"
+   ],
+   "tests/test_env.py::test_env_service": [
+    "ENV"
+   ],
+   "tests/test_control.py::test_control_a": null,
+   "tests/test_control.py::test_control_b": null
+  }
+ ],
+ "raw_trial1": "{\n \"tool\": \"baseline\",\n \"version\": \"0.1.0\",\n \"schema\": 1,\n \"exit_code\": 1,\n \"summary\": {\n  \"new\": 2,\n  \"pre_existing\": 1,\n  \"pre_existing_error_changed\": 1,\n  \"flaky\": 2,\n  \"environment\": 3,\n  \"unknown\": 0,\n  \"tests_total\": 12,\n  \"tests_passed\": 4,\n  \"tests_failed\": 8,\n  \"tests_skipped\": 0,\n  \"load_errors\": 1,\n  \"fixed\": 0,\n  \"missing\": 0,\n  \"flaky_surfaced\": 0\n },\n \"base\": {\n  \"sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n  \"short\": \"a565869\",\n  \"ref\": \"main\",\n  \"how\": \"merge-base of HEAD and main\"\n },\n \"head\": {\n  \"sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n  \"short\": \"9f10b2f\",\n  \"dirty\": false\n },\n \"runner\": {\n  \"name\": \"pytest\",\n  \"command\": [\n   \"python\",\n   \"-m\",\n   \"pytest\",\n   \"-q\",\n   \"-p\",\n   \"no:cacheprovider\",\n   \"--continue-on-collection-errors\"\n  ],\n  \"per_test\": true,\n  \"cwd\": \".\"\n },\n \"policy\": {\n  \"head_runs\": 5,\n  \"base_required\": 5,\n  \"base_confirm\": 10,\n  \"max_runs\": 15,\n  \"confirm_budget_hit\": true,\n  \"flaky_hunt\": 0\n },\n \"concurrency\": {\n  \"serial\": false,\n  \"forced\": false,\n  \"collision\": \"\"\n },\n \"test_runs\": 115,\n \"cache\": {\n  \"enabled\": false,\n  \"hit\": false\n },\n \"results\": [\n  {\n   \"id\": \"tests/test_cart.py::test_new_discount_percent\",\n   \"kind\": \"test\",\n   \"verdict\": \"new\",\n   \"reason\": \"Passed all 9 runs on base but failed all 5 runs on head \\u2014 this change broke it.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 99.9 == 90\\n+ where 99.9 = total([(100, 1)], discount=0.1)\",\n    \"error_raw\": \"def test_new_discount_percent():\\n>       assert total([(100, 1)], discount=0.1) == 90\\nE       assert 99.9 == 90\\nE        +  where 99.9 = total([(100, 1)], discount=0.1)\\n\\ntests/test_cart.py:7: AssertionError\",\n    \"message\": \"AssertionError: assert 99.9 == 90\\n +  where 99.9 = total([(100, 1)], discount=0.1)\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 9,\n    \"failed\": 0,\n    \"passed\": 9,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"\",\n    \"error_raw\": \"\",\n    \"message\": \"\",\n    \"distinct_errors\": 0\n   },\n   \"runs_total\": 14,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": true,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_report.py\",\n   \"kind\": \"load_error\",\n   \"verdict\": \"new\",\n   \"reason\": \"Loads fine on base but fails to load on head (5/5) \\u2014 this change broke it; 1 test(s) in it can't run.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"ModuleNotFoundError: No module named 'shop.report'\",\n    \"error_raw\": \"ImportError while importing test module '<work>/py-shop/tests/test_report.py'.\\nHint: make sure your test modules/packages have valid Python names.\\nTraceback:\\n/usr/lib/python3.13/importlib/__init__.py:88: in import_module\\n    return _bootstrap._gcd_import(name[level:], package, level)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\ntests/test_report.py:1: in <module>\\n    from shop.report import summary\\nE   ModuleNotFoundError: No module named 'shop.report'\",\n    \"message\": \"ModuleNotFoundError: No module named 'shop.report'\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 5,\n    \"failed\": 0,\n    \"passed\": 5,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"\",\n    \"error_raw\": \"\",\n    \"message\": \"\",\n    \"distinct_errors\": 0\n   },\n   \"runs_total\": 10,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [\n    \"tests/test_report.py::test_new_collect_summary\"\n   ],\n   \"closure_changed\": null,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_shipping.py::test_pre_changed_shipping\",\n   \"kind\": \"test\",\n   \"verdict\": \"pre_existing_error_changed\",\n   \"reason\": \"Failed on base too (9/9), but the error is different now \\u2014 still failing, check this change didn't make it worse.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 6 == 7\\n+ where 6 = shipping(2)\",\n    \"error_raw\": \"def test_pre_changed_shipping():\\n>       assert shipping(2) == 7\\nE       assert 6 == 7\\nE        +  where 6 = shipping(2)\\n\\ntests/test_shipping.py:4: AssertionError\",\n    \"message\": \"AssertionError: assert 6 == 7\\n +  where 6 = shipping(2)\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 9,\n    \"failed\": 9,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 5 == 7\\n+ where 5 = shipping(2)\",\n    \"error_raw\": \"def test_pre_changed_shipping():\\n>       assert shipping(2) == 7\\nE       assert 5 == 7\\nE        +  where 5 = shipping(2)\\n\\ntests/test_shipping.py:4: AssertionError\",\n    \"message\": \"AssertionError: assert 5 == 7\\n +  where 5 = shipping(2)\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 14,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": true,\n   \"similarity\": 0.962,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_tax.py::test_pre_tax_rounding\",\n   \"kind\": \"test\",\n   \"verdict\": \"pre_existing\",\n   \"reason\": \"Fails the same way on base (9/9) and head (5/5) \\u2014 already broken before this change.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 1.57 == 1.58\\n+ where 1.57 = tax(10.5)\",\n    \"error_raw\": \"def test_pre_tax_rounding():\\n>       assert tax(10.50) == 1.58\\nE       assert 1.57 == 1.58\\nE        +  where 1.57 = tax(10.5)\\n\\ntests/test_tax.py:7: AssertionError\",\n    \"message\": \"AssertionError: assert 1.57 == 1.58\\n +  where 1.57 = tax(10.5)\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 9,\n    \"failed\": 9,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 1.57 == 1.58\\n+ where 1.57 = tax(10.5)\",\n    \"error_raw\": \"def test_pre_tax_rounding():\\n>       assert tax(10.50) == 1.58\\nE       assert 1.57 == 1.58\\nE        +  where 1.57 = tax(10.5)\\n\\ntests/test_tax.py:7: AssertionError\",\n    \"message\": \"AssertionError: assert 1.57 == 1.58\\n +  where 1.57 = tax(10.5)\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 14,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_env.py::test_env_module\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (9/9) and head (5/5) with an environment error (Python module 'psycopg2_not_installed' is not installed) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"ModuleNotFoundError: No module named 'psycopg2_not_installed'\",\n    \"error_raw\": \"def test_env_module():\\n>       import psycopg2_not_installed  # noqa\\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nE       ModuleNotFoundError: No module named 'psycopg2_not_installed'\\n\\ntests/test_env.py:4: ModuleNotFoundError\",\n    \"message\": \"ModuleNotFoundError: No module named 'psycopg2_not_installed'\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 9,\n    \"failed\": 9,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"ModuleNotFoundError: No module named 'psycopg2_not_installed'\",\n    \"error_raw\": \"def test_env_module():\\n>       import psycopg2_not_installed  # noqa\\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nE       ModuleNotFoundError: No module named 'psycopg2_not_installed'\\n\\ntests/test_env.py:4: ModuleNotFoundError\",\n    \"message\": \"ModuleNotFoundError: No module named 'psycopg2_not_installed'\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 14,\n   \"env_class\": {\n    \"class\": \"missing_module\",\n    \"detail\": \"Python module 'psycopg2_not_installed' is not installed\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_env.py::test_env_service\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (9/9) and head (5/5) with an environment error (a required service is not reachable (connection refused)) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"ConnectionRefusedError: [Errno 111] Connection refused\",\n    \"error_raw\": \"def test_env_service():\\n>       socket.create_connection((\\\"127.0.0.1\\\", 59999), timeout=1)\\n\\ntests/test_env.py:10: \\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \\n/usr/lib/python3.13/socket.py:864: in create_connection\\n    raise exceptions[0]\\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \\n\\naddress = ('127.0.0.1', 59999), timeout = 1, source_address = None\\nall_errors = False\\n\\n    def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT,\\n                          source_address=None, *, all_errors=False):\\n        \\\"\\\"\\\"Connect to *address* and return the socket object.\\n    \\n        Convenience function.  Connect to *address* (a 2-tuple ``(host,\\n        port)``) and return the socket object.  Passing the optional\\n        *timeout* parameter will set the timeout on the socket instance\\n        before attempting to connect.  If no *timeout* is supplied, the\\n        global default timeout setting returned by :func:`getdefaulttimeout`\\n        is used.  If *source_address* is set it must be a tuple of (host, port)\\n        for the socket to bind as a source address before making the connection.\\n        A host of '' or port 0 tells the OS to use the default. When a connection\\n        cannot be created, raises the last error if *all_errors* is False,\\n        and an ExceptionGroup of all errors if *all_errors* is True.\\n        \\\"\\\"\\\"\\n    \\n        host, port = address\\n        exceptions = []\\n        for res in getaddrinfo(host, port, 0, SOCK_STREAM):\\n            af, socktype, proto, canonname, sa = res\\n            sock = None\\n            try:\\n                sock = socket(af, socktype, proto)\\n                if timeout is not _GLOBAL_DEFAULT_TIMEOUT:\\n                    sock.settimeout(timeout)\\n                if source_address:\\n                    sock.bind(source_address)\\n>               sock.connect(sa)\\n\\u2026\",\n    \"message\": \"ConnectionRefusedError: [Errno 111] Connection refused\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 9,\n    \"failed\": 9,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"ConnectionRefusedError: [Errno 111] Connection refused\",\n    \"error_raw\": \"def test_env_service():\\n>       socket.create_connection((\\\"127.0.0.1\\\", 59999), timeout=1)\\n\\ntests/test_env.py:10: \\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \\n/usr/lib/python3.13/socket.py:864: in create_connection\\n    raise exceptions[0]\\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \\n\\naddress = ('127.0.0.1', 59999), timeout = 1, source_address = None\\nall_errors = False\\n\\n    def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT,\\n                          source_address=None, *, all_errors=False):\\n        \\\"\\\"\\\"Connect to *address* and return the socket object.\\n    \\n        Convenience function.  Connect to *address* (a 2-tuple ``(host,\\n        port)``) and return the socket object.  Passing the optional\\n        *timeout* parameter will set the timeout on the socket instance\\n        before attempting to connect.  If no *timeout* is supplied, the\\n        global default timeout setting returned by :func:`getdefaulttimeout`\\n        is used.  If *source_address* is set it must be a tuple of (host, port)\\n        for the socket to bind as a source address before making the connection.\\n        A host of '' or port 0 tells the OS to use the default. When a connection\\n        cannot be created, raises the last error if *all_errors* is False,\\n        and an ExceptionGroup of all errors if *all_errors* is True.\\n        \\\"\\\"\\\"\\n    \\n        host, port = address\\n        exceptions = []\\n        for res in getaddrinfo(host, port, 0, SOCK_STREAM):\\n            af, socktype, proto, canonname, sa = res\\n            sock = None\\n            try:\\n                sock = socket(af, socktype, proto)\\n                if timeout is not _GLOBAL_DEFAULT_TIMEOUT:\\n                    sock.settimeout(timeout)\\n                if source_address:\\n                    sock.bind(source_address)\\n>               sock.connect(sa)\\n\\u2026\",\n    \"message\": \"ConnectionRefusedError: [Errno 111] Connection refused\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 14,\n   \"env_class\": {\n    \"class\": \"service_unavailable\",\n    \"detail\": \"a required service is not reachable (connection refused)\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_env.py::test_env_var\",\n   \"kind\": \"test\",\n   \"verdict\": \"environment\",\n   \"reason\": \"Fails on base (9/9) and head (5/5) with an environment error (environment variable DATABASE_URL is not set) \\u2014 fix the environment, not the code.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 5,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"KeyError: 'DATABASE_URL'\",\n    \"error_raw\": \"def test_env_var():\\n>       assert os.environ[\\\"DATABASE_URL\\\"].startswith(\\\"postgres\\\")\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n\\ntests/test_env.py:7: \\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \\n\\nself = environ({'SAND_BOX_MAX_WINDOWS': '100', 'SAND_BOX_SCRIPT_SYNC_DISABLED': '1', 'AI_AGENT': 'claude-code_2-1-300_agent',...op/.git/baseline/pycache', 'PYTEST_VERSION': '9.2.0', 'PYTEST_CURRENT_TEST': 'tests/test_env.py::test_env_var (call)'})\\nkey = 'DATABASE_URL'\\n\\n>   ???\\nE   KeyError: 'DATABASE_URL'\\n\\n<frozen os>:717: KeyError\",\n    \"message\": \"KeyError: 'DATABASE_URL'\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 9,\n    \"failed\": 9,\n    \"passed\": 0,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"KeyError: 'DATABASE_URL'\",\n    \"error_raw\": \"def test_env_var():\\n>       assert os.environ[\\\"DATABASE_URL\\\"].startswith(\\\"postgres\\\")\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n\\ntests/test_env.py:7: \\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \\n\\nself = environ({'SAND_BOX_MAX_WINDOWS': '100', 'SAND_BOX_SCRIPT_SYNC_DISABLED': '1', 'AI_AGENT': 'claude-code_2-1-300_agent',...EFIX': '~/.local', 'PYTEST_VERSION': '9.2.0', 'PYTEST_CURRENT_TEST': 'tests/test_env.py::test_env_var (call)'})\\nkey = 'DATABASE_URL'\\n\\n>   ???\\nE   KeyError: 'DATABASE_URL'\\n\\n<frozen os>:717: KeyError\",\n    \"message\": \"KeyError: 'DATABASE_URL'\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 14,\n   \"env_class\": {\n    \"class\": \"missing_env_var\",\n    \"detail\": \"environment variable DATABASE_URL is not set\"\n   },\n   \"env_suspect\": false,\n   \"flaky_side\": null,\n   \"match\": \"exact\",\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_flaky.py::test_flaky_random\",\n   \"kind\": \"test\",\n   \"verdict\": \"flaky\",\n   \"reason\": \"Failed 4 and passed 1 of 5 runs on head with the same code \\u2014 flaky, not caused by this change.\",\n   \"head\": {\n    \"runs\": 5,\n    \"failed\": 4,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 0.49556953692175465 > 0.5\\n+ where 0.49556953692175465 = <built-in method random of Random object at 0x<ADDR>>()\\n+ where <built-in method random of Random object at 0x<ADDR>> = random.random\",\n    \"error_raw\": \"def test_flaky_random():\\n>       assert random.random() > 0.5\\nE       assert 0.49556953692175465 > 0.5\\nE        +  where 0.49556953692175465 = <built-in method random of Random object at 0x3f17ca00>()\\nE        +    where <built-in method random of Random object at 0x3f17ca00> = random.random\\n\\ntests/test_flaky.py:4: AssertionError\",\n    \"message\": \"AssertionError: assert 0.49556953692175465 > 0.5\\n +  where 0.49556953692175465 = <built-in method random of Random object at 0x3f17ca00>()\\n +    where <built-in method random of Random object at 0x3f17ca00> = random.random\",\n    \"distinct_errors\": 4\n   },\n   \"base\": {\n    \"runs\": 2,\n    \"failed\": 1,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: assert 0.42959631167357193 > 0.5\\n+ where 0.42959631167357193 = <built-in method random of Random object at 0x<ADDR>>()\\n+ where <built-in method random of Random object at 0x<ADDR>> = random.random\",\n    \"error_raw\": \"def test_flaky_random():\\n>       assert random.random() > 0.5\\nE       assert 0.42959631167357193 > 0.5\\nE        +  where 0.42959631167357193 = <built-in method random of Random object at 0x2e8e5830>()\\nE        +    where <built-in method random of Random object at 0x2e8e5830> = random.random\\n\\ntests/test_flaky.py:4: AssertionError\",\n    \"message\": \"AssertionError: assert 0.42959631167357193 > 0.5\\n +  where 0.42959631167357193 = <built-in method random of Random object at 0x2e8e5830>()\\n +    where <built-in method random of Random object at 0x2e8e5830> = random.random\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 7,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": \"head\",\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  },\n  {\n   \"id\": \"tests/test_flaky.py::test_flaky_timing\",\n   \"kind\": \"test\",\n   \"verdict\": \"flaky\",\n   \"reason\": \"Failed 3 and passed 1 of 4 runs on head with the same code \\u2014 flaky, not caused by this change.\",\n   \"head\": {\n    \"runs\": 4,\n    \"failed\": 3,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: worker had not finished\\nassert []\",\n    \"error_raw\": \"def test_flaky_timing():\\n        done = []\\n        def worker():\\n            time.sleep(random.uniform(0, 0.02))\\n            done.append(1)\\n        threading.Thread(target=worker).start()\\n        time.sleep(0.01)\\n>       assert done, \\\"worker had not finished\\\"\\nE       AssertionError: worker had not finished\\nE       assert []\\n\\ntests/test_flaky.py:13: AssertionError\",\n    \"message\": \"AssertionError: worker had not finished\\nassert []\",\n    \"distinct_errors\": 1\n   },\n   \"base\": {\n    \"runs\": 2,\n    \"failed\": 1,\n    \"passed\": 1,\n    \"skipped\": 0,\n    \"absent\": 0,\n    \"cached_runs\": 0,\n    \"error\": \"AssertionError: worker had not finished\\nassert []\",\n    \"error_raw\": \"def test_flaky_timing():\\n        done = []\\n        def worker():\\n            time.sleep(random.uniform(0, 0.02))\\n            done.append(1)\\n        threading.Thread(target=worker).start()\\n        time.sleep(0.01)\\n>       assert done, \\\"worker had not finished\\\"\\nE       AssertionError: worker had not finished\\nE       assert []\\n\\ntests/test_flaky.py:13: AssertionError\",\n    \"message\": \"AssertionError: worker had not finished\\nassert []\",\n    \"distinct_errors\": 1\n   },\n   \"runs_total\": 6,\n   \"env_class\": null,\n   \"env_suspect\": false,\n   \"flaky_side\": \"head\",\n   \"match\": null,\n   \"blocked_tests\": [],\n   \"closure_changed\": false,\n   \"suspicious_escalated\": false,\n   \"base_sha\": \"a5658698ecd894758bdc4041f9831eece6bac28f\",\n   \"head_sha\": \"9f10b2fd40fb7637050e86b56fbb2c4622304989\",\n   \"dirty\": false\n  }\n ],\n \"fixed\": [],\n \"flaky_passing\": [],\n \"missing\": [],\n \"warnings\": [],\n \"notes\": [],\n \"duration_s\": 2.61\n}"
+}

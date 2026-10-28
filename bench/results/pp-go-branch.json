@@ -1,0 +1,369 @@
+{
+ "tool": "pp",
+ "eco": "go",
+ "mode": "branch",
+ "trials": 10,
+ "started": "2026-10-28T12:34:57+02:00",
+ "load_before": "3.35, 4.85, 3.70",
+ "load_after": "3.24, 4.80, 3.69",
+ "tool_version": {
+  "commit": "c321dfe9c5fd49f1d5cc970e4b89e00c030a17d8",
+  "commit_date": "2026-10-23"
+ },
+ "seconds": [
+  0.61,
+  0.59,
+  0.54,
+  0.65,
+  0.59,
+  0.64,
+  0.65,
+  0.65,
+  0.61,
+  0.6
+ ],
+ "truth": {
+  "example.com/shop/cart::TestTotalPlain": "PASS",
+  "example.com/shop/cart::TestNewDiscountPercent": "NEW",
+  "example.com/shop/tax::TestTaxBasic": "PASS",
+  "example.com/shop/tax::TestPreTaxRounding": "PRE",
+  "example.com/shop/shipping::TestPreChangedShipping": "PRE_CHANGED",
+  "example.com/shop/report::TestNewCollectSummary": "NEW_COLLECT",
+  "example.com/shop/flaky::TestFlakyRandom": "FLAKY",
+  "example.com/shop/flaky::TestFlakyTiming": "FLAKY",
+  "example.com/shop/envtests::TestEnvModule": "ENV",
+  "example.com/shop/envtests::TestEnvVar": "ENV",
+  "example.com/shop/envtests::TestEnvService": "ENV",
+  "example.com/shop/control::TestControlA": "PASS",
+  "example.com/shop/control::TestControlB": "PASS"
+ },
+ "labels": [
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "reported_passing_unverified"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "reported_passing_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": null,
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "NEW"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "NEW"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": null,
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "NEW"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": null,
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "reported_passing_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  },
+  {
+   "example.com/shop/cart::TestTotalPlain": null,
+   "example.com/shop/cart::TestNewDiscountPercent": [
+    "NEW"
+   ],
+   "example.com/shop/tax::TestTaxBasic": null,
+   "example.com/shop/tax::TestPreTaxRounding": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/shipping::TestPreChangedShipping": [
+    "CHANGED"
+   ],
+   "example.com/shop/report::TestNewCollectSummary": [
+    "MISSING",
+    "NEW"
+   ],
+   "example.com/shop/flaky::TestFlakyRandom": null,
+   "example.com/shop/flaky::TestFlakyTiming": [
+    "NEW"
+   ],
+   "example.com/shop/envtests::TestEnvModule": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvVar": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/envtests::TestEnvService": [
+    "same_signature_unverified"
+   ],
+   "example.com/shop/control::TestControlA": null,
+   "example.com/shop/control::TestControlB": null
+  }
+ ],
+ "raw_trial1": "capture before: rc=1 {\"receipt\": \"/tmp/bench-pp-6vyjyyok/before/receipt.json\", \"test_returncode\": 1, \"report_created\": true, \"timed_out\": false}\ncapture after: rc=1 {\"receipt\": \"/tmp/bench-pp-6vyjyyok/after/receipt.json\", \"test_returncode\": 1, \"report_created\": true, \"timed_out\": false}\n# Failure evidence\n\nComparable receipts: NO\nBefore: {'pass': 6, 'failure': 7}; after: {'failure': 7, 'pass': 6}\n\nDo not classify any failure as pre-existing from this comparison.\n- \"after: declared errors mismatch in testsuites\"\n- \"after: declared failures mismatch in example.com/shop/report\"\n- \"after: declared tests mismatch in example.com/shop/report\"\n- \"after: declared tests mismatch in testsuites\"\n\n## changed_failure: 1\n- 4548a8757f48 \"example.com/shop/shipping / example.com/shop/shipping / TestPreChangedShipping\": failure -> failure\n\n## new_failure: 2\n- 0a3ec584f935 \"example.com/shop/report /  / TestMain\": absent -> failure\n- 76e88da912a4 \"example.com/shop/cart / example.com/shop/cart / TestNewDiscountPercent\": pass -> failure\n\n## other_missing: 1\n- 76c86f2fabb8 \"example.com/shop/report / example.com/shop/report / TestNewCollectSummary\": pass -> absent\n\n## reported_passing_unverified: 2\n- 7897beb4e994 \"example.com/shop/flaky / example.com/shop/flaky / TestFlakyTiming\": failure -> pass\n- 910274543ca1 \"example.com/shop/flaky / example.com/shop/flaky / TestFlakyRandom\": failure -> pass\n\n## same_signature_unverified: 4\n- 2b01d677b048 \"example.com/shop/envtests / example.com/shop/envtests / TestEnvModule\": failure -> failure\n- 43e4cafadb52 \"example.com/shop/tax / example.com/shop/tax / TestPreTaxRounding\": failure -> failure\n- 782bb87fc995 \"example.com/shop/envtests / example.com/shop/envtests / TestEnvService\": failure -> failure\n- b21696012823 \"example.com/shop/envtests / example.com/shop/envtests / TestEnvVar\": failure -> failure\n\n- Observed before is not proof of causality or permission to ignore it.\n- Environment and test scope labels are caller-declared, not attested.\n- Exact signatures deliberately retain numbers/paths; noisy changes need inspection.\n- Local hashes detect accidental artifact changes; receipts are not signed.\n\nNOT COMPARABLE: [\"after: declared errors mismatch in testsuites\", \"after: declared failures mismatch in example.com/shop/report\", \"after: declared tests mismatch in example.com/shop/report\", \"after: declared tests mismatch in testsuites\"]"
+}

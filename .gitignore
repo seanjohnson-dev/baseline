@@ -7,3 +7,5 @@ dist/
 .venv/
 .claude/
 *.hooklog
+bench/_work/
+bench/rivals/
