@@ -26,6 +26,11 @@ def _evidence(v: Dict, base_short: str) -> str:
     h, b = v["head"], v["base"]
     verdict = v["verdict"]
     noun = "loads" if v["kind"] == "load_error" else "passed"
+    if v["kind"] == "check_error":
+        if verdict == NEW:
+            return f"not in base's errors ({plural(b['runs'], 'run')}), reported on head"
+        if verdict == PRE:
+            return "reported on base and head"
     if verdict == NEW:
         if b["passed"]:
             return f"{noun} on base {b['passed']}/{b['runs']}, fails on head {_counts(h)}"
@@ -149,7 +154,10 @@ def agent_line(rep: Dict) -> str:
         return "Agent: " + ("all tests pass" if kind_of(rep) == "tests" else "the command passes") + \
             "; nothing to attribute."
     out = []
-    if s[NEW]:
+    if s[NEW] and kind_of(rep) == "check":
+        out.append(f"Fix the {s[NEW]} NEW error(s): base doesn't have them, this change introduced them; do not "
+                   f"call them pre-existing.")
+    elif s[NEW]:
         out.append(f"Fix the {s[NEW]} NEW failure(s): they pass on base and fail with this change; do not call "
                    f"them pre-existing.")
     if s[PRE_CHANGED]:
