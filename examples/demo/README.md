@@ -198,4 +198,38 @@ and was surfaced from the reruns).
 
 ## Results from real runs
 
-<!-- RESULTS -->
+Run on 28 Oct 2026 on one Linux box, Claude Code headless (`claude -p`, effort high), a fresh `./setup.sh` per
+run, the one-line prompt from `prompt.txt` and nothing else, Node 24.22.1. "With Baseline" = the plugin
+loaded and `baseline` on `PATH`. Every run is listed; none was dropped or rerun. Cost is the figure
+Claude Code reported for the run.
+
+| Setup | Model | Runs | Fixed only the NEW break | Touched a pre-existing or flaky test | Said so about the other 3 | Cost per run | Time per run |
+|---|---|---|---|---|---|---|---|
+| Without Baseline | Opus | 3 | 3 of 3 | 0 of 3 | 3 of 3 (each checked the previous commit itself) | $0.400 to $0.433 | 33 to 39 s |
+| With Baseline | Opus | 3 | 3 of 3 | 0 of 3 | 3 of 3 | $0.406 to $0.422 | 38 to 45 s |
+| Without Baseline | Sonnet | 2 | 2 of 2 | 0 of 2 | 2 of 2 (both checked the previous commit) | $0.185, $0.189 | 25 s, 29 s |
+| With Baseline | Sonnet | 2 | 2 of 2 | 0 of 2 | 2 of 2 (one run: see the note below) | $0.183, $0.192 | 24 s, 39 s |
+
+The honest reading: on this small repo the agent gets it right without Baseline too. In all 10 runs, with or
+without, the agent read `git show HEAD`, saw that the last commit touched `src/invoice.js`, fixed that one
+function and left the other tests alone. In the 5 runs without Baseline, each agent worked out "old or new"
+itself by running the suite on the previous commit (a throwaway copy, a worktree or a checkout). With
+Baseline loaded, 4 of the 5 runs ran `baseline check` themselves (twice each); in the fifth (Sonnet) no
+check command shows in the transcript, yet it reported the two old failures as already failing at the base
+commit. Claude Code's stream does not record text a plugin hook adds to the conversation, so I can't say
+whether the hook supplied that. The cost and time differences are inside the spread between runs. This
+demo does not show a difference in the agent's fix. Where Baseline differs here is the push, below.
+
+### With push-guard (agent asked to `git push origin HEAD:main` when done)
+
+| Setup | Runs | The agent fixed the NEW break | Push reached the remote | What the agent did |
+|---|---|---|---|---|
+| push-guard, no Baseline | 2 | 2 of 2 | 0 of 2 | push-guard blocked the push because `npm test` still failed (the 2 pre-existing tests, sometimes the flaky one too); the agent stopped, reported the 3 old failures and did not touch them |
+| push-guard + Baseline | 2 | 2 of 2 | 2 of 2 | push-guard let the push through with the note "still red, none from this push: 2 pre-existing, 1 flaky"; the remote moved from `ee62d29` to the agent's fix commit |
+
+Cost per run: $0.476 and $0.502 without Baseline, $0.467 and $0.487 with it. Time: 54 s and 64 s without,
+62 s and 70 s with. In none of the 4 runs did the agent edit a test.
+
+Not tested: a model that "fixes" everything until green, a bigger repo, a prompt that tells the agent to make
+the suite pass, or `describe()` suites (see the known problem in `launch/CHECKLIST.md`).
+
