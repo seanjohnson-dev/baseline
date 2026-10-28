@@ -501,11 +501,6 @@ What it can't do, or does only partly:
 - node:test: TypeScript test files need Node >= 22.6 (`--experimental-strip-types` below 23.6). On an older
   node they fail to load on both sides and are reported ENVIRONMENT with the node version (as a whole
   command, e.g. through a shell script, UNKNOWN with the node version as a hint).
-- node:test with `describe()` suites is mis-read (known issue, not fixed in 0.1.0): a failing `describe()`
-  suite is dropped from head's results, and the report lists the suite under "Missing on head (exist on
-  base; deleted or renamed?)" although it still exists. In a small check the failing test inside the suite
-  still got its own verdict; larger suites haven't been checked. Top-level `test()` calls are read
-  correctly.
 - ENVIRONMENT is per test (or per load error) and needs the same error on base: a test that fails with an
   environment error only on head, or with a different one on base, is NEW or UNKNOWN.
 - Monorepos and workspaces: npm/yarn/pnpm workspace packages in `node_modules` are re-pointed at the base

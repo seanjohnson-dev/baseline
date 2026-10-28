@@ -169,9 +169,7 @@ Initial release. Everything below was written before the first public release.
   check -- <command>`" instead of nothing (command not found, no git state, internal error).
 - Whole-command proof lines: `FAIL <file>`, `●`/`✕`, `Error…`/`AssertionError`, `Expected`/`Received` first and
   the final summary (`Tests: 26 failed, …`) last, before console noise from passing tests.
-
-### Known issues
-
-- `node --test` with `describe()` suites: a failing `describe()` suite is dropped from head's results and
-  reported as "Missing on head (exist on base; deleted or renamed?)" although it still exists. Not fixed in
-  this release; top-level `test()` calls are read correctly.
+- `node --test` with `describe()` suites was mis-read: a failing suite was dropped from head's results and
+  reported as "Missing on head (exist on base; deleted or renamed?)" although it still existed. Now each test
+  inside a suite is judged on its own (id `suite > nested > test`), suites aren't counted as tests, and a
+  suite-level `before`/`after` hook failure is reported on the tests of that suite.

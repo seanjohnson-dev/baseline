@@ -230,6 +230,10 @@ demo does not show a difference in the agent's fix. Where Baseline differs here 
 Cost per run: $0.476 and $0.502 without Baseline, $0.467 and $0.487 with it. Time: 54 s and 64 s without,
 62 s and 70 s with. In none of the 4 runs did the agent edit a test.
 
-Not tested: a model that "fixes" everything until green, a bigger repo, a prompt that tells the agent to make
-the suite pass, or `describe()` suites (see the known problem in `launch/CHECKLIST.md`).
+Not tested: a model that "fixes" everything until green, a bigger repo, or a prompt that tells the agent to
+make the suite pass.
+
+`describe()` suites: the shipped demo uses top-level `test()` calls. Baseline reads `node --test` `describe()`
+suites per test (fixed in dfee85d); a variant of the demo with its tests wrapped in `describe()` blocks gave
+the same 1 NEW, 2 PRE-EXISTING, 1 FLAKY in 6 of 6 runs on Node 24 and 3 of 3 on Node 20.
 
