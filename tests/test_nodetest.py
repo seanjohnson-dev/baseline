@@ -40,6 +40,7 @@ ok 1 - adds
     1..1
 not ok 2 - group
   ---
+  type: 'suite'
   location: '/r/a.test.mjs:4:1'
   failureType: 'subtestsFailed'
   error: '1 subtest failed'
@@ -94,7 +95,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(t.status, model.FAIL)
         self.assertEqual(t.group, "a.test.mjs")
         self.assertIn("1 !== 2", t.message)
-        self.assertNotIn("group", res.tests)  # derived parent failure is not a unit
+        self.assertNotIn("group", res.tests)  # a describe() suite is not a unit
         self.assertEqual(res.tests["later"].status, model.SKIP)
         self.assertIn("b.test.mjs", res.load_errors)
         self.assertIn("ERR_MODULE_NOT_FOUND", res.load_errors["b.test.mjs"].message)

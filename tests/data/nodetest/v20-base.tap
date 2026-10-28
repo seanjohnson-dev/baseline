@@ -1,0 +1,220 @@
+TAP version 13
+# Subtest: invoice
+    # Subtest: totals lines
+    ok 1 - totals lines
+      ---
+      duration_ms: 0.616775
+      ...
+    # Subtest: discounts
+        # Subtest: applies a percentage
+        ok 1 - applies a percentage
+          ---
+          duration_ms: 0.159365
+          ...
+        # Subtest: applies a fixed amount
+        ok 2 - applies a fixed amount
+          ---
+          duration_ms: 0.083347
+          ...
+        # Subtest: stacked
+            # Subtest: caps at 100%
+            ok 1 - caps at 100%
+              ---
+              duration_ms: 0.113297
+              ...
+            1..1
+        ok 3 - stacked
+          ---
+          duration_ms: 0.200349
+          type: 'suite'
+          ...
+        1..3
+    ok 2 - discounts
+      ---
+      duration_ms: 0.755178
+      type: 'suite'
+      ...
+    # Subtest: keeps legacy rounding
+    ok 3 - keeps legacy rounding
+      ---
+      duration_ms: 0.106091
+      ...
+    1..3
+ok 1 - invoice
+  ---
+  duration_ms: 2.388722
+  type: 'suite'
+  ...
+# Subtest: format
+    # Subtest: rounds half a cent up
+    not ok 1 - rounds half a cent up
+      ---
+      duration_ms: 1.23625
+      location: '/tmp/nodetest-fixture/invoice.test.mjs:18:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        1 !== 1.01
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 1.01
+      actual: 1
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///tmp/nodetest-fixture/invoice.test.mjs:18:44)
+        Test.runInAsyncScope (node:async_hooks:206:9)
+        Test.run (node:internal/test_runner/test:796:25)
+        Test.start (node:internal/test_runner/test:702:17)
+        node:internal/test_runner/test:1133:71
+        node:internal/per_context/primordials:482:82
+        new Promise (<anonymous>)
+        new SafePromise (node:internal/per_context/primordials:450:29)
+        node:internal/per_context/primordials:482:9
+        Array.map (<anonymous>)
+      ...
+    # Subtest: puts the minus sign first
+    not ok 2 - puts the minus sign first
+      ---
+      duration_ms: 0.413751
+      location: '/tmp/nodetest-fixture/invoice.test.mjs:19:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + '$-5.00'
+        - '-$5.00'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: '-$5.00'
+      actual: '$-5.00'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///tmp/nodetest-fixture/invoice.test.mjs:19:48)
+        Test.runInAsyncScope (node:async_hooks:206:9)
+        Test.run (node:internal/test_runner/test:796:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:526:18)
+        Test.postRun (node:internal/test_runner/test:889:19)
+        Test.run (node:internal/test_runner/test:835:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1135:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+      ...
+    1..2
+not ok 2 - format
+  ---
+  duration_ms: 1.873632
+  type: 'suite'
+  location: '/tmp/nodetest-fixture/invoice.test.mjs:17:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: rates
+    # Subtest: quotes from the sandbox
+    not ok 1 - quotes from the sandbox
+      ---
+      duration_ms: 0.271565
+      location: '/tmp/nodetest-fixture/invoice.test.mjs:23:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        1.0832 !== 1.085
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 1.085
+      actual: 1.0832
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///tmp/nodetest-fixture/invoice.test.mjs:23:46)
+        Test.runInAsyncScope (node:async_hooks:206:9)
+        Test.run (node:internal/test_runner/test:796:25)
+        Test.start (node:internal/test_runner/test:702:17)
+        node:internal/test_runner/test:1133:71
+        node:internal/per_context/primordials:482:82
+        new Promise (<anonymous>)
+        new SafePromise (node:internal/per_context/primordials:450:29)
+        node:internal/per_context/primordials:482:9
+        Array.map (<anonymous>)
+      ...
+    1..1
+not ok 3 - rates
+  ---
+  duration_ms: 0.36596
+  type: 'suite'
+  location: '/tmp/nodetest-fixture/invoice.test.mjs:22:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: ledger
+    # Subtest: posts a debit
+    not ok 1 - posts a debit
+      ---
+      duration_ms: 0
+      location: '/tmp/nodetest-fixture/invoice.test.mjs:28:3'
+      failureType: 'cancelledByParent'
+      error: 'test did not finish before its parent and was cancelled'
+      code: 'ERR_TEST_FAILURE'
+      ...
+    # Subtest: posts a credit
+    not ok 2 - posts a credit
+      ---
+      duration_ms: 0
+      location: '/tmp/nodetest-fixture/invoice.test.mjs:29:3'
+      failureType: 'cancelledByParent'
+      error: 'test did not finish before its parent and was cancelled'
+      code: 'ERR_TEST_FAILURE'
+      ...
+    1..2
+not ok 4 - ledger
+  ---
+  duration_ms: 0.310431
+  type: 'suite'
+  location: '/tmp/nodetest-fixture/invoice.test.mjs:26:1'
+  failureType: 'hookFailed'
+  error: 'ledger seed is missing account 4000'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ledgerSeed (file:///tmp/nodetest-fixture/invoice.mjs:5:41)
+    SuiteContext.<anonymous> (file:///tmp/nodetest-fixture/invoice.test.mjs:27:16)
+    TestHook.runInAsyncScope (node:async_hooks:206:9)
+    TestHook.run (node:internal/test_runner/test:796:25)
+    TestHook.run (node:internal/test_runner/test:1041:18)
+    TestHook.run (node:internal/util:524:20)
+    Suite.runHook (node:internal/test_runner/test:723:20)
+    Suite.run (node:internal/test_runner/test:1129:18)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: archive
+    # Subtest: monthly
+        # Subtest: writes a file
+        ok 1 - writes a file
+          ---
+          duration_ms: 0.174493
+          ...
+        1..1
+    ok 1 - monthly
+      ---
+      duration_ms: 0.32435
+      type: 'suite'
+      ...
+    1..1
+ok 5 - archive
+  ---
+  duration_ms: 0.540596
+  type: 'suite'
+  ...
+1..5
+# tests 11
+# suites 8
+# pass 6
+# fail 3
+# cancelled 2
+# skipped 0
+# todo 0
+# duration_ms 132.462903

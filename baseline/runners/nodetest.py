@@ -1,11 +1,27 @@
 """node:test (`node --test`): TAP reporter written to a file (Node >= 20).
 
-Test ids are the name path ("suite > test"); passing tests carry no location in
-TAP, so the file is known only for failures (enough to rerun them). A test file
-that fails to load is reported by node as a failing "test" named after the file:
-that becomes a load error with the subprocess's stderr as its message.
+Test ids are the name path ("suite > nested > test"); passing tests carry no
+location in TAP, so the file is known only for failures (enough to rerun them).
+A test file that fails to load is reported by node as a failing "test" named
+after the file: that becomes a load error with the subprocess's stderr as its
+message.
+
+describe() suites (TAP `type: 'suite'`, as written by Node 20.19 and 24; a
+result without it is read like a test() with subtests, below) are not tests: a
+passing suite adds nothing, and a suite failing because of its tests
+(failureType subtestsFailed) is reported through them. A suite that fails for
+its own reason is blamed on the tests it took down, each failing with
+"hook failed in '<suite>': <error>" (or "parent failed ..."):
+- a before hook that throws: node cancels the suite's tests (cancelledByParent);
+- an after hook that throws: the tests passed, the suite fails afterwards;
+- a timeout: the unfinished tests are cancelled.
+beforeEach/afterEach failures are already reported on the test itself. A
+failing suite with no tests in it (e.g. a describe() callback that throws)
+stays a unit of its own. A test() with t.test() subtests is a test: when only
+its subtests fail, its own body passed and it counts as passed (never missing).
 Reruns: `--test-name-pattern` matching the test and its ancestors (a subtest only
-runs if its parents match, on Node 20 and later alike) plus the files involved.
+runs if its parents match, on Node 20 and later alike) plus the files involved;
+a matching suite runs its hooks, so a hook failure reproduces in reruns.
 """
 from __future__ import annotations
 
@@ -58,6 +74,79 @@ def _yaml(lines: List[str], i: int, ind: int):
     return out, i + 1
 
 
+class _Rec:
+    """One TAP result line: a test or a suite, with its children (TAP lists them before it)."""
+
+    def __init__(self, path: List[str], lvl: int, failed: bool, skipped: bool, diag: Dict[str, str],
+                 comments: List[str]):
+        self.path, self.lvl, self.failed, self.skipped, self.diag, self.comments = \
+            path, lvl, failed, skipped, diag, comments
+        self.name = path[-1]
+        self.children: List["_Rec"] = []
+        self.suite = diag.get("type") == "suite"
+        self.own_failure = failed and diag.get("failureType") not in ("subtestsFailed", "cancelledByParent")
+        self.blame: Optional["_Rec"] = None  # the failing parent (e.g. a suite hook) this test failed through
+
+    def descendants(self):
+        for c in self.children:
+            yield c
+            yield from c.descendants()
+
+    @property
+    def has_tests(self) -> bool:
+        return any(not d.suite for d in self.descendants())
+
+
+def _records(lines: List[str]) -> List[_Rec]:
+    """TAP lines -> results in report order (children before their parent), linked to their children."""
+    recs: List[_Rec] = []
+    kids: Dict[int, List[_Rec]] = {}
+    stack: List[str] = []
+    comments: List[str] = []
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
+        m = SUBTEST.match(ln)
+        if m:
+            lvl = len(m.group("ind")) // 4
+            stack = stack[:lvl] + [_unescape(m.group("name"))]
+            i += 1
+            continue
+        m = RESULT.match(ln)
+        if not m:
+            if ln.startswith("# ") and not SUMMARY.match(ln):
+                comments.append(ln[2:])
+            i += 1
+            continue
+        ind = len(m.group("ind"))
+        lvl = ind // 4
+        diag, i = _yaml(lines, i + 1, ind)
+        r = _Rec(stack[:lvl] + [_unescape(m.group("name") or "")], lvl, bool(m.group("not")),
+                 bool(m.group("dir")), diag, comments)
+        comments = []
+        r.children = kids.pop(lvl + 1, [])
+        for k in [k for k in kids if k > lvl]:
+            del kids[k]
+        kids.setdefault(lvl, []).append(r)
+        recs.append(r)
+    return recs
+
+
+def _blame_parents(recs: List[_Rec]) -> None:
+    """A parent that fails for its own reason (a before/after hook that throws, a timeout) is blamed on
+    the tests it took down: those node cancelled and, for a hook, those that passed (an after hook runs
+    once they are done). The innermost failing parent wins; skipped tests stay skipped."""
+    for r in recs:
+        if not (r.own_failure and r.children):
+            continue
+        hook = r.diag.get("failureType") == "hookFailed"
+        for d in r.descendants():
+            if d.suite or d.skipped or d.blame is not None:
+                continue
+            if (d.failed and d.diag.get("failureType") == "cancelledByParent") or (hook and not d.failed):
+                d.blame = r
+
+
 class NodeTestRunner(Runner):
     name = "node-test"
 
@@ -77,6 +166,9 @@ class NodeTestRunner(Runner):
                 skip_next = "=" not in a
                 continue  # we own the reporter; reruns choose their own pattern
             (self.opts if a.startswith("-") else self.pos).append(a)
+
+    def cache_key(self) -> str:
+        return super().cache_key() + "\0suites2"  # base results cached before suites stopped being tests
 
     def _argv(self, report: Path, extra: List[str], files: List[str]) -> List[str]:
         return self.prefix + ["--test-reporter=tap", f"--test-reporter-destination={report}"] + self.opts + \
@@ -106,59 +198,48 @@ class NodeTestRunner(Runner):
         lines = rep.read_text(errors="replace").splitlines()
         res = RunResult(exit_code=proc.returncode, duration=proc.duration, output_tail=proc.output[-4000:])
         res.invocations.append(inv.argv)
-        stack: List[str] = []
-        comments: List[str] = []
-        i = 0
-        while i < len(lines):
-            ln = lines[i]
-            m = SUBTEST.match(ln)
-            if m:
-                lvl = len(m.group("ind")) // 4
-                stack = stack[:lvl] + [_unescape(m.group("name"))]
-                i += 1
-                continue
-            m = RESULT.match(ln)
-            if not m:
-                if ln.startswith("# ") and not SUMMARY.match(ln):
-                    comments.append(ln[2:])
-                i += 1
-                continue
-            ind = len(m.group("ind"))
-            lvl = ind // 4
-            name = _unescape(m.group("name") or "")
-            diag, i = _yaml(lines, i + 1, ind)
-            path = stack[:lvl] + [name]
-            if diag.get("failureType") == "subtestsFailed":
-                comments = []
-                continue  # derived from its subtests
-            loc = diag.get("location", "")
+        recs = _records(lines)
+        _blame_parents(recs)
+        for r in recs:
+            loc = r.diag.get("location", "")
             lm = re.match(r"^(.*?):\d+:\d+$", loc)
             file = side.rel(lm.group(1)) if lm else ""
-            if lvl == 0 and m.group("not") and os.path.isabs(name) and TEST_FILE.search(name) \
-                    and diag.get("failureType") == "testCodeFailure" and "exitCode" in diag:
-                rel = side.rel(name)
-                text = "\n".join(comments).strip() or diag.get("error", "test file failed")
+            ftype = r.diag.get("failureType", "")
+            if r.lvl == 0 and r.failed and os.path.isabs(r.name) and TEST_FILE.search(r.name) \
+                    and ftype == "testCodeFailure" and "exitCode" in r.diag:
+                rel = side.rel(r.name)
+                text = "\n".join(r.comments).strip() or r.diag.get("error", "test file failed")
                 first = next((c for c in text.splitlines() if re.search(r"Error|error", c)), text.splitlines()[0])
                 key = self.make_key("", first, side)
                 res.load_errors[rel] = LoadError(rel, key, normalize.first_lines(first, 4),
                                                  normalize.first_lines(text, 30),
                                                  self.classify(key, text, side), {"file": rel})
-                comments = []
                 continue
-            comments = []
-            tid = " > ".join(path)
-            locator = {"file": file, "path": "\x1f".join(path)}
-            if m.group("dir"):
-                res.tests[tid] = TestResult(tid, file or "(node:test)", SKIP, name, locator)
-            elif not m.group("not"):
+            if r.suite and (r.has_tests or not r.own_failure):
+                continue  # a suite is not a test: its failures are its tests' (or blamed on them)
+            tid = " > ".join(r.path)
+            locator = {"file": file, "path": "\x1f".join(r.path)}
+            if r.skipped:
+                res.tests[tid] = TestResult(tid, file or "(node:test)", SKIP, r.name, locator)
+            elif r.blame is None and (not r.failed or ftype == "subtestsFailed"):
+                # a test() whose own body passed (a failing subtest is reported on its own)
                 if tid not in res.tests or res.tests[tid].status != FAIL:
-                    res.tests[tid] = TestResult(tid, file or "(node:test)", PASS, name, locator)
+                    res.tests[tid] = TestResult(tid, file or "(node:test)", PASS, r.name, locator)
             else:
+                diag = r.diag
                 err = diag.get("error", "")
+                if r.blame is not None:
+                    diag = r.blame.diag
+                    what = "hook" if diag.get("failureType") == "hookFailed" else "parent"
+                    err = f"{what} failed in '{' > '.join(r.blame.path)}': {diag.get('error', '')}"
+                    if not file:
+                        lm = re.match(r"^(.*?):\d+:\d+$", diag.get("location", ""))
+                        file = side.rel(lm.group(1)) if lm else ""
+                        locator["file"] = file
                 etype = diag.get("name", "") if diag.get("name", "") not in ("", "Error") else ""
                 key = self.make_key(etype, normalize.first_lines(err, 6), side)
                 raw = (err + "\n" + diag.get("stack", "")).strip()
-                res.tests[tid] = TestResult(tid, file or "(node:test)", FAIL, name, locator, key,
+                res.tests[tid] = TestResult(tid, file or "(node:test)", FAIL, r.name, locator, key,
                                             normalize.first_lines(err, 8), normalize.first_lines(raw, 30),
                                             self.classify(key, raw, side))
         if not res.tests and not res.load_errors and proc.returncode != 0:

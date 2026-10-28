@@ -71,6 +71,16 @@ through `--json --outputFile`. Every child runs with `CI=true` and stdin from
 /dev/null, and jest gets `--watchAll=false` (`--watch`/`--watchAll` removed;
 vitest always runs `run`), so watch modes never start.
 
+`node --test` (TAP reporter): a test's id is its name path, `suite > nested >
+test`. `describe()` suites are not units and are not counted as tests: a
+failing test inside one gets its own verdict. A suite that fails for its own
+reason (a `before`/`after` hook that throws, a timeout) is blamed on the tests
+it took down, each failing with `hook failed in '<suite>': <error>`, so the
+usual rules apply (the same hook failure on base ⇒ PRE-EXISTING, only on head
+⇒ NEW). A failing suite with no tests in it (a `describe()` callback that
+throws) is a unit of its own. A `test()` whose `t.test()` subtests fail is
+counted as passed (its own body passed); the subtests carry the failures.
+
 ### Chained commands
 
 A command or npm script that is a list of commands (`a && b; c`, newlines)

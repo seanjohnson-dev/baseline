@@ -1,0 +1,115 @@
+TAP version 13
+# Subtest: invoice
+    # Subtest: totals lines
+    ok 1 - totals lines
+      ---
+      duration_ms: 0.445902
+      type: 'test'
+      ...
+    # Subtest: discounts
+        # Subtest: applies a percentage
+        not ok 1 - applies a percentage
+          ---
+          duration_ms: 0.76377
+          type: 'test'
+          location: '/tmp/nodetest-fixture/invoice.test.mjs:8:5'
+          failureType: 'testCodeFailure'
+          error: |-
+            Expected values to be strictly equal:
+            + actual - expected
+            
+            + 110.00000000000001
+            - 90
+            
+          code: 'ERR_ASSERTION'
+          name: 'AssertionError'
+          expected: 90
+          actual: 110.00000000000001
+          operator: 'strictEqual'
+          stack: |-
+            TestContext.<anonymous> (file:///tmp/nodetest-fixture/invoice.test.mjs:8:45)
+            Test.runInAsyncScope (node:async_hooks:227:14)
+            Test.run (node:internal/test_runner/test:1402:25)
+            Test.start (node:internal/test_runner/test:1262:17)
+            node:internal/test_runner/test:1903:71
+            node:internal/per_context/primordials:504:82
+            new Promise (<anonymous>)
+            new SafePromise (node:internal/per_context/primordials:478:3)
+            node:internal/per_context/primordials:504:9
+            Array.map (<anonymous>)
+          ...
+        # Subtest: applies a fixed amount
+        ok 2 - applies a fixed amount
+          ---
+          duration_ms: 0.084718
+          type: 'test'
+          ...
+        # Subtest: stacked
+            # Subtest: caps at 100%
+            not ok 1 - caps at 100%
+              ---
+              duration_ms: 0.168538
+              type: 'test'
+              location: '/tmp/nodetest-fixture/invoice.test.mjs:11:7'
+              failureType: 'testCodeFailure'
+              error: |-
+                Expected values to be strictly equal:
+                
+                250 !== 0
+                
+              code: 'ERR_ASSERTION'
+              name: 'AssertionError'
+              expected: 0
+              actual: 250
+              operator: 'strictEqual'
+              stack: |-
+                TestContext.<anonymous> (file:///tmp/nodetest-fixture/invoice.test.mjs:11:39)
+                Test.runInAsyncScope (node:async_hooks:227:14)
+                Test.run (node:internal/test_runner/test:1402:25)
+                Test.start (node:internal/test_runner/test:1262:17)
+                node:internal/test_runner/test:1903:71
+                node:internal/per_context/primordials:504:82
+                new Promise (<anonymous>)
+                new SafePromise (node:internal/per_context/primordials:478:3)
+                node:internal/per_context/primordials:504:9
+                Array.map (<anonymous>)
+              ...
+            1..1
+        not ok 3 - stacked
+          ---
+          duration_ms: 0.297757
+          type: 'suite'
+          location: '/tmp/nodetest-fixture/invoice.test.mjs:10:5'
+          failureType: 'subtestsFailed'
+          error: '1 subtest failed'
+          code: 'ERR_TEST_FAILURE'
+          ...
+        1..3
+    not ok 2 - discounts
+      ---
+      duration_ms: 1.395857
+      type: 'suite'
+      location: '/tmp/nodetest-fixture/invoice.test.mjs:7:3'
+      failureType: 'subtestsFailed'
+      error: '2 subtests failed'
+      code: 'ERR_TEST_FAILURE'
+      ...
+    1..2
+not ok 1 - invoice
+  ---
+  duration_ms: 2.540709
+  type: 'suite'
+  location: '/tmp/nodetest-fixture/invoice.test.mjs:5:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 4
+# suites 3
+# pass 2
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.737026
