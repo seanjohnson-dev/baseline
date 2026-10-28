@@ -339,6 +339,7 @@ class Engine:
                 s = decide.UnitState(u, head=[Obs(PASS)], base=[Obs.from_dict(full["obs"][tid])],
                                      exists_on_base=True, mentioned_on_base=True)
                 s.head_attempts = s.base_attempts = 1
+                s.closure_changed = self._closure(u)
                 out.append(s)
         return out
 

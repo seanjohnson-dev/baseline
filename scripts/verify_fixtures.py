@@ -55,6 +55,7 @@ def main():
     ap.add_argument("--eco", default="py,js,go")
     ap.add_argument("--modes", default="branch,dirty")
     ap.add_argument("--cache", action="store_true", help="allow the base cache (default: --no-cache)")
+    ap.add_argument("--auto", action="store_true", help="let the tool auto-detect the test command")
     ap.add_argument("--path-prepend", default="", help="dirs (os.pathsep-separated) to put first on PATH")
     ap.add_argument("extra", nargs=argparse.REMAINDER)
     a = ap.parse_args()
@@ -76,7 +77,7 @@ def main():
             times, runs = [], []
             for t in range(a.trials):
                 argv = [sys.executable, str(LAUNCHER), "check", "--json"] + ([] if a.cache else ["--no-cache"]) \
-                    + extra + ["--", *cmds[eco].split()]
+                    + extra + ([] if a.auto else ["--", *cmds[eco].split()])
                 t0 = time.time()
                 p = subprocess.run(argv, cwd=repo, env=env, capture_output=True, text=True, timeout=900)
                 times.append(time.time() - t0)

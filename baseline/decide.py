@@ -157,20 +157,32 @@ def wants_base(st: UnitState, p: Policy) -> int:
     return max(0, opt - _base_count(st))
 
 
+def fixed_target(st: UnitState, p: Policy) -> int:
+    """Runs per side before calling a test 'fixed'. A change that didn't touch anything the test depends on
+    can't have fixed it, so such candidates (likely flaky) must survive the suspicious budget."""
+    if st.closure_changed is False:
+        return p.max_runs
+    if st.closure_changed is None:
+        return p.base_runs
+    return p.runs
+
+
 def needs_head_fixed(st: UnitState, p: Policy) -> int:
     """'Fixed' candidate (failed on base, passed on head): confirm it keeps passing on head."""
     hf, hp, _, _ = _split(st.head)
-    if hf or st.head_attempts >= p.runs + 2:
+    t = fixed_target(st, p)
+    if hf or st.head_attempts >= t + 2:
         return 0
-    return max(0, p.runs - len(hp))
+    return max(0, t - len(hp))
 
 
 def needs_base_fixed(st: UnitState, p: Policy) -> int:
     bf, bp, _, _ = _split(st.base)
     hf, _, _, _ = _split(st.head)
-    if bp or hf or st.base_problem or st.base_attempts >= p.runs + 2:
+    t = fixed_target(st, p)
+    if bp or hf or st.base_problem or st.base_attempts >= t + 2:
         return 0
-    return max(0, p.runs - len(bf))
+    return max(0, t - len(bf))
 
 
 def fixed_verdict(st: UnitState) -> str:

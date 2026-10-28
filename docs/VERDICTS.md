@@ -23,7 +23,11 @@ untrusted for some failure) — exit 3 is never a "pre-existing" claim.
 `130`/`128+n` when interrupted by a signal (worktree is still removed).
 
 Fixed tests (fail on every base run, pass on every head run) are listed under
-`fixed`; tests on base that no longer exist on head are listed under `missing`
+`fixed`. Candidates come from the full base run and are rerun on both sides
+(`--runs` each; 2× when the change's effect on them can't be analysed; 3× when
+the change touched nothing they depend on — such a test can't have been fixed
+by it, so it is most likely flaky). Candidates that pass on base or fail on
+head go to `flaky_passing` instead; tests on base that no longer exist on head are listed under `missing`
 (informational); passing tests are only counted.
 
 ## Units

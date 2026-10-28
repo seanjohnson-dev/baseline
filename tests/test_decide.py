@@ -186,8 +186,13 @@ class PolicyTest(unittest.TestCase):
         self.assertEqual(d.needs_head(st, self.pol), 1)
         self.assertEqual(d.needs_base(st, self.pol), 2)
 
+    def test_fixed_needs_more_evidence_when_nothing_it_depends_on_changed(self):
+        st = state([P()], [F()], closure_changed=False)
+        self.assertEqual(d.needs_head_fixed(st, self.pol), 14)
+        self.assertEqual(d.needs_base_fixed(st, self.pol), 14)
+
     def test_fixed_confirmation(self):
-        st = state([P()], [F()])
+        st = state([P()], [F()], closure_changed=True)
         self.assertEqual(d.needs_head_fixed(st, self.pol), 4)
         self.assertEqual(d.needs_base_fixed(st, self.pol), 4)
         st.head = [P()] * 5
