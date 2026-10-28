@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Critical: a chained command or npm script (`CI=true react-scripts test --watchAll=false && jest --config
+  jest.api.config.js && npm run check:a`) was cut to its first part and reported "all tests passed; nothing
+  to attribute", exit 0, so a break in a later part (an api suite) passed as clean. A chain is now split at
+  top-level `&&`, `;` and newlines (quotes respected; `npm run X` / `yarn X` / `pnpm X` parts whose script is
+  itself a chain are expanded, up to 5 levels; `VAR=x` prefixes, `export` and `cd <dir>` carried to the later
+  parts) and EVERY part is judged on its own by the ordinary check (per test, per error or whole command),
+  on head and on base, also parts the shell would skip after an earlier `&&` failure. Combined: NEW in any
+  part is NEW (exit 1), else any UNKNOWN is UNKNOWN (exit 3). A part with `||`, a pipe, a subshell or
+  `$(...)`, `$`/backtick expansion, `&`, a redirect (other than `2>&1`) or unbalanced quotes is not run and
+  is UNKNOWN, so a chain is only clean when every part was judged. The text report lists every part
+  (`[part 2: jest --config jest.api.config.js] ...`) and labels each result with its part; the JSON adds
+  `runner.parts` and `part`/`part_command` on each result (see docs/VERDICTS.md). The hook does the same,
+  and an agent command line with several test commands (`pytest a; pytest b`) is judged as a chain instead
+  of by its first test command.
+
 - False clean on whole commands: a command Baseline can't read per test that failed on both sides was called
   ENVIRONMENT (exit 0, "No failure was caused by this change") as soon as both outputs contained
   environment-looking text, even when head failed in suites base passes (seen on a Create React App suite
@@ -39,15 +54,18 @@ All notable changes to this project are documented here. The format follows
 - Tests updated because they asserted the old behaviour: `test_envload` (`command not found` / TS on old Node
   as a whole command on both sides: now UNKNOWN with the hint, exit 3), `test_decide` ("different env errors"
   now UNKNOWN), `test_hook` (`npx ...` keeps `npx` in the re-run command; `format_context` with an UNKNOWN
-  no longer says "None of these failures was caused"), `test_parsers` (`NODE_ENV=x vitest && echo` now runs
-  its first part as vitest, with a note).
+  no longer says "None of these failures was caused").
+- Tests replaced because they asserted the first-part-only bug: `test_parsers.DetectionTest.
+  test_npm_test_resolves_script` (`NODE_ENV=x vitest && echo` was "vitest, first part, with a note"; now a
+  chain) and `test_mixed.CraDetectTest.test_from_command_forms` (`npm run t2` = `craco test && echo done`
+  was jest; now a chain). New: `tests/test_chain.py`.
 
 ### Added
 
 - `react-scripts test`, `craco test`, `react-app-rewired test`, `rescripts test` are the jest runner (per-test
   verdicts via `--json --outputFile`, `--watchAll=false`, reruns of failing tests only with
   `--runTestsByPath` and an escaped `-t` pattern), directly, through npx/yarn/pnpm, with a `VAR=x` prefix, or
-  as an npm script that is or starts with one (`... && other` runs the test part, with a note).
+  as an npm script that is one (a chained script is judged part by part, see Fixed).
 - Auto-detection picks the project's `test` script when it runs a known runner (CRA included), detects jest
   from `jest.config.*` or a `jest` key in package.json without a direct dependency, and lists other suites
   it found (`jest.api.config.js`, `test:*` scripts) in an "also found" note.

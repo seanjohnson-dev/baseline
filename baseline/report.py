@@ -54,6 +54,8 @@ def plural(n: int, word: str, many: str = "") -> str:
 def kind_of(rep: Dict) -> str:
     """'tests' (per-test runner), 'check' (one unit per error) or 'command' (whole command)."""
     r = rep["runner"]
+    if r.get("name") == "chain":
+        return "chain"
     if r.get("check"):
         return "check"
     return "tests" if r["per_test"] else "command"
@@ -75,7 +77,9 @@ def render(rep: Dict, json_path: str = "") -> str:
     timing = f"{rep.get('duration_s', 0):.1f}s, " + (plural(runs, "test run") if kind == "tests" else plural(runs, "run"))
     where = f"(base {base['short']} → head {head_s}, {timing})"
     if not rep["results"]:
-        if kind == "tests":
+        if kind == "chain":
+            what = f"all {plural(s.get('parts', 0), 'part')} of `{command_text(rep)}` passed"
+        elif kind == "tests":
             total = s["tests_total"]
             what = "the 1 test passed" if total == 1 else f"all {total} tests passed"
         elif kind == "check":
@@ -85,7 +89,12 @@ def render(rep: Dict, json_path: str = "") -> str:
         lines.append(f"{brand.NAME}: {what} on head  {where}")
     else:
         lines.append(f"{brand.NAME}: {', '.join(parts)}  {where}")
-    if kind == "check":
+    if kind == "chain":
+        lines.append(f"  chained command `{command_text(rep)}`: {s.get('parts_judged', 0)} of "
+                     f"{plural(s.get('parts', 0), 'part')} judged, each on its own; base = {base['how']}")
+        for pi in rep["runner"].get("parts", []):
+            lines.append(f"  [part {pi['index']}: {_short(pi['command'])}] {part_state(pi, rep['results'])}")
+    elif kind == "check":
         noun = rep["runner"].get("noun", "error")
         unread = [v for v in rep["results"] if v["kind"] == "command"]
         if unread and not s.get("check_errors"):
@@ -111,7 +120,7 @@ def render(rep: Dict, json_path: str = "") -> str:
             continue
         lines.append(title)
         for v in items:
-            label = v["id"] + (" [load error]" if v["kind"] == "load_error" else "")
+            label = part_label(v) + v["id"] + (" [load error]" if v["kind"] == "load_error" else "")
             lines.append(f"  {label} — {_evidence(v, base['short'])}")
             h, b = v["head"], v["base"]
             if v["kind"] == "command" and (h["error_raw"] or b["error_raw"]):
@@ -160,9 +169,38 @@ def render(rep: Dict, json_path: str = "") -> str:
     return "\n".join(lines)
 
 
+def _short(text: str, n: int = 60) -> str:
+    t = normalize.one_line(text)
+    return t if len(t) <= n else t[: n - 1] + "…"
+
+
+def part_label(v: Dict) -> str:
+    """`[part 2: jest --config jest.api.config.js] ` for a result of a chained command ('' otherwise)."""
+    return f"[part {v['part']}: {_short(v.get('part_command', ''))}] " if v.get("part") else ""
+
+
+def part_state(pi: Dict, results: List[Dict]) -> str:
+    """One line per part of a chained command: what was judged and how it came out."""
+    if not pi.get("judged"):
+        return f"NOT JUDGED ({pi.get('problem') or 'unknown reason'}) — UNKNOWN"
+    r = pi.get("runner") or {}
+    s = pi.get("summary") or {}
+    mine = [v for v in results if v.get("part") == pi["index"]]
+    words = [f"{n} {w}" for k, w in SUMMARY_WORDS for n in [sum(1 for v in mine if v["verdict"] == k)] if n]
+    if r.get("check"):
+        what = f"{r.get('name')} check, {plural(s.get('check_errors', 0), r.get('noun') or 'error')} on head"
+    elif r.get("per_test"):
+        what = f"{r.get('name')}, {plural(s.get('tests_total', 0), 'test')} on head ({s.get('tests_failed', 0)} failed)"
+    else:
+        what = "whole command"
+    return f"judged: {what}; " + (", ".join(words) if words else "passed")
+
+
 def agent_line(rep: Dict) -> str:
     s = rep["summary"]
     if not rep["results"]:
+        if kind_of(rep) == "chain":
+            return "Agent: every part of the chained command was judged and passes; nothing to attribute."
         return "Agent: " + ("all tests pass" if kind_of(rep) == "tests" else "the command passes") + \
             "; nothing to attribute."
     out = []

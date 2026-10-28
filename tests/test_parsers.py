@@ -367,11 +367,10 @@ class DetectionTest(unittest.TestCase):
         (p / "package.json").write_text(json.dumps({"scripts": {"test": "vitest run --silent"}}))
         d = runners.from_command(["npm", "test"], p)
         self.assertEqual((d.runner, d.argv), ("vitest", ["vitest", "run", "--silent"]))
-        # (was: generic) a script that starts with the test runner runs its first part, with a note
+        # a chained script is a chain: every part is judged (it used to be cut to its first part)
         (p / "package.json").write_text(json.dumps({"scripts": {"test": "NODE_ENV=x vitest && echo"}}))
         d = runners.from_command(["npm", "test"], p)
-        self.assertEqual((d.runner, d.argv, d.env), ("vitest", ["vitest"], {"NODE_ENV": "x"}))
-        self.assertIn("echo", d.note)
+        self.assertEqual((d.runner, d.argv), ("chain", ["npm", "test"]))
         (p / "package.json").write_text(json.dumps({"scripts": {"test": "echo x | vitest"}}))
         self.assertEqual(runners.from_command(["npm", "test"], p).runner, "generic")
 

@@ -74,6 +74,8 @@ class Segment:
     kind: str = ""          # why it is a test command (runner family)
 
     def display(self) -> str:
+        if self.kind == "chain":
+            return self.argv[0]
         return " ".join(shlex.quote(a) for a in self.argv)
 
 
@@ -287,6 +289,7 @@ def find_test_segment(command: str, cwd: str) -> Optional[Segment]:
     cur = cwd
     exported: Dict[str, str] = {}
     found: Optional[Segment] = None
+    more: List[Segment] = []   # further test commands on the same line: judged too (never the first alone)
     for argv, _piped in split_segments(tokens):
         env: Dict[str, str] = {}
         launcher: List[str] = []
@@ -320,10 +323,14 @@ def find_test_segment(command: str, cwd: str) -> Optional[Segment]:
                 exported["PATH"] = os.path.join(venv, os.path.basename(os.path.dirname(act))) + os.pathsep + \
                     exported.get("PATH", os.environ.get("PATH", ""))
             continue
-        if found is not None:
-            continue
         kind = classify(a, cur)
         if not kind:
+            continue
+        if found is not None:
+            if kind != "check":
+                env2 = {**exported, **env}
+                a2 = (launcher + a) if launcher else a
+                more.append(Segment(a2, cur, env2, kind))
             continue
         if kind == "check":
             a = argv[next(i for i, x in enumerate(argv) if not ASSIGN.match(x)):]  # keep `npx` for the hint
@@ -335,6 +342,14 @@ def find_test_segment(command: str, cwd: str) -> Optional[Segment]:
                 return None
             a = expanded
         found = Segment(a, cur, {**exported, **env}, kind)
+    if found is not None and more and found.kind != "check":
+        segs = [found] + more
+        if any(x.cwd != found.cwd or any("$" in y or "`" in y for y in x.argv) for x in segs):
+            return None  # several test commands in different places: can't be re-run as one
+        shared = {k: v for k, v in found.env.items() if all(x.env.get(k) == v for x in segs)}
+        text = " ; ".join(" ".join([f"{k}={shlex.quote(v)}" for k, v in x.env.items() if k not in shared] +
+                                   [shlex.quote(y) for y in x.argv]) for x in segs)
+        return Segment([text], found.cwd, shared, "chain")
     return found
 
 
@@ -484,7 +499,8 @@ def _counts(side: Dict, word: str) -> str:
 
 
 def _item(v: Dict, base_short: str) -> str:
-    vid = v["id"] + (" [file failed to load]" if v.get("kind") == "load_error" else "")
+    part = f"[part {v['part']}: {_one(v.get('part_command', ''), 50)}] " if v.get("part") else ""
+    vid = part + v["id"] + (" [file failed to load]" if v.get("kind") == "load_error" else "")
     h, b = v.get("head") or {}, v.get("base") or {}
     herr = _one(h.get("message") or h.get("error") or "")
     berr = _one(b.get("message") or b.get("error") or "")
@@ -533,7 +549,10 @@ def format_context(rep: Dict, command: str, launcher: str, limit: int = MAX_CONT
                                                         ("unknown", "unknown")) if s.get(k))
     head_s = head.get("short", "?") + (" + uncommitted changes" if head.get("dirty") else "")
     how = base.get("how", "")
-    per = "Per-test" if (rep.get("runner") or {}).get("per_test", True) else "Whole-command"
+    rn = rep.get("runner") or {}
+    per = "Per-test" if rn.get("per_test", True) else "Whole-command"
+    if rn.get("name") == "chain":
+        per = f"Per-part ({s.get('parts_judged', 0)} of {s.get('parts', 0)} parts judged, each on its own)"
     hdr = (f"[{brand.NAME}] {per} verdicts for the failing command `{_one(command, 120)}`: {counts or 'no failures'}. "
            f"Base {bshort} ({_one(how, 70)}) vs head {head_s}; {s.get('tests_total', 0)} tests, "
            f"{rep.get('test_runs', 0)} test runs, {rep.get('duration_s', 0):.0f}s.")

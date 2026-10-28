@@ -326,8 +326,9 @@ What it can't do, or does only partly:
   fixed temp file) are not caught. Use `--serial` for such suites.
 - Per-test verdicts need pytest, vitest, jest (also `react-scripts test`, `craco test`), `node --test`, go
   test, cargo test or rspec; per-error verdicts need tsc, eslint, `prettier --check` or `next build`.
-  Anything else (`make test`, `tox`, mocha, a shell chain like `node --test; npm run typecheck`) is one
-  unit: NEW when base passes, or when every head run prints a `FAIL <file>` line that base doesn't;
+  A chained command or npm script (`a && b; c`) is split and each part judged on its own (combined: NEW in
+  any part is NEW; a part it can't split or read, such as one with `||`, a pipe, `$(...)` or a redirect, is
+  UNKNOWN, never skipped). Anything else (`make test`, `tox`, mocha) is one unit: NEW when base passes, or when every head run prints a `FAIL <file>` line that base doesn't;
   otherwise UNKNOWN when base fails too (exit 3), never PRE-EXISTING or ENVIRONMENT, even if the output
   contains environment-looking errors. Its `FAIL` / assertion lines and summary are shown for both sides
   but not compared per test. For those the plugin's hook only adds a one-line note. cargo and rspec are

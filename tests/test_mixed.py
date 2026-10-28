@@ -184,7 +184,9 @@ class CraDetectTest(unittest.TestCase):
         p = Path(git_repo({"package.json": json.dumps({"scripts": {
             "test": "CI=true react-scripts test --watchAll=false", "t2": "craco test && echo done"}})}))
         try:
-            for argv, env in ((["npm", "test"], {"CI": "true"}), (["npm", "run", "t2"], {}),
+            # `npm run t2` ("craco test && echo done") is a chain now (was: jest, its first part only)
+            self.assertEqual(runners.from_command(["npm", "run", "t2"], p).runner, "chain")
+            for argv, env in ((["npm", "test"], {"CI": "true"}),
                               (["CI=true react-scripts test --watchAll=false"], {"CI": "true"}),
                               (["yarn", "react-scripts", "test"], {}), (["pnpm", "exec", "craco", "test"], {})):
                 det = runners.from_command(argv, p)

@@ -75,26 +75,15 @@ def split_env(argv: List[str]) -> Tuple[Dict[str, str], List[str]]:
 
 
 def script_command(body: str) -> Tuple[Optional[List[str]], Dict[str, str], str]:
-    """A package.json script body -> (argv, env, note). Simple bodies only, with an optional `VAR=x` prefix;
-    `react-scripts test ... && other` keeps its first (test) part, with a note."""
-    note = ""
+    """A package.json script body -> (argv, env, note). Simple bodies only, with an optional `VAR=x` prefix.
+    Chained bodies (`a && b`) are not simple: see chain.py (each part is judged; never the first part alone)."""
     if SHELL_META.search(body):
-        first = body.split("&&")[0]
-        if "&&" not in body or SHELL_META.search(first):
-            return None, {}, ""
-        try:
-            argv = shlex.split(first)
-        except ValueError:
-            return None, {}, ""
-        if runner_for_argv(split_env(argv)[1]) not in ("jest", "vitest"):
-            return None, {}, ""
-        note = f"the script also runs `{body.split('&&', 1)[1].strip()}` after the tests; only the tests were checked"
-        body = first
+        return None, {}, ""
     try:
         env, argv = split_env(shlex.split(body))
     except ValueError:
         return None, {}, ""
-    return (argv or None), env, note
+    return (argv or None), env, ""
 
 
 def _npm_script(argv: List[str], project: Path) -> Optional[List[str]]:
@@ -152,6 +141,9 @@ def missing_npm_script(argv: List[str], project: Path) -> Optional[str]:
 
 
 def from_command(argv: List[str], project: Path) -> Detection:
+    from ..chain import is_chain
+    if is_chain(argv, project):
+        return Detection("chain", list(argv), "command", "each part of the chained command is judged on its own")
     if len(argv) == 1 and " " in argv[0]:
         argv = shlex.split(argv[0])
     env, argv = split_env(argv)
@@ -203,6 +195,11 @@ def _js_runner(project: Path) -> Optional[Detection]:
     scripts = data.get("scripts") or {}
     test_script = scripts.get("test", "")
     found: List[Detection] = []
+    from ..chain import chained_script
+    if test_script and chained_script(["npm", "test"], project):
+        # `"test": "jest && jest --config api.js"`: every part, judged on its own (never the first alone)
+        found.append(Detection("chain", ["npm", "test"], "auto: package.json test script (chained)",
+                               "each part of the chained command is judged on its own"))
     cmd, env, note = script_command(test_script) if test_script else (None, {}, "")
     if cmd and runner_for_argv(cmd) in ("jest", "vitest", "node-test"):
         # the project's own test script, as written (react-scripts test, jest --config x, vitest, ...)

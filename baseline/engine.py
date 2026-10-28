@@ -9,11 +9,11 @@ import shutil
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from . import __version__, brand, closure, decide, envclass, gitutil, normalize, procs, pyenv
+from . import __version__, brand, chain, closure, decide, envclass, gitutil, normalize, procs, pyenv
 from .cache import BaseCache, env_fingerprint
 from .model import (ABSENT, BLOCKED, CHECK, COMMAND, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST,
                     UNKNOWN, Obs, RunResult, Unit)
@@ -144,6 +144,7 @@ class Options:
     serial: bool = False          # never run head and base at the same time
     flaky_hunt: int = 0           # extra full head runs to catch tests that flip
     deadline: Optional[float] = None  # absolute time.time(); past it -> BudgetExceeded (no verdict)
+    in_chain: bool = False        # this check is one part of a chained command (see run_chain)
 
 
 class Progress:
@@ -317,6 +318,13 @@ class Engine:
         self.project_rel = os.path.relpath(cwd, self.root)
         self.cwd = cwd
         det = detect(cwd, o.command)
+        if det.runner == "chain":
+            if o.in_chain:
+                raise UsageError("a part of a chained command is itself a chain")
+            self.state_dir = gitutil.git_dir(self.root) / brand.CACHE_DIR_NAME
+            rep = run_chain(self, det)
+            rep["duration_s"] = round(time.time() - t0, 2)
+            return rep
         if det.note:
             self.notes.append(det.note)
         self.runner: Runner = make_runner(det, cwd)
@@ -1070,3 +1078,128 @@ def _crash_obs(r: RunResult, roots: List[str], ctx) -> Obs:
     key = normalize.normalize(msg, roots)
     raw = normalize.first_lines("\n".join(tail[-30:]), 30)
     return Obs(FAIL, key, normalize.first_lines(msg, 5), raw, envclass.classify(key, raw, ctx))
+
+
+# ---------------------------------------------------------------------------------------------- chains
+VERDICT_ORDER = {NEW: 0, PRE_CHANGED: 1, UNKNOWN: 2, "pre_existing": 3, "environment": 4, "flaky": 5}
+
+
+def run_chain(eng: Engine, det: Detection) -> Dict:
+    """`a && b; c` (or an npm script that is one): every part is judged on its own by an ordinary check
+    (per test where the runner is recognised, per error for checks, whole command otherwise), on head and
+    base, even parts the shell would skip after an earlier `&&` failure. A part that can't be split or
+    re-run faithfully is UNKNOWN, so the chain is never clean unless every part was judged."""
+    o = eng.opts
+    try:
+        base = gitutil.resolve_base(eng.root, o.base)
+    except gitutil.GitError as e:
+        if o.base:
+            raise UsageError(str(e))
+        raise BaseError(str(e))
+    head_sha = gitutil.head_sha(eng.root) or ""
+    dirty = gitutil.is_dirty(eng.root)
+    parts = chain.expand(det.argv, eng.cwd, eng.root)
+    if not parts:
+        raise UsageError(f"`{' '.join(det.argv)}` contains no command to check")
+    results: List[Dict] = []
+    infos: List[Dict] = []
+    warnings: List[str] = [base.warning] if base.warning else []
+    notes: List[str] = [f"`{' '.join(det.argv)}` is a chain of {len(parts)} command(s); each part was run and "
+                        f"judged on its own on head and on base"]
+    fixed: List[str] = []
+    flaky_passing: List[str] = []
+    missing: List[str] = []
+    totals = {k: 0 for k in ("tests_total", "tests_passed", "tests_failed", "tests_skipped", "load_errors",
+                             "check_errors", "fixed", "missing", "flaky_surfaced")}
+    test_runs = 0
+    cache_hits: List[bool] = []
+    serial = False
+    failed_before_and = []
+    for i, p in enumerate(parts, 1):
+        info: Dict = {"index": i, "command": p.text, "via": p.via,
+                      "cwd": os.path.relpath(p.cwd or eng.cwd, eng.root), "judged": False, "problem": p.problem,
+                      "runner": None, "exit_code": None}
+        eng.progress(f"part {i}/{len(parts)}: {p.text}")
+        rep = None
+        if not p.problem:
+            sub = Engine(replace(o, command=p.command(), cwd=str(p.cwd or eng.cwd), in_chain=True))
+            try:
+                rep = sub.run()
+            except UsageError as e:
+                info["problem"] = str(e)
+            except BaseError as e:
+                info["problem"] = f"could not establish the base result: {e}"
+            except gitutil.GitError as e:
+                info["problem"] = str(e)
+        if rep is None:
+            results.append(_unjudged(i, p, info["problem"], base.sha, head_sha, dirty))
+            infos.append(info)
+            continue
+        info.update(judged=True, runner=rep["runner"], exit_code=rep["exit_code"], summary=rep["summary"],
+                    duration_s=rep.get("duration_s"), test_runs=rep.get("test_runs", 0))
+        infos.append(info)
+        tag = f"[part {i}] "
+        for v in rep["results"]:
+            v["part"] = i
+            v["part_command"] = p.text
+            results.append(v)
+        fixed += [tag + x for x in rep.get("fixed", [])]
+        flaky_passing += [tag + x for x in rep.get("flaky_passing", [])]
+        missing += [tag + x for x in rep.get("missing", [])]
+        for k in totals:
+            totals[k] += rep["summary"].get(k, 0)
+        test_runs += rep.get("test_runs", 0)
+        cache_hits.append(bool(rep.get("cache", {}).get("hit")))
+        serial = serial or rep.get("concurrency", {}).get("serial", False)
+        for w in rep.get("warnings", []):
+            if w not in warnings:
+                warnings.append(w if w == base.warning else f"part {i}: {w}")
+        notes += [f"part {i}: {n}" for n in rep.get("notes", [])]
+        if rep["results"] and i < len(parts):
+            failed_before_and.append(i)
+    if failed_before_and:
+        notes.append("part(s) " + ", ".join(map(str, failed_before_and)) + " fail on head, so the shell would "
+                     "stop there; the later parts were still run and judged independently")
+    results.sort(key=lambda v: (VERDICT_ORDER.get(v["verdict"], 9), v.get("part", 0), bool(v.get("surfaced")),
+                                v["id"]))
+    counts = {k: 0 for k in (NEW, "pre_existing", PRE_CHANGED, "flaky", "environment", UNKNOWN)}
+    for v in results:
+        counts[v["verdict"]] += 1
+    exit_code = 0
+    if counts[NEW] or (o.strict_changed and counts[PRE_CHANGED]):
+        exit_code = 1
+    elif counts[UNKNOWN]:
+        exit_code = 3
+    judged = sum(1 for x in infos if x["judged"])
+    totals.update(fixed=len(fixed), missing=len(missing))
+    return {
+        "tool": brand.NAME, "version": __version__, "schema": 1,
+        "exit_code": exit_code,
+        "summary": {**counts, **totals, "parts": len(parts), "parts_judged": judged},
+        "base": {"sha": base.sha, "short": gitutil.short(base.sha), "ref": base.ref, "how": base.how},
+        "head": {"sha": head_sha, "short": gitutil.short(head_sha), "dirty": dirty},
+        "runner": {"name": "chain", "command": list(det.argv), "per_test": False, "check": False, "noun": "",
+                   "cwd": eng.project_rel, "parts": infos},
+        "policy": {"head_runs": eng.policy.runs, "base_required": eng.policy.base_required,
+                   "base_confirm": eng.policy.base_runs, "max_runs": eng.policy.max_runs,
+                   "confirm_budget_hit": False, "flaky_hunt": o.flaky_hunt},
+        "concurrency": {"serial": serial, "forced": bool(o.serial), "collision": ""},
+        "test_runs": test_runs,
+        "cache": {"enabled": not o.no_cache, "hit": bool(cache_hits) and all(cache_hits)},
+        "results": results,
+        "fixed": fixed, "flaky_passing": flaky_passing, "missing": missing,
+        "warnings": warnings,
+        "notes": notes,
+    }
+
+
+def _unjudged(i: int, p: "chain.Part", problem: str, base_sha: str, head_sha: str, dirty: bool) -> Dict:
+    empty = decide._side_summary([])
+    return {"id": p.text, "kind": COMMAND, "verdict": UNKNOWN,
+            "reason": f"This part of the chained command was not judged: {problem}. Nothing is known about "
+                      f"whether it passes or whether this change broke it; do not call the command clean or its "
+                      f"failures pre-existing.",
+            "head": dict(empty), "base": dict(empty), "runs_total": 0, "env_class": None, "env_suspect": False,
+            "flaky_side": None, "match": None, "blocked_tests": [], "closure_changed": None,
+            "suspicious_escalated": False, "part": i, "part_command": p.text, "judged": False,
+            "base_sha": base_sha, "head_sha": head_sha, "dirty": dirty}

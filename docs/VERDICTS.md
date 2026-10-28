@@ -65,11 +65,38 @@ A *unit* is what can fail:
   `--- FAIL: Name` / `FAIL pkg`) is kept per run as `fails`.
 
 `react-scripts test`, `craco test` (also `react-app-rewired`, `rescripts`), via
-npx/yarn/pnpm, as an npm script (also `VAR=x react-scripts test ...`, or a
-script that starts with it before `&&`) are the jest runner: per-test verdicts
+npx/yarn/pnpm, as an npm script (also `VAR=x react-scripts test ...`) are the
+jest runner: per-test verdicts
 through `--json --outputFile`. Every child runs with `CI=true` and stdin from
 /dev/null, and jest gets `--watchAll=false` (`--watch`/`--watchAll` removed;
 vitest always runs `run`), so watch modes never start.
+
+### Chained commands
+
+A command or npm script that is a list of commands (`a && b; c`, newlines)
+is split into parts at top-level `&&`, `;` and newlines, respecting quotes.
+A part that runs an npm script (`npm run X`, `npm test`, `yarn X`, `pnpm X`)
+whose body is itself a chain is replaced by that body's parts (up to 5
+levels; deeper is UNKNOWN). `VAR=x` prefixes apply to their part (on an
+`npm run` part: to all of its parts), `export VAR=x` and `cd <dir>` to the
+parts after them; a bare `node_modules/.bin` tool in a script body runs from
+there (npm puts it on PATH).
+
+Every part is a check of its own (the units, sampling and decision below,
+per test where the runner is recognised, per error for checks, whole command
+otherwise), on head and on base, even a part the shell would never reach
+because an earlier `&&` part fails on head (the report says so). Parts are
+never run together, so one part's result can't hide another's.
+
+A part that can't be re-run and read faithfully is **not run** and is one
+UNKNOWN unit: `||` (the whole `;`-separated list containing it), a pipe, a
+subshell or `$(...)`, `$`/backtick expansion, `&`, a redirect other than
+`2>&1`/`1>&2`, a `cd` that can't be followed, unbalanced quotes.
+
+Combined: any NEW (or PRE-EXISTING error-changed with `--strict-changed`) in
+any part -> exit 1; else any UNKNOWN -> exit 3; else 0. So "all passed" or
+"nothing to attribute" needs every part judged and every failure proven not
+caused by the change.
 
 ## Sampling (how many runs a verdict rests on)
 
@@ -327,6 +354,17 @@ Each entry of `results`:
  "match": null, "similarity": 0.93, "blocked_tests": [], "closure_changed": true,
  "suspicious_escalated": false, "base_sha": "…", "head_sha": "…", "dirty": true}
 ```
+
+For a chained command, `runner` is `{"name": "chain", "command": [...],
+"per_test": false, "check": false, "parts": [...]}`; each part has `index`
+(1-based), `command` (as written), `via` (the npm script(s) it came from),
+`cwd`, `judged`, `problem` (why it was not judged, else empty), `runner` (the
+part's own runner object, null when not judged), `exit_code`, `summary`,
+`duration_s`, `test_runs`. Each result carries `part` (its part's index) and
+`part_command`; an unjudged part is one result of kind `command`, verdict
+`unknown`, `judged: false`. `summary` adds `parts` and `parts_judged`; the
+part lists `fixed`, `flaky_passing`, `missing` prefix entries with
+`[part N] `. The schema number stays 1 (fields were only added).
 
 `kind` is `test`, `load_error` or `command` (unknown runner). `match` is
 `exact`/`loose` when both sides failed with the same error; `similarity` is
