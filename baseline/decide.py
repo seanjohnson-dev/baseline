@@ -192,6 +192,27 @@ def fixed_verdict(st: UnitState) -> str:
     return "fixed" if bf and hp and not bp and not hf else "flaky"
 
 
+def flip_result(st: UnitState) -> Dict:
+    """FLAKY result for a test that is NOT among head's failures (it passed in the full head run) but
+    flipped between pass and fail in runs that were made anyway. Informational: never NEW, exit code 0."""
+    hf, hp, _, _ = _split(st.head)
+    bf, bp, _, _ = _split(st.base)
+    h, b = len(hf) + len(hp), len(bf) + len(bp)
+    out: Dict = {"id": st.unit.id, "kind": st.unit.kind, "verdict": FLAKY, "reason": "",
+                 "head": _side_summary(st.head), "base": _side_summary(st.base),
+                 "runs_total": h + b, "env_class": None, "env_suspect": False, "flaky_side": None,
+                 "match": None, "blocked_tests": [], "closure_changed": st.closure_changed, "surfaced": True}
+    if hf and hp:
+        out.update(flaky_side="head",
+                   reason=f"Passed {len(hp)} and failed {len(hf)} of {h} runs on head with the same code — flaky "
+                          f"(not counted as a head failure; it passed in the full run).")
+    else:
+        out.update(flaky_side="base",
+                   reason=f"On base it failed {len(bf)} and passed {len(bp)} of {b} runs with the same code; on head "
+                          f"it passed {len(hp)}/{h} — flaky, not fixed or broken by this change.")
+    return out
+
+
 def _side_summary(obs: List[Obs]) -> Dict:
     f, p, s, a = _split(obs)
     ex = f[0] if f else None

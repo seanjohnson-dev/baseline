@@ -12,8 +12,11 @@ import glob
 import json
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
@@ -21,6 +24,9 @@ from . import brand, gitutil
 
 OWNER_FILE = "owner.json"
 SKIP_NM = {".vite", ".vitest", ".cache", ".vite-temp"}
+LEGACY_MAX_AGE = 3600.0          # tmp dirs without an owner file count as stale only when older than this
+# what our temp dirs may contain; anything else in there means "not ours / not sure" and it is left alone
+KIND_CONTENTS = {"wt-": {OWNER_FILE, "no-hooks", "wt"}, "run-": {OWNER_FILE, "head", "base"}}
 
 
 def _pid_alive(pid: int) -> bool:
@@ -37,33 +43,185 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+def proc_start(pid: int) -> Optional[str]:
+    """Process start time as an opaque string (to tell a live owner from a reused pid); None if unknown."""
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            return "jiffies:" + f.read().rsplit(")", 1)[1].split()[19]
+    except (OSError, IndexError):
+        pass
+    if os.name != "posix" or sys.platform.startswith("linux"):
+        return None  # linux: /proc is authoritative (unreadable = gone); elsewhere ask ps
+    try:
+        out = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, timeout=2)
+        return ("lstart:" + " ".join(out.stdout.split())) if out.returncode == 0 and out.stdout.strip() else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def owner_alive(owner: dict) -> bool:
+    try:
+        pid = int(owner.get("pid", 0))
+    except (TypeError, ValueError):
+        return False
+    if not _pid_alive(pid):
+        return False
+    want = owner.get("start")
+    if not want:
+        return True
+    now = proc_start(pid)
+    return now is None or now == want
+
+
 def wt_marker() -> str:
     return brand.TMP_PREFIX + "wt-"
 
 
-def prune_stale(root: Path) -> List[str]:
-    """Remove worktrees left behind by earlier runs that died (e.g. kill -9)."""
-    removed = []
+def tmp_root() -> Path:
+    return Path(os.path.realpath(tempfile.gettempdir()))
+
+
+def make_tmp_dir(kind: str, git_dir: Optional[Path] = None, repo: Optional[Path] = None) -> Path:
+    """<tmp>/<prefix><kind>XXXX with an owner file (pid + process start time + repo git dir) so that a
+    later run can tell whether the run that made it is still alive."""
+    d = Path(tempfile.mkdtemp(prefix=brand.TMP_PREFIX + kind))
+    owner = {"pid": os.getpid(), "start": proc_start(os.getpid()), "git_dir": str(git_dir or ""),
+             "repo": str(repo or ""), "created": time.time()}
+    (d / OWNER_FILE).write_text(json.dumps(owner))
+    return d
+
+
+@dataclass
+class Stale:
+    path: Path
+    kind: str           # "wt-" | "run-"
+    reason: str
+    git_dir: str = ""   # repo git dir to run `git worktree remove/prune` in
+    repo: str = ""
+
+
+def _gitdir_of_worktree(wt: Path) -> Optional[str]:
+    """wt/.git must be a file `gitdir: <repo git dir>/worktrees/<name>`; returns the repo git dir."""
     try:
-        paths = gitutil.worktree_list(root)
-    except gitutil.GitError:
-        return removed
-    for p in paths:
-        pp = Path(p)
-        if wt_marker() not in pp.parent.name:
+        text = (wt / ".git").read_text().strip()
+    except OSError:
+        return None
+    if not text.startswith("gitdir:"):
+        return None
+    gd = Path(text[len("gitdir:"):].strip())
+    if gd.parent.name != "worktrees":
+        return None
+    return str(gd.parent.parent)
+
+
+def _cwd_users(path: Path) -> Optional[bool]:
+    """Is any process's cwd inside path? None if that can't be determined on this system."""
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return None
+    prefix = str(path) + os.sep
+    for p in proc.iterdir():
+        if not p.name.isdigit():
             continue
-        owner = pp.parent / OWNER_FILE
-        alive = False
         try:
-            alive = _pid_alive(int(json.loads(owner.read_text()).get("pid", 0)))
-        except (OSError, ValueError):
-            alive = False
-        if not alive:
-            gitutil.try_git(["worktree", "remove", "--force", str(pp)], root)
-            shutil.rmtree(pp.parent, ignore_errors=True)
-            removed.append(p)
-    gitutil.try_git(["worktree", "prune"], root)
+            cwd = os.readlink(p / "cwd")
+        except OSError:
+            continue
+        if cwd == str(path) or cwd.startswith(prefix):
+            return True
+    return False
+
+
+def find_stale(deadline: Optional[float] = None, now: Optional[float] = None) -> List[Stale]:
+    """Temp dirs of ours (<tmp>/<prefix>wt-*, <prefix>run-*) whose run is gone."""
+    root = tmp_root()
+    now = now or time.time()
+    out: List[Stale] = []
+    try:
+        entries = list(os.scandir(root))
+    except OSError:
+        return out
+    for e in entries:
+        if deadline is not None and time.time() > deadline:
+            break
+        kind = next((k for k in KIND_CONTENTS if e.name.startswith(brand.TMP_PREFIX + k)), None)
+        if kind is None:
+            continue
+        try:
+            if e.is_symlink() or not e.is_dir(follow_symlinks=False):
+                continue
+            path = Path(e.path)
+            if Path(os.path.realpath(path)).parent != root:
+                continue
+            names = set(os.listdir(path))
+            if not names <= KIND_CONTENTS[kind]:
+                continue  # something we didn't put there: not ours to delete
+            owner = None
+            if OWNER_FILE in names:
+                try:
+                    owner = json.loads((path / OWNER_FILE).read_text())
+                except (OSError, ValueError):
+                    owner = None
+            if isinstance(owner, dict):
+                if owner_alive(owner):
+                    continue
+                reason = f"its run (pid {owner.get('pid')}) is gone"
+            else:
+                age = now - path.stat().st_mtime
+                if age < LEGACY_MAX_AGE:
+                    continue
+                if _cwd_users(path) is not False:
+                    continue
+                reason = f"no owner file, {age / 3600:.1f}h old, no process inside"
+                owner = {}
+            gd = owner.get("git_dir") or ""
+            if kind == "wt-" and "wt" in names:
+                real_gd = _gitdir_of_worktree(path / "wt")
+                if real_gd is None and os.listdir(path / "wt"):
+                    continue  # a non-empty wt/ that isn't a linked worktree: leave it alone
+                gd = real_gd or gd
+            out.append(Stale(path, kind, reason, gd, owner.get("repo") or ""))
+        except OSError:
+            continue
+    return out
+
+
+def remove_stale(s: Stale) -> bool:
+    """`git worktree remove --force` + prune in the recorded repo, then delete the tmp dir (tmp only)."""
+    if Path(os.path.realpath(s.path)).parent != tmp_root():
+        return False
+    wt = s.path / "wt"
+    where = next((d for d in (s.repo, s.git_dir) if d and os.path.isdir(d)), None)
+    if where is not None:
+        if wt.exists():
+            gitutil.try_git(["worktree", "remove", "--force", str(wt)], where)
+        shutil.rmtree(s.path, ignore_errors=True)
+        gitutil.try_git(["worktree", "prune"], where)
+    else:
+        shutil.rmtree(s.path, ignore_errors=True)
+    return not s.path.exists()
+
+
+def cleanup_stale(repo: Optional[Path] = None, budget: float = 3.0) -> List[str]:
+    """Best effort, bounded, never raises: remove leftovers of killed runs; prune `repo`'s worktree list."""
+    removed: List[str] = []
+    deadline = time.time() + budget
+    try:
+        for s in find_stale(deadline=deadline):
+            if time.time() > deadline:
+                break
+            if remove_stale(s):
+                removed.append(str(s.path))
+        if repo is not None:
+            gitutil.try_git(["worktree", "prune"], repo)
+    except Exception:  # never let housekeeping break a check
+        pass
     return removed
+
+
+def prune_stale(root: Path) -> List[str]:
+    """Compatibility name for cleanup_stale(repo=root)."""
+    return cleanup_stale(repo=root)
 
 
 class BaseWorktree:
@@ -87,9 +245,7 @@ class BaseWorktree:
         self.remove()
 
     def create(self) -> Path:
-        self.tmp = Path(tempfile.mkdtemp(prefix=wt_marker()))
-        (self.tmp / OWNER_FILE).write_text(json.dumps({"pid": os.getpid(), "repo": str(self.root),
-                                                        "created": time.time()}))
+        self.tmp = make_tmp_dir("wt-", gitutil.common_git_dir(self.root), self.root)
         hooks = self.tmp / "no-hooks"
         hooks.mkdir()
         self.path = self.tmp / "wt"

@@ -1,10 +1,13 @@
 """Orchestration: head run, reruns, base worktree runs, cache, verdicts."""
 from __future__ import annotations
 
+import hashlib
+import json
 import os
+import re
 import shutil
 import sys
-import tempfile
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -12,17 +15,28 @@ from typing import Dict, List, Optional
 
 from . import __version__, brand, closure, decide, envclass, gitutil, normalize, procs, pyenv
 from .cache import BaseCache, env_fingerprint
-from .model import (ABSENT, BLOCKED, COMMAND, FAIL, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST, UNKNOWN, Obs,
-                    RunResult, Unit)
+from .model import (ABSENT, BLOCKED, COMMAND, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST, UNKNOWN,
+                    Obs, RunResult, Unit)
 from .runners import Detection, Side, auto_detect, from_command, make_runner
 from .runners.base import Runner
-from .worktree import BaseWorktree, missing_ignored, prune_stale
+from .worktree import BaseWorktree, cleanup_stale, make_tmp_dir, missing_ignored
 
 FULL_BASE_MAX_SECONDS = 60.0
+# the full base run starts alongside head's full run unless the last head run of this command took longer
+SPECULATE_MAX_SECONDS = 30.0
 # optional base confirmation runs may add this share of the elapsed time (but at least CONFIRM_MIN_SECONDS)
 CONFIRM_SHARE = 0.25
 CONFIRM_MIN_SECONDS = 1.0
 SESSION_UNIT = "(test session)"
+
+# Signs that two runs at once got in each other's way (ports, sqlite/file locks, busy files). Seen in either
+# side of a concurrent round, that round is discarded and redone serially. False alarms only cost time.
+COLLISION = re.compile(
+    r"EADDRINUSE|address already in use|address in use|\[Errno (?:98|48)\]|port \d+ is (?:already )?in use|"
+    r"port is already allocated|already in use|database is locked|database table is locked|SQLITE_BUSY|"
+    r"could not obtain lock|unable to (?:acquire|obtain|get) (?:a |the )?lock|lock (?:is )?(?:held|busy)|"
+    r"\block(?:file)? already|resource temporarily unavailable|EAGAIN|EBUSY|resource busy|text file busy|ETXTBSY|"
+    r"EEXIST|file exists|deadlock detected|too many clients", re.I)
 
 
 class UsageError(Exception):
@@ -31,6 +45,82 @@ class UsageError(Exception):
 
 class BaseError(Exception):
     """Exit code 3: the base result could not be established."""
+
+
+class BudgetExceeded(Exception):
+    """Options.deadline passed: no verdict may be claimed."""
+
+
+class _Cancelled(Exception):
+    """The lane this run belonged to was cancelled (e.g. a speculative base run that isn't needed)."""
+
+
+class _Async:
+    """fn() in a daemon thread; wait() returns its result or re-raises its exception."""
+
+    def __init__(self, fn):
+        self.result = None
+        self.error: Optional[BaseException] = None
+        self.thread = threading.Thread(target=self._run, args=(fn,), daemon=True)
+        self.thread.start()
+
+    def _run(self, fn) -> None:
+        try:
+            self.result = fn()
+        except BaseException as e:  # handed to the waiting thread
+            self.error = e
+
+    def wait(self):
+        self.thread.join()
+        if self.error is not None:
+            raise self.error
+        return self.result
+
+
+def collision_sign(r: Optional[RunResult]) -> str:
+    """The first resource-collision sign in a run's output or failure texts ('' if none)."""
+    if r is None:
+        return ""
+    parts = [r.output_tail, r.problem]
+    for t in r.tests.values():
+        if t.status == FAIL:
+            parts += [t.message, t.raw]
+    for le in r.load_errors.values():
+        parts += [le.message, le.raw]
+    m = COLLISION.search("\n".join(p for p in parts if p))
+    return m.group(0) if m else ""
+
+
+class TimingHint:
+    """Duration of the last head full run per command (decides whether to speculate on base)."""
+
+    def __init__(self, path: Path, key: str):
+        self.path = path
+        self.key = hashlib.sha256(key.encode("utf-8", "replace")).hexdigest()[:16]
+
+    def _load(self) -> Dict:
+        try:
+            d = json.loads(self.path.read_text())
+            return d if isinstance(d, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def get(self) -> Optional[float]:
+        v = self._load().get(self.key)
+        return float(v) if isinstance(v, (int, float)) else None
+
+    def put(self, seconds: float) -> None:
+        d = self._load()
+        d[self.key] = round(seconds, 2)
+        if len(d) > 50:
+            d = dict(list(d.items())[-50:])
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.path.with_suffix(f".tmp{os.getpid()}")
+            tmp.write_text(json.dumps(d))
+            os.replace(tmp, self.path)
+        except OSError:
+            pass
 
 
 @dataclass
@@ -48,6 +138,9 @@ class Options:
     copy_ignored: List[str] = field(default_factory=list)
     full_base: str = "auto"       # auto | always | never
     verbose: bool = False
+    serial: bool = False          # never run head and base at the same time
+    flaky_hunt: int = 0           # extra full head runs to catch tests that flip
+    deadline: Optional[float] = None  # absolute time.time(); past it -> BudgetExceeded (no verdict)
 
 
 class Progress:
@@ -87,19 +180,47 @@ class Engine:
         self.base_round_times: List[float] = []
         self.confirm_limited = False
         self.t_start = time.time()
+        self.serial = opts.serial or os.environ.get(brand.ENV_PREFIX + "SERIAL", "") not in ("", "0")
+        self.collision = ""
+        self.overlap_saved = 0.0   # seconds that running head and base concurrently saved
+        self._last_overlap = 0.0
+        self.base_lane = procs.Lane("base")
+        self._tasks: List[_Async] = []
+        self._lock = threading.Lock()
+        # every observation per side and test id, from all runs made anyway (to surface flaky tests)
+        self.seen: Dict[str, Dict[str, list]] = {"head": {}, "base": {}}
+        self.base_full: Optional[Dict] = None
+        self.fixed_states: List[decide.UnitState] = []
+        self.full_wanted = False
+        self._full_used = False
 
     # ------------------------------------------------------------------ helpers
-    def _execute(self, invs, side: Side) -> RunResult:
+    def _timeout(self) -> float:
+        t = self.opts.timeout
+        if self.opts.deadline is not None:
+            left = self.opts.deadline - time.time()
+            if left <= 0:
+                raise BudgetExceeded("the time budget ran out")
+            t = min(t, left)
+        return t
+
+    def _execute(self, invs, side: Side, lane: Optional[procs.Lane] = None, progress: str = "") -> RunResult:
         total = RunResult()
         first = True
+        if progress:
+            self.progress(progress)
         for inv in invs:
             env = dict(side.env)
             env.update(inv.env)
             side.outdir.mkdir(parents=True, exist_ok=True)
             if inv.report is not None and inv.report.exists():
                 inv.report.unlink()
-            proc = procs.run(inv.argv, str(side.cwd), env=env, timeout=self.opts.timeout,
-                             merge_stderr=bool(inv.meta.get("merge_stderr")))
+            proc = procs.run(inv.argv, str(side.cwd), env=env, timeout=self._timeout(),
+                             merge_stderr=bool(inv.meta.get("merge_stderr")), lane=lane)
+            if proc.cancelled:
+                raise _Cancelled()
+            if proc.timed_out and self.opts.deadline is not None and time.time() >= self.opts.deadline - 1:
+                raise BudgetExceeded("the time budget ran out")
             if proc.not_found:
                 r = RunResult(ok=False, problem=f"command not found: {inv.argv[0]}", exit_code=127,
                               duration=proc.duration, output_tail=proc.stderr)
@@ -107,7 +228,8 @@ class Engine:
                 r.not_found = True  # type: ignore[attr-defined]
             else:
                 r = self.runner.parse(inv, proc, side)
-            self.test_runs += sum(1 for t in r.tests.values() if t.status in (PASS, FAIL)) + len(r.load_errors)
+            with self._lock:
+                self.test_runs += sum(1 for t in r.tests.values() if t.status in (PASS, FAIL)) + len(r.load_errors)
             if first:
                 total = r
                 first = False
@@ -180,18 +302,23 @@ class Engine:
         self.changed = set(gitutil.changed_files(self.root, self.base.sha))
         gdir = gitutil.git_dir(self.root)
         self.state_dir = gdir / brand.CACHE_DIR_NAME
-        cache_dir = gitutil.common_git_dir(self.root) / brand.CACHE_DIR_NAME / "cache"
-        removed = prune_stale(self.root)
+        common = gitutil.common_git_dir(self.root)
+        cache_dir = common / brand.CACHE_DIR_NAME / "cache"
+        removed = cleanup_stale(repo=self.root)
         if removed:
-            self.notes.append(f"removed {len(removed)} stale base worktree(s) from an earlier interrupted run")
-        outdir = Path(tempfile.mkdtemp(prefix=brand.TMP_PREFIX + "run-"))
+            self.notes.append(f"removed {len(removed)} stale temp dir(s)/worktree(s) left by earlier killed runs")
+        outdir = make_tmp_dir("run-", common)
         self.outdir = outdir
         report: Dict = {}
         try:
             self._setup_env()
-            self.cache = BaseCache(cache_dir, self.base.sha, self._cache_key(), enabled=not o.no_cache)
+            key = self._cache_key()
+            self.cache = BaseCache(cache_dir, self.base.sha, key, enabled=not o.no_cache)
+            self.timing = TimingHint(common / brand.CACHE_DIR_NAME / "timing.json",
+                                     self.runner.cache_key() + "\0" + self.project_rel)
             report = self._check()
         finally:
+            self._cancel_base()
             if self.wt is not None:
                 self.wt.remove()
                 self.notes.extend(self.wt.notes)
@@ -256,14 +383,17 @@ class Engine:
     def _check(self) -> Dict:
         o = self.opts
         p = self.progress
-        p(f"running {self.runner.name} on head (working tree)")
-        r1 = self._execute(self.runner.full(self.head, "head-full"), self.head)
-        if getattr(r1, "not_found", False):
-            raise UsageError(f"test command not found: {self.runner.argv[0]}")
-        if not r1.ok and "timed out" in r1.problem:
-            raise UsageError(f"the test command timed out on head ({r1.problem}); raise --timeout")
+        spec = self._start_speculation()
+        try:
+            r1 = self._head_full()
+            units = self._failing_units(r1)
+            r1, units, spec_out = self._settle_speculation(spec, r1, units)
+            hunts = self._flaky_hunt(r1)
+        except BaseException:
+            self._cancel_base()
+            raise
         self.head_full = r1
-        units = self._failing_units(r1)
+        self.timing.put(r1.duration)
         p(f"head: {r1.collected} tests, {len(units)} failing unit(s)")
         if not units:
             if r1.exit_code not in (0, 5) and self.runner.per_test:
@@ -274,59 +404,238 @@ class Engine:
         for st in states.values():
             st.head.append(self._obs_for(st.unit, r1))
             st.head_attempts = 1
+            for rh in hunts:
+                st.head.append(self._obs_for(st.unit, rh))
+                st.head_attempts += 1
             st.closure_changed = self._closure(st.unit)
 
-        # head reruns (early stop on first pass)
-        rnd = 0
-        while True:
-            need = [s for s in states.values() if decide.needs_head(s, self.policy) > 0]
-            if not need:
-                break
-            rnd += 1
-            self._head_round(need, rnd)
+        self.full_wanted = self._full_wanted(r1)
+        full_pending = False
+        try:
+            if spec_out is not None:
+                kind, val = spec_out
+                if kind == "error":
+                    raise val
+                self._apply_base_full(states, val)
+            elif self.full_wanted and self.cache.full is not None:
+                self.progress("base full run: from cache")
+                self._use_full(states, self.cache.full, fresh=False)
+            elif self.full_wanted:
+                full_pending = True
+            else:
+                self._use_full(states, None, fresh=False)
+        except BaseError as e:
+            self._fail_base(states, str(e))
+            self._use_full(states, None, fresh=False)
 
-        # base: cache first, then (optionally) one full run, then targeted rounds
-        base_full = self._base_full(states, r1)
-        self._prefill(states, base_full)
-        self.fixed_states = self._fixed_candidates(r1, base_full)
-        brnd = 0
+        # Rounds. Each iteration has at most one head round and one base task (the full base run or a
+        # targeted round); concurrently unless serial, else base first, then head (stage-1 order).
+        self.rnd = self.brnd = 0
         confirm_spent = 0.0
         confirm_budget: Optional[float] = None
-        try:
-            while True:
+        base_dead = bool(self.base_problem_global)
+        while True:
+            try:
                 pol = self.policy
-                bneed = [s for s in states.values() if decide.needs_base(s, pol) > 0]
                 hneed = [s for s in states.values() if decide.needs_head(s, pol) > 0]
-                bneed += [s for s in self.fixed_states if decide.needs_base_fixed(s, pol) > 0]
                 hneed += [s for s in self.fixed_states if decide.needs_head_fixed(s, pol) > 0]
-                if bneed or hneed:
+                btask = None
+                if base_dead:
+                    pass  # no base any more; head reruns still finish (flaky-on-head beats everything)
+                elif full_pending:
+                    if self.serial and hneed:
+                        pass  # serial: head reruns first, so an all-flaky head can skip the base run
+                    elif self.serial and all(_head_flaky(s) for s in states.values()):
+                        full_pending = False
+                        self._use_full(states, None, fresh=False)
+                        continue
+                    else:
+                        btask = ("full", [])
+                else:
+                    bneed = [s for s in states.values() if decide.needs_base(s, pol) > 0]
+                    bneed += [s for s in self.fixed_states if decide.needs_base_fixed(s, pol) > 0]
                     if bneed:
                         # optional confirmation runs ride along for free in a round that happens anyway
                         ride = [s for s in states.values() if s not in bneed and decide.wants_base(s, pol) > 0]
-                        brnd += 1
-                        self._base_round(bneed + ride, brnd)
-                    if hneed:
-                        rnd += 1
-                        self._head_round(hneed, rnd)
+                        btask = ("round", bneed + ride)
+                if hneed or btask:
+                    if btask and btask[0] == "full":
+                        full_pending = False
+                    self._iteration(states, hneed, btask)
                     continue
-                bwant = [s for s in states.values() if decide.wants_base(s, pol) > 0]
+                bwant = [s for s in states.values() if decide.wants_base(s, pol) > 0] if not base_dead else []
                 if not bwant:
                     break
                 if confirm_budget is None:
-                    confirm_budget = max(CONFIRM_MIN_SECONDS, CONFIRM_SHARE * (time.time() - self.t_start))
+                    # measured against the time a serial check would have taken by now, so running head and
+                    # base concurrently never buys fewer confirmation runs than stage 1's serial order did
+                    serial_elapsed = time.time() - self.t_start + self.overlap_saved
+                    confirm_budget = max(CONFIRM_MIN_SECONDS, CONFIRM_SHARE * serial_elapsed)
                 avg = sum(self.base_round_times) / len(self.base_round_times) if self.base_round_times else 0.0
                 if confirm_spent + avg > confirm_budget:
                     self.confirm_limited = True
                     break
                 t = time.time()
-                brnd += 1
-                self._base_round(bwant, brnd)
+                self._iteration(states, [], ("round", bwant))
                 confirm_spent += time.time() - t
-        except BaseError as e:
-            self._fail_base(states, str(e))
+            except BaseError as e:
+                self._fail_base(states, str(e))
+                full_pending = False
+                if not self._full_used:
+                    self._use_full(states, None, fresh=False)
+                base_dead = True
         self._fill_blocked(states)
         self.cache.save()
-        return self._report(list(states.values()), r1, base_full)
+        return self._report(list(states.values()), r1, self.base_full)
+
+    def _head_full(self, tag: str = "head-full") -> RunResult:
+        self.progress(f"running {self.runner.name} on head (working tree)")
+        r1 = self._execute(self.runner.full(self.head, tag), self.head)
+        if getattr(r1, "not_found", False):
+            raise UsageError(f"test command not found: {self.runner.argv[0]}")
+        if not r1.ok and "timed out" in r1.problem:
+            raise UsageError(f"the test command timed out on head ({r1.problem}); raise --timeout")
+        return r1
+
+    def _flaky_hunt(self, r1: RunResult) -> List[RunResult]:
+        """--flaky-hunt N: N extra full head runs; tests that flip between them are reported FLAKY."""
+        self._record("head", r1)
+        out = []
+        for i in range(max(0, self.opts.flaky_hunt)):
+            rh = self._head_full(f"head-hunt{i + 1}")
+            if not rh.ok:
+                break
+            self._record("head", rh)
+            out.append(rh)
+        return out
+
+    # -- concurrency ------------------------------------------------------------------
+    def _full_wanted(self, r1: RunResult) -> bool:
+        mode = self.opts.full_base
+        if mode == "never" or not self.runner.per_test:
+            return False
+        if mode == "auto" and r1.duration > FULL_BASE_MAX_SECONDS:
+            self.notes.append(f"head run took {r1.duration:.0f}s, so only the failing tests were run on base "
+                              f"(no fixed/missing lists; use --full-base always)")
+            return False
+        return True
+
+    def _start_speculation(self) -> Optional["_Async"]:
+        """Start the full base run while head's full run is still going (it is needed in nearly every
+        check with a failure). Not when serial, when the base result is cached, or when the last head
+        run of this command was slow (two full suites at once would mostly fight for the CPU)."""
+        o = self.opts
+        if self.serial or o.full_base == "never" or not self.runner.per_test or self.cache.full is not None:
+            return None
+        hint = self.timing.get()
+        if hint is not None and (hint > SPECULATE_MAX_SECONDS or (o.full_base == "auto" and
+                                                                    hint > FULL_BASE_MAX_SECONDS)):
+            return None
+        self.progress("starting the full base run alongside head")
+        task = _Async(self._exec_base_full)
+        self._tasks.append(task)
+        return task
+
+    def _settle_speculation(self, spec: Optional["_Async"], r1: RunResult, units: List[Unit]):
+        """-> (r1, units, None | ("ok", base RunResult) | ("error", BaseError))."""
+        if spec is None:
+            return r1, units, None
+        too_slow = self.opts.full_base == "auto" and r1.duration > FULL_BASE_MAX_SECONDS
+        if not units or too_slow:
+            self._cancel_base()
+            return r1, units, None
+        try:
+            rb = spec.wait()
+            out = ("ok", rb)
+        except BaseError as e:
+            out = ("error", e)
+        except _Cancelled:
+            out = None
+        self._tasks.remove(spec)
+        sign = collision_sign(r1) or (collision_sign(out[1]) if out and out[0] == "ok" else "")
+        if sign:
+            self._go_serial(sign)
+            r1 = self._head_full()
+            return r1, self._failing_units(r1), None
+        if out and out[0] == "ok":
+            self.overlap_saved += min(r1.duration, out[1].duration)
+        return r1, units, out
+
+    def _go_serial(self, sign: str) -> None:
+        self.serial = True
+        self.collision = sign
+        self.notes.append(f"head and base ran concurrently and one of them showed a resource-collision sign "
+                          f"({sign!r}); that round was discarded and redone serially, and the rest of this "
+                          f"check ran serially (--serial forces this)")
+        self.progress(f"collision sign {sign!r}: going serial")
+
+    def _cancel_base(self) -> None:
+        """Kill whatever runs on the base lane and wait for its threads (before the worktree goes)."""
+        self.base_lane.cancel()
+        for t in self._tasks:
+            t.thread.join(timeout=30)
+        self._tasks = []
+        self.base_lane = procs.Lane("base")
+
+    def _iteration(self, states, hneed: List[decide.UnitState], btask) -> None:
+        head_fn = base_fn = None
+        if hneed:
+            self.rnd += 1
+            rnd = self.rnd
+            head_fn = lambda: self._execute(self.runner.subset([s.unit for s in hneed], self.head, f"head-r{rnd}"),
+                                            self.head, progress=f"head rerun {rnd}: {len(hneed)} unit(s)")
+        plan = None
+        if btask:
+            if btask[0] == "full":
+                base_fn = self._exec_base_full
+            else:
+                self.brnd += 1
+                plan = self._plan_base(btask[1])
+                brnd = self.brnd
+                base_fn = lambda: self._exec_base_round(plan[0], brnd)
+        if head_fn and base_fn and not self.serial:
+            h, b, berr = self._pair(head_fn, base_fn)
+            sign = collision_sign(h) or (collision_sign(b) if berr is None else "")
+            if not sign:
+                self.overlap_saved += self._last_overlap
+                self._apply_head_round(hneed, h)
+                if berr is not None:
+                    raise berr
+                self._apply_base(states, btask, plan, b)
+                return
+            self._go_serial(sign)
+        # serial: base first, then head (the stage-1 order)
+        if base_fn:
+            self._apply_base(states, btask, plan, base_fn())
+        if head_fn:
+            self._apply_head_round(hneed, head_fn())
+
+    def _pair(self, head_fn, base_fn):
+        """Run head_fn here and base_fn in a worker thread. -> (head result, base result, base BaseError)."""
+        task = _Async(base_fn)
+        self._tasks.append(task)
+        t0 = time.time()
+        try:
+            h = head_fn()
+        except BaseException:
+            self._cancel_base()
+            raise
+        th = time.time() - t0
+        try:
+            b = task.wait()
+        except BaseError as e:
+            self._tasks.remove(task)
+            self._last_overlap = 0.0
+            return h, None, e
+        self._tasks.remove(task)  # (on any other exception it stays listed, so cleanup joins it)
+        self._last_overlap = min(th, time.time() - t0)
+        return h, b, None
+
+    def _apply_base(self, states, btask, plan, result) -> None:
+        if btask[0] == "full":
+            self._apply_base_full(states, result)
+        else:
+            self._apply_base_round(plan[0], plan[1], result)
 
     def _fixed_candidates(self, r1: RunResult, full: Optional[Dict]) -> List[decide.UnitState]:
         if full is None:
@@ -343,9 +652,8 @@ class Engine:
                 out.append(s)
         return out
 
-    def _head_round(self, need: List[decide.UnitState], rnd: int) -> None:
-        self.progress(f"head rerun {rnd}: {len(need)} unit(s)")
-        r = self._execute(self.runner.subset([s.unit for s in need], self.head, f"head-r{rnd}"), self.head)
+    def _apply_head_round(self, need: List[decide.UnitState], r: RunResult) -> None:
+        self._record("head", r)
         for s in need:
             s.head_attempts += 1
             if not r.ok and s.unit.id != SESSION_UNIT:
@@ -358,29 +666,14 @@ class Engine:
             if not s.base:
                 s.base_problem = problem
 
-    def _base_full(self, states, r1: RunResult) -> Optional[Dict]:
+    def _exec_base_full(self) -> RunResult:
+        side = self._ensure_base()
+        return self._execute(self.runner.full(side, "base-full"), side, lane=self.base_lane,
+                             progress="running full suite on base")
+
+    def _apply_base_full(self, states, rb: RunResult) -> None:
         """One full base run (cached per base sha) gives fixed/missing/blocked lists."""
-        mode = self.opts.full_base
-        if mode == "never" or not self.runner.per_test:
-            return None
-        if mode == "auto" and r1.duration > FULL_BASE_MAX_SECONDS:
-            self.notes.append(f"head run took {r1.duration:.0f}s, so only the failing tests were run on base "
-                              f"(no fixed/missing lists; use --full-base always)")
-            return None
-        cached = self.cache.full
-        if cached is not None:
-            self.progress("base full run: from cache")
-            return cached
-        # skip the full run if every unit is flaky on head already (nothing to attribute)
-        if all(_head_flaky(s) for s in states.values()):
-            return None
-        try:
-            side = self._ensure_base()
-        except BaseError as e:
-            self._fail_base(states, str(e))
-            return None
-        self.progress("running full suite on base")
-        rb = self._execute(self.runner.full(side, "base-full"), side)
+        r1 = self.head_full
         problem = ""
         if getattr(rb, "not_found", False):
             problem = rb.problem
@@ -393,7 +686,8 @@ class Engine:
             problem = "the base run collected no tests although head collected some"
         if problem:
             self._fail_base(states, problem)
-            return None
+            self._use_full(states, None, fresh=False)
+            return
         full = {"tests": {tid: t.status for tid, t in rb.tests.items()},
                 "groups": {tid: t.group for tid, t in rb.tests.items()},
                 "obs": {}, "load_errors": {k: v.obs().to_dict() for k, v in rb.load_errors.items()},
@@ -402,8 +696,21 @@ class Engine:
             if t.status == FAIL:
                 full["obs"][tid] = t.obs().to_dict()
         self.cache.set_full(full)
-        self._full_fresh = True
-        return full
+        self._use_full(states, full, fresh=True)
+
+    def _use_full(self, states, full: Optional[Dict], fresh: bool) -> None:
+        """Adopt the full base result (fresh, cached or none): first base sample, fixed candidates. Once."""
+        if self._full_used:
+            return
+        self._full_used = True
+        self._full_fresh = fresh
+        self.base_full = full
+        if full is not None:
+            for tid, st in full.get("tests", {}).items():
+                ob = Obs.from_dict(full["obs"][tid]) if st == FAIL and tid in full.get("obs", {}) else Obs(st)
+                self._seen_add("base", tid, ob, full.get("groups", {}).get(tid, ""))
+        self._prefill(states, full)
+        self.fixed_states = self._fixed_candidates(self.head_full, full)
 
     def _obs_from_full(self, u: Unit, full: Dict) -> Obs:
         if u.id == SESSION_UNIT:
@@ -430,6 +737,49 @@ class Engine:
             ob.key = "[file failed to load] " + ob.key
             return ob
         return Obs(ABSENT)
+
+    def _seen_add(self, side: str, tid: str, ob: Obs, group: str) -> None:
+        rec = self.seen[side].get(tid)
+        if rec is None:
+            rec = self.seen[side][tid] = {"pass": 0, "fail": 0, "fail_obs": None, "group": group}
+        if ob.status == PASS:
+            rec["pass"] += 1
+        elif ob.status == FAIL:
+            rec["fail"] += 1
+            if rec["fail_obs"] is None:
+                rec["fail_obs"] = ob
+
+    def _record(self, side: str, r: RunResult) -> None:
+        """Remember every test outcome of a run (also tests we didn't ask for) to surface flips."""
+        if not r.ok or not self.runner.per_test:
+            return
+        for tid, t in r.tests.items():
+            self._seen_add(side, tid, t.obs(), t.group)
+
+    def _flips(self, states: List[decide.UnitState]) -> List[Dict]:
+        """FLAKY results for tests that are not head failures but flipped in the runs made anyway:
+        'fixed' candidates that turned out flaky, and any test that both passed and failed on one side."""
+        out = []
+        done = {s.unit.id for s in states}
+        for fs in self.fixed_states:
+            done.add(fs.unit.id)
+            if decide.fixed_verdict(fs) != "fixed":
+                out.append(decide.flip_result(fs))
+        for tid in sorted(set(self.seen["head"]) | set(self.seen["base"])):
+            if tid in done:
+                continue
+            h = self.seen["head"].get(tid)
+            b = self.seen["base"].get(tid)
+            if h is None or not any(x and x["pass"] and x["fail"] for x in (h, b)):
+                continue
+            rec = h or b
+            st = decide.UnitState(Unit(tid, TEST, rec["group"], ""))
+            for side, x in (("head", h), ("base", b)):
+                if x:
+                    obs = [Obs(PASS)] * x["pass"] + [x["fail_obs"]] * x["fail"]
+                    setattr(st, side, obs)
+            out.append(decide.flip_result(st))
+        return out
 
     def _prefill(self, states, full: Optional[Dict]) -> None:
         for s in states.values():
@@ -474,26 +824,36 @@ class Engine:
             text = gitutil.show(self.root, self.base.sha, f) or ""
             s.mentioned_on_base = self.runner.source_contains(text, u)
 
-    def _base_round(self, need: List[decide.UnitState], rnd: int) -> None:
-        side = self._ensure_base()
-        run_units = []
+    def _plan_base(self, need: List[decide.UnitState]):
+        """-> (units to run on base, units known to be absent there). Git lookups only; no mutation of
+        the evidence."""
+        run_units, absent_units = [], []
         for s in need:
             self._presence(s)
             absent = (s.unit.kind == LOAD_ERROR and s.exists_on_base is False) or \
                 (s.unit.kind == TEST and (s.exists_on_base is False or s.mentioned_on_base is False)
                  and self.runner.name in ("pytest", "go", "rspec"))
-            if absent:
-                # don't ask the runner for a test the base doesn't have (pytest errors out on unknown ids)
-                s.base.append(Obs(ABSENT))
-                s.base_attempts += 1
-                continue
-            run_units.append(s)
+            # don't ask the runner for a test the base doesn't have (pytest errors out on unknown ids)
+            (absent_units if absent else run_units).append(s)
+        return run_units, absent_units
+
+    def _exec_base_round(self, run_units: List[decide.UnitState], rnd: int) -> Optional[RunResult]:
         if not run_units:
-            return
-        self.progress(f"base run {rnd}: {len(run_units)} unit(s)")
+            return None
+        side = self._ensure_base()
         t = time.time()
-        r = self._execute(self.runner.subset([s.unit for s in run_units], side, f"base-r{rnd}"), side)
+        r = self._execute(self.runner.subset([s.unit for s in run_units], side, f"base-r{rnd}"), side,
+                          lane=self.base_lane, progress=f"base run {rnd}: {len(run_units)} unit(s)")
         self.base_round_times.append(time.time() - t)
+        return r
+
+    def _apply_base_round(self, run_units: List[decide.UnitState], absent_units: List[decide.UnitState],
+                          r: Optional[RunResult]) -> None:
+        for s in absent_units:
+            s.base.append(Obs(ABSENT))
+            s.base_attempts += 1
+        if r is None:
+            return
         problem = ""
         if getattr(r, "not_found", False) or (not r.ok and SESSION_UNIT not in {s.unit.id for s in run_units}):
             problem = f"base run failed: {r.problem}"
@@ -502,6 +862,8 @@ class Engine:
             problem = "the base rerun produced no results"
         for tid, t in r.tests.items():
             self.base_seen.setdefault(t.group, {})[tid] = t.status
+        if not problem:
+            self._record("base", r)
         for s in run_units:
             s.base_attempts += 1
             if problem:
@@ -560,8 +922,10 @@ class Engine:
             v = decide.decide(s)
             v["suspicious_escalated"] = decide.suspicious(s)
             results.append(v)
+        flips = self._flips(states)
+        results += flips
         order = {NEW: 0, PRE_CHANGED: 1, UNKNOWN: 2, "pre_existing": 3, "environment": 4, "flaky": 5}
-        results.sort(key=lambda v: (order.get(v["verdict"], 9), v["id"]))
+        results.sort(key=lambda v: (order.get(v["verdict"], 9), bool(v.get("surfaced")), v["id"]))
         head_ids = set(r1.tests)
         head_load = set(r1.load_errors)
         fixed: List[str] = []
@@ -602,7 +966,8 @@ class Engine:
                         "tests_failed": sum(1 for t in tests if t.status == FAIL),
                         "tests_skipped": sum(1 for t in tests if t.status == SKIP),
                         "load_errors": len(r1.load_errors),
-                        "fixed": len(fixed), "missing": len(missing)},
+                        "fixed": len(fixed), "missing": len(missing),
+                        "flaky_surfaced": len(flips)},
             "base": {"sha": self.base.sha, "short": gitutil.short(self.base.sha), "ref": self.base.ref,
                      "how": self.base.how},
             "head": {"sha": self.head_sha, "short": gitutil.short(self.head_sha), "dirty": self.dirty},
@@ -610,7 +975,9 @@ class Engine:
                        "cwd": self.project_rel},
             "policy": {"head_runs": self.policy.runs, "base_required": self.policy.base_required,
                        "base_confirm": self.policy.base_runs, "max_runs": self.policy.max_runs,
-                       "confirm_budget_hit": self.confirm_limited},
+                       "confirm_budget_hit": self.confirm_limited, "flaky_hunt": self.opts.flaky_hunt},
+            "concurrency": {"serial": self.serial, "forced": bool(self.opts.serial) or self.serial and
+                            not self.collision, "collision": self.collision},
             "test_runs": self.test_runs,
             "cache": {"enabled": not self.opts.no_cache, "hit": self.cache.hit},
             "results": results,

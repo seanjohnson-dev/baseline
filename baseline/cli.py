@@ -12,8 +12,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from . import __version__, brand, gitutil, procs, report
-from .engine import BaseError, Engine, Options, UsageError, detect
+from . import __version__, brand
 
 EXIT_OK, EXIT_NEW, EXIT_USAGE, EXIT_BASE = 0, 1, 2, 3
 
@@ -54,14 +53,43 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--full-base", choices=("auto", "always", "never"), default="auto",
                    help="also run the full suite once on base for fixed/missing lists (auto: if the head "
                         "run took <= 60s)")
+    c.add_argument("--serial", action="store_true", default=_env_flag("SERIAL"),
+                   help=f"never run head and base at the same time (also {brand.ENV_PREFIX}SERIAL=1)")
+    c.add_argument("--flaky-hunt", type=int, default=0, metavar="N",
+                   help="N extra full runs on head; tests that flip between runs are reported FLAKY")
     c.add_argument("-v", "--verbose", action="store_true", help="progress on stderr")
     c.add_argument("command", nargs=argparse.REMAINDER, help="test command after --")
     d = sub.add_parser("detect", help="print the detected test runner and command")
     d.add_argument("--cwd")
     d.add_argument("--json", action="store_true")
     d.add_argument("command", nargs=argparse.REMAINDER)
+    k = sub.add_parser("clean", help="list and remove temp worktrees/dirs left behind by killed runs")
+    k.add_argument("--dry-run", action="store_true", help="only list them")
+    k.add_argument("--json", action="store_true")
     sub.add_parser("version", help="print the version")
     return p
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(brand.ENV_PREFIX + name, "") not in ("", "0", "false", "no", "off")
+
+
+def cmd_clean(a) -> int:
+    from . import worktree
+    stale = worktree.find_stale()
+    rows = []
+    for s in stale:
+        ok = None if a.dry_run else worktree.remove_stale(s)
+        rows.append({"path": str(s.path), "reason": s.reason, "repo": s.repo or s.git_dir, "removed": ok})
+    if a.json:
+        print(json.dumps({"stale": rows, "dry_run": a.dry_run}))
+        return EXIT_OK
+    if not rows:
+        print(f"{brand.CLI_NAME}: no stale temp worktrees/dirs")
+    for r in rows:
+        state = "would remove" if a.dry_run else ("removed" if r["removed"] else "could not remove")
+        print(f"{state}: {r['path']}  ({r['reason']}{'; repo ' + r['repo'] if r['repo'] else ''})")
+    return EXIT_OK
 
 
 def _command(rest: List[str]) -> Optional[List[str]]:
@@ -71,6 +99,7 @@ def _command(rest: List[str]) -> Optional[List[str]]:
 
 
 def cmd_detect(a) -> int:
+    from .engine import UsageError, detect
     from .runners import auto_detect, make_runner
     cwd = Path(a.cwd or os.getcwd()).resolve()
     command = _command(a.command)
@@ -92,13 +121,16 @@ def cmd_detect(a) -> int:
 
 
 def cmd_check(a) -> int:
+    from . import gitutil, report
+    from .engine import BaseError, Engine, Options, UsageError
     fmt = "json" if a.json else (a.format or "text")
     opts = Options(command=_command(a.command), base=a.base, runs=a.runs, base_runs=a.base_runs,
                    max_runs=a.max_runs, no_cache=a.no_cache, keep_worktree=a.keep_worktree, timeout=a.timeout,
                    cwd=a.cwd, strict_changed=a.strict_changed, copy_ignored=a.copy_ignored,
-                   full_base=a.full_base, verbose=a.verbose or (fmt == "text" and sys.stderr.isatty()))
-    if opts.runs < 1:
-        print(f"{brand.CLI_NAME}: --runs must be >= 1", file=sys.stderr)
+                   full_base=a.full_base, verbose=a.verbose or (fmt == "text" and sys.stderr.isatty()),
+                   serial=a.serial, flaky_hunt=a.flaky_hunt)
+    if opts.runs < 1 or opts.flaky_hunt < 0:
+        print(f"{brand.CLI_NAME}: --runs must be >= 1 and --flaky-hunt >= 0", file=sys.stderr)
         return EXIT_USAGE
     eng = Engine(opts)
     try:
@@ -159,10 +191,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         a.command = (a.command or []) + rest
         if a.command and a.command[0] == "--":
             a.command = a.command[1:]
+    from . import procs
     procs.install_signal_handlers()
     try:
         if a.cmd == "detect":
             return cmd_detect(a)
+        if a.cmd == "clean":
+            return cmd_clean(a)
         return cmd_check(a)
     except KeyboardInterrupt:
         procs.kill_all()

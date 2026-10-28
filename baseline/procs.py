@@ -31,6 +31,7 @@ class ProcResult:
     timed_out: bool = False
     not_found: bool = False
     extra: Dict[str, str] = field(default_factory=dict)
+    cancelled: bool = False
 
     @property
     def output(self) -> str:
@@ -80,12 +81,45 @@ def kill_all() -> None:
         kill_group(p, grace=0.5)
 
 
+class Lane:
+    """A cancellation scope: cancel() kills the process group running in it and refuses new ones.
+
+    Used for the base side when it runs concurrently with head (and for the speculative base run)."""
+
+    def __init__(self, name: str = ""):
+        self.name = name
+        self.cancelled = False
+        self._procs: "set[subprocess.Popen]" = set()
+        self._lock = threading.Lock()
+
+    def _add(self, p: subprocess.Popen) -> bool:
+        with self._lock:
+            if self.cancelled:
+                return False
+            self._procs.add(p)
+            return True
+
+    def _discard(self, p: subprocess.Popen) -> None:
+        with self._lock:
+            self._procs.discard(p)
+
+    def cancel(self) -> None:
+        with self._lock:
+            self.cancelled = True
+            procs = list(self._procs)
+        for p in procs:
+            kill_group(p, grace=0.5)
+
+
 def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
-        timeout: Optional[float] = None, merge_stderr: bool = False) -> ProcResult:
+        timeout: Optional[float] = None, merge_stderr: bool = False, lane: Optional[Lane] = None) -> ProcResult:
     """Run argv (no shell). Never raises for a failing/missing command.
 
-    merge_stderr: interleave stderr into stdout (for runners that split one report over both)."""
+    merge_stderr: interleave stderr into stdout (for runners that split one report over both).
+    lane: cancellation scope; a cancelled lane's run comes back with cancelled=True."""
     t0 = time.time()
+    if lane is not None and lane.cancelled:
+        return ProcResult(argv, cwd, -9, "", "cancelled", 0.0, cancelled=True)
     out = tempfile.TemporaryFile()
     err = tempfile.TemporaryFile()
     kwargs = {}
@@ -102,6 +136,8 @@ def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
                               time.time() - t0, not_found=True)
         with _LOCK:
             _ACTIVE.add(p)
+        if lane is not None and not lane._add(p):
+            kill_group(p, grace=0.2)
         timed_out = False
         try:
             p.wait(timeout=timeout)
@@ -114,11 +150,14 @@ def run(argv: List[str], cwd: str, env: Optional[Dict[str, str]] = None,
         finally:
             with _LOCK:
                 _ACTIVE.discard(p)
+            if lane is not None:
+                lane._discard(p)
         if not timed_out:
             # a runner may leave orphaned workers in its group; reap them
             _signal_group(p, getattr(signal, "SIGKILL", signal.SIGTERM))
         return ProcResult(argv, cwd, p.returncode if p.returncode is not None else -9,
-                          _read_tail(out), _read_tail(err), time.time() - t0, timed_out)
+                          _read_tail(out), _read_tail(err), time.time() - t0, timed_out,
+                          cancelled=bool(lane is not None and lane.cancelled))
     finally:
         out.close()
         err.close()
