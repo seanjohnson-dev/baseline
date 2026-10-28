@@ -56,7 +56,9 @@ class EnvPatternTest(unittest.TestCase):
 
 
 class EnvIntegrationTest(unittest.TestCase):
-    def test_command_not_found_on_both_sides_is_environment(self):
+    def test_command_not_found_on_both_sides_is_unknown(self):
+        # an unparsed whole command is one unit for every failure in it: environment-looking text never
+        # makes it ENVIRONMENT (exit 0); the env text is shown as a hint, the verdict is UNKNOWN (exit 3)
         script = "#!/bin/sh\necho 'sh: 1: nosuchtool-xyz: not found' >&2\nexit 127\n"
         repo = git_repo({"t.sh": script})
         (repo / "t.sh").chmod(0o755)
@@ -65,12 +67,13 @@ class EnvIntegrationTest(unittest.TestCase):
         try:
             p = run_cli(["check", "--json", "--", "./t.sh"], repo)
             rep = json.loads(p.stdout)
-            self.assertEqual(rep["results"][0]["verdict"], "environment", p.stdout)
-            self.assertEqual(p.returncode, 0)
+            self.assertEqual(rep["results"][0]["verdict"], "unknown", p.stdout)
+            self.assertIn("not found", rep["results"][0]["reason"])
+            self.assertEqual(p.returncode, 3)
         finally:
             rmtree(repo)
 
-    def test_ts_import_on_old_node_both_sides_environment(self):
+    def test_ts_import_on_old_node_both_sides_unknown_with_hint(self):
         script = ("#!/bin/sh\necho 'TypeError [ERR_UNKNOWN_FILE_EXTENSION]: Unknown file extension \".ts\" "
                   "for /r/src/lib/x.ts' >&2\nexit 1\n")
         repo = git_repo({"t.sh": script})
@@ -79,9 +82,11 @@ class EnvIntegrationTest(unittest.TestCase):
         write(repo, {"t.sh": script + "# edited\n"})
         try:
             p = run_cli(["check", "--", "./t.sh"], repo)
-            self.assertIn("ENVIRONMENT", p.stdout)
+            self.assertIn("UNKNOWN", p.stdout)
+            self.assertNotIn("ENVIRONMENT", p.stdout)
             self.assertIn("22.6", p.stdout)
             self.assertNotIn("PRE-EXISTING", p.stdout)
+            self.assertEqual(p.returncode, 3)
         finally:
             rmtree(repo)
 

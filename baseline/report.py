@@ -32,6 +32,9 @@ def _evidence(v: Dict, base_short: str) -> str:
         if verdict == PRE:
             return "reported on base and head"
     if verdict == NEW:
+        if v.get("head_only_fails") and b["failed"]:
+            return (f"fails on base {_counts(b)} and head {_counts(h)}, but head fails in "
+                    f"{plural(len(v['head_only_fails']), 'file')} base doesn't")
         if b["passed"]:
             return f"{noun} on base {b['passed']}/{b['runs']}, fails on head {_counts(h)}"
         return f"not on base, fails on head {_counts(h)}"
@@ -84,8 +87,13 @@ def render(rep: Dict, json_path: str = "") -> str:
         lines.append(f"{brand.NAME}: {', '.join(parts)}  {where}")
     if kind == "check":
         noun = rep["runner"].get("noun", "error")
-        lines.append(f"  {plural(s.get('check_errors', 0), noun)} on head; check {rep['runner']['name']} "
-                     f"(`{command_text(rep)}`); base = {base['how']}")
+        unread = [v for v in rep["results"] if v["kind"] == "command"]
+        if unread and not s.get("check_errors"):
+            # never "0 errors" for a command that failed: its output just couldn't be read
+            what = "the command failed and its output could not be read (no errors parsed)"
+        else:
+            what = f"{plural(s.get('check_errors', 0), noun)} on head"
+        lines.append(f"  {what}; check {rep['runner']['name']} (`{command_text(rep)}`); base = {base['how']}")
     elif kind == "tests":
         lines.append(f"  {plural(s['tests_total'], 'test')} on head: {s['tests_passed']} passed, "
                      f"{s['tests_failed']} failed"
@@ -95,8 +103,8 @@ def render(rep: Dict, json_path: str = "") -> str:
     else:
         lines.append(f"  command `{command_text(rep)}`; base = {base['how']}")
         lines.append("  note: unrecognised command — its output can't be read per test or per error, so it is one "
-                     "unit; a failure on both sides can't be attributed (UNKNOWN), only pass-on-base/fail-on-head "
-                     "(NEW).")
+                     "unit: NEW if it passes on base or head fails in files base doesn't (`FAIL <file>` lines), "
+                     "else UNKNOWN when base fails too.")
     for verdict, title in SECTIONS:
         items = [v for v in rep["results"] if v["verdict"] == verdict]
         if not items:
@@ -111,6 +119,10 @@ def render(rep: Dict, json_path: str = "") -> str:
                     shown = [ln for ln in (side["error_raw"] or "").splitlines() if ln.strip()][:4]
                     for i, ln in enumerate(shown):
                         lines.append(f"      {name if i == 0 else ' ' * len(name)}: {normalize.one_line(ln)[:200]}")
+                only = v.get("head_only_fails") or []
+                if only:
+                    lines.append(f"      failing on head only ({len(only)}): " + ", ".join(only[:8])
+                                 + (f" (+{len(only) - 8} more)" if len(only) > 8 else ""))
             elif verdict == PRE_CHANGED:
                 lines.append(f"      base: {normalize.one_line(b['message'] or b['error'])}")
                 lines.append(f"      head: {normalize.one_line(h['message'] or h['error'])}")
@@ -169,6 +181,8 @@ def agent_line(rep: Dict) -> str:
     if rest:
         out.append(f"The other {rest} failure(s) are pre-existing, flaky or environmental (proof above); report them "
                    f"as such rather than fixing them as part of this change.")
-    if not s[NEW] and not s[UNKNOWN] and not s[PRE_CHANGED]:
+    proven = all(v["verdict"] in (PRE, FLAKY, ENVIRONMENT) and (v["kind"] != "command" or v["verdict"] == FLAKY)
+                 for v in rep["results"])
+    if not s[NEW] and not s[UNKNOWN] and not s[PRE_CHANGED] and proven:
         out.insert(0, "No failure was caused by this change.")
     return "Agent: " + " ".join(out)

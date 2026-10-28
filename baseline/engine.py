@@ -227,6 +227,7 @@ class Engine:
             self.progress(progress)
         for inv in invs:
             env = dict(side.env)
+            env.update(getattr(self.runner, "cmd_env", None) or {})
             env.update(inv.env)
             side.outdir.mkdir(parents=True, exist_ok=True)
             if inv.report is not None and inv.report.exists():
@@ -264,7 +265,7 @@ class Engine:
             t = r.tests.get(u.id)
             if t is not None:
                 return t.obs()
-            whole = r.tests.get(WHOLE)
+            whole = r.tests.get(self._whole_id())
             # the run's errors were read and this one is not among them: on this side it 'passes'
             return Obs(PASS) if r.ok and whole is not None and whole.status == PASS else Obs(ABSENT)
         if u.kind == COMMAND or u.id == SESSION_UNIT:
@@ -292,6 +293,9 @@ class Engine:
             o.key = "[file failed to load] " + o.key
             return o
         return Obs(ABSENT)
+
+    def _whole_id(self) -> str:
+        return getattr(self.runner, "whole_id", WHOLE)
 
     def _side_roots(self) -> List[str]:
         roots = [str(self.root)]
@@ -378,7 +382,7 @@ class Engine:
         if self.runner.name == "pytest":
             extra += pyenv.site_dirs(self.base_env)
         fp = env_fingerprint(os.environ, extra, ignore_prefix=brand.ENV_PREFIX)
-        return "\0".join([__version__, self.runner.cache_key(), self.project_rel, fp, ",".join(self.editable),
+        return "\0".join([__version__, "units2", self.runner.cache_key(), self.project_rel, fp, ",".join(self.editable),
                           ",".join(self.opts.copy_ignored)])
 
     def _ensure_base(self) -> Side:
@@ -764,7 +768,7 @@ class Engine:
             st = full.get("tests", {}).get(u.id)
             if st == FAIL:
                 return Obs.from_dict(full["obs"][u.id])
-            readable = full.get("ok", True) and full.get("tests", {}).get(WHOLE) == PASS
+            readable = full.get("ok", True) and full.get("tests", {}).get(self._whole_id()) == PASS
             return Obs(PASS) if readable else Obs(ABSENT)
         if u.kind == LOAD_ERROR:
             if u.id in les:
@@ -921,6 +925,11 @@ class Engine:
 
     def _fill_blocked(self, states) -> None:
         for s in states.values():
+            if s.unit.kind == TEST and s.base and all(o.status == ABSENT for o in s.base) and \
+                    s.exists_on_base and self.base_seen.get(s.unit.group) and \
+                    s.unit.id not in self.base_seen[s.unit.group]:
+                # base ran this file and it has no such test: added (or renamed) on head
+                s.mentioned_on_base = False
             if s.unit.kind == LOAD_ERROR:
                 if s.unit.group.startswith("("):
                     s.blocked_tests = sorted({t for seen in self.base_seen.values() for t in seen})

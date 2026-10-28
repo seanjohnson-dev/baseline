@@ -75,6 +75,28 @@ def errors_match(hf: List[Obs], bf: List[Obs]) -> Optional[str]:
     return None
 
 
+def command_fails(obs: List[Obs]) -> Optional[List[set]]:
+    """Per run, the failing files/suites read from a whole command's output; None if any run had none."""
+    sets = [set(o.fails) for o in obs if o.fails]
+    return sets if obs and len(sets) == len(obs) else None
+
+
+def command_extra(hf: List[Obs], bf: List[Obs]) -> Optional[List[str]]:
+    """Whole command failing on both sides: the failing files/suites that every head run shows and no base
+    run does. None when either side's output had none to read (nothing to compare)."""
+    hs, bs = command_fails(hf), command_fails(bf)
+    if hs is None or bs is None:
+        return None
+    return sorted(set.intersection(*hs) - set().union(*bs))
+
+
+def head_only_lines(hf: List[Obs], bf: List[Obs]) -> List[str]:
+    """Failing files/suites seen in some head run and in no base run (a hint, not a verdict)."""
+    h = set().union(*[set(o.fails or []) for o in hf]) if hf else set()
+    b = set().union(*[set(o.fails or []) for o in bf]) if bf else set()
+    return sorted(h - b)
+
+
 def candidate(st: UnitState) -> str:
     return decide(st)["verdict"]
 
@@ -128,7 +150,10 @@ def base_targets(st: UnitState, p: Policy):
         return 0, 0  # skipped/absent on base: deterministic, no point repeating
     if st.unit.kind == CHECK:
         return 1, 1
-    if st.unit.group.startswith("(") or st.unit.kind == COMMAND:
+    if st.unit.kind == COMMAND:
+        t = _command_target(st)
+        return t, t
+    if st.unit.group.startswith("("):
         t = min(p.runs, 2)
         return t, t
     if st.unit.kind == LOAD_ERROR:
@@ -139,6 +164,17 @@ def base_targets(st: UnitState, p: Policy):
     if bp and not bf and st.closure_changed is None:
         req = max(req, p.base_runs)  # NEW and we can't tell what the change touched: confirm
     return req, max(req, p.base_runs)
+
+
+def _command_target(st: UnitState) -> int:
+    """Base runs for a whole command (each run is the full command; head gets two, to catch a flaky
+    failure). One base run answers 'fails on both sides' (UNKNOWN); a second only when the answer would be
+    NEW (passes on base, or head fails in files base doesn't), so one flaky base run can't accuse."""
+    hf, _, _, _ = _split(st.head)
+    bf, bp, _, _ = _split(st.base)
+    if bp or (bf and command_extra(hf, bf)):
+        return 2
+    return 1
 
 
 def _base_count(st: UnitState) -> int:
@@ -276,6 +312,12 @@ def decide(st: UnitState) -> Dict:
         return out
 
     # 3. flaky on base
+    if bf and bp and u.kind == COMMAND:
+        out.update(verdict=UNKNOWN,
+                   reason=f"The command failed all {h} head runs but only {len(bf)} of {b} base runs, and "
+                          f"{brand.NAME} can't read its output per test, so head may have failures base doesn't "
+                          f"— do not call this flaky or pre-existing.")
+        return out
     if bf and bp:
         out.update(verdict=FLAKY, flaky_side="base",
                    reason=f"Failed all {h} head runs, but on base it is flaky too (failed {len(bf)}/{b}) — "
@@ -304,16 +346,29 @@ def decide(st: UnitState) -> Dict:
 
     # 5. fails on base too
     if bf and u.kind == COMMAND:
-        benv = _env_of(bf)
-        if henv and benv:
-            out.update(verdict=ENVIRONMENT, env_class=henv,
-                       reason=f"The command fails on base ({len(bf)}/{b}) and head ({len(hf)}/{h}) with an "
-                              f"environment error ({henv['detail']}) — fix the environment, not the code.")
+        # Never PRE-EXISTING or ENVIRONMENT: one unit stands for every failure in the output, so
+        # environment-looking text anywhere in it says nothing about the other failures.
+        extra = command_extra(hf, bf)
+        if extra:
+            out["head_only_fails"] = extra
+            out.update(verdict=NEW,
+                       reason=f"The command fails on base too, but every head run ({len(hf)}/{h}) fails in "
+                              f"{len(extra)} file(s)/suite(s) that no base run ({len(bf)}/{b}) fails in: "
+                              + ", ".join(extra[:5]) + (f" (+{len(extra) - 5} more)" if len(extra) > 5 else "")
+                              + " — this change broke them.")
             return out
-        out.update(verdict=UNKNOWN, env_class=benv,
+        hint = head_only_lines(hf, bf)
+        out["head_only_fails"] = hint
+        env_note = ""
+        if henv or _env_of(bf):
+            env_note = (f" Environment-looking errors in the output "
+                        f"({(henv or _env_of(bf))['detail']}) don't explain the other failures.")
+        out.update(verdict=UNKNOWN,
                    reason=f"Can't tell: the command fails on base too and {brand.NAME} can't read its output per "
-                          "error, so the exit code proves nothing either way; compare the error lines yourself "
-                          "(head and base below) — do not call this pre-existing.")
+                          "test or error, so the exit code proves nothing either way; compare the error lines "
+                          "yourself (head and base below) — do not call this pre-existing or environmental."
+                          + env_note
+                          + (" Failing on head only: " + ", ".join(hint[:5]) + "." if hint else ""))
         return out
     if bf:
         benv = _env_of(bf)
@@ -331,16 +386,12 @@ def decide(st: UnitState) -> Dict:
                                   f"({len(bf)}/{b}) and head ({len(hf)}/{h}){extra} — already broken before "
                                   f"this change.")
             return out
-        if henv and benv:
-            out.update(verdict=ENVIRONMENT, env_class=henv,
-                       reason=f"Fails on both sides with environment errors (base: {benv['detail']}; head: "
-                              f"{henv['detail']}) — fix the environment, not the code.")
-            return out
-        if benv and not henv:
+        if benv:
+            # an environment error only counts when the same unit fails with the same error on base
             out.update(verdict=UNKNOWN, env_class=benv,
                        reason=f"On base it fails for an environmental reason ({benv['detail']}) while head fails "
-                              f"differently — the base result proves nothing; this must not be reported as "
-                              f"pre-existing.")
+                              f"differently{' (' + henv['detail'] + ')' if henv else ''} — the base result proves "
+                              f"nothing; this must not be reported as pre-existing or environmental.")
             return out
         out["similarity"] = normalize.similarity(hf[0].key, bf[0].key)
         blocked_note = " (on base its file failed to load)" if all(o.status == BLOCKED for o in bf) else ""

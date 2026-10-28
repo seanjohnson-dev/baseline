@@ -44,6 +44,7 @@ class Obs:
     raw: str = ""          # raw excerpt (traceback/body), truncated
     env: Optional[Dict[str, str]] = None   # environment-class match {"class":..., "detail":...}
     cached: bool = False
+    fails: Optional[List[str]] = None      # whole command: failing files/suites read from its output (None: none)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -53,7 +54,7 @@ class Obs:
     @classmethod
     def from_dict(cls, d: dict) -> "Obs":
         return cls(status=d.get("status", ABSENT), key=d.get("key", ""), message=d.get("message", ""),
-                   raw=d.get("raw", ""), env=d.get("env"), cached=True)
+                   raw=d.get("raw", ""), env=d.get("env"), cached=True, fails=d.get("fails"))
 
 
 @dataclass
@@ -68,9 +69,10 @@ class TestResult:
     message: str = ""
     raw: str = ""
     env: Optional[Dict[str, str]] = None
+    fails: Optional[List[str]] = None
 
     def obs(self) -> Obs:
-        return Obs(self.status, self.key, self.message, self.raw, self.env)
+        return Obs(self.status, self.key, self.message, self.raw, self.env, fails=self.fails)
 
 
 @dataclass
