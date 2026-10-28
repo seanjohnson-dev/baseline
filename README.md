@@ -116,9 +116,10 @@ export PATH="/path/to/baseline/bin:$PATH"
 baseline version
 ```
 
-Runners read per test: pytest, vitest, jest, go test, cargo test, rspec (each needs its own runner
-installed, as for your normal test run). Any other command gets one verdict for the whole command, by
-exit code.
+Runners read per test: pytest, vitest, jest, `node --test`, go test, cargo test, rspec (each needs its own
+runner installed, as for your normal test run). Checks read per error: `tsc` (and `npm run typecheck`-style
+scripts that run it), eslint, `prettier --check`, `next build`. Any other command is one unit for the whole
+command: NEW if it passes on base and fails on head, UNKNOWN (exit 3) if it fails on both sides.
 
 ## Claude Code plugin
 
@@ -157,6 +158,10 @@ Bounds:
 - Dedup: the same command on the same HEAD and working tree within 10 minutes reuses the earlier result;
   at most 20 checks per session (`BASELINE_HOOK_MAX_RUNS`).
 - Runners that can only get a whole-command verdict (`make test`, `tox`) get a one-line note, not a check.
+- Check commands (`tsc`, `npx tsc`, eslint, `prettier --check`, `next build`, and `npm|pnpm|yarn|bun run
+  typecheck|type-check|lint|format:check|check|build` or any script whose body runs one of them): when they
+  fail, a one-line hint naming the exact `baseline check -- <command>` to run. They are not re-run inside
+  the hook (a build can take minutes). When they pass, the hook says nothing.
 - Off switch: `BASELINE_HOOK=off`. Errors in the hook are swallowed; it never blocks the tool call.
 
 The plugin also has a `failing-tests` skill (the verdict vocabulary and when to run the check) and a
@@ -319,10 +324,16 @@ What it can't do, or does only partly:
   state from both sides, and head and base run in parallel by default. Collisions that print a known sign
   (port in use, database locked, lock busy) are redone serially; silent ones (two runs rewriting the same
   fixed temp file) are not caught. Use `--serial` for such suites.
-- Per-test verdicts need pytest, vitest, jest, go test, cargo test or rspec. Anything else (`make test`,
-  `tox`, `node --test`, mocha) gets one verdict for the whole command by exit code, which can call a new
-  failure pre-existing if the command already failed on base; for those the plugin's hook only adds a one-line note.
-  jest, cargo and rspec are tested on captured reports, not end to end.
+- Per-test verdicts need pytest, vitest, jest, `node --test`, go test, cargo test or rspec; per-error verdicts
+  need tsc, eslint, `prettier --check` or `next build`. Anything else (`make test`, `tox`, mocha, a shell
+  chain like `node --test; npm run typecheck`) is one unit: NEW when base passes, UNKNOWN when base fails too
+  (its first and last error lines for both sides are shown, but not compared). For those the plugin's hook
+  only adds a one-line note. jest, cargo and rspec are tested on captured reports, not end to end.
+- Check errors are matched by file + code/rule + message, without line numbers. An error whose message
+  stays the same but moves to a different place in the same file is still PRE-EXISTING; a second copy of
+  an existing error in the same file counts as NEW.
+- `next build` is parsed only for its "Type error" blocks; other build failures with readable errors are
+  whole-command failures.
 - PRE-EXISTING (error changed) is not a clean bill: the test was failing before, and the change altered how
   it fails. It exits 0 unless you pass `--strict-changed`.
 - A test that already fails on base for one reason hides anything else the change breaks in it: if the
@@ -335,7 +346,13 @@ What it can't do, or does only partly:
   run import head's code.
 - Untracked and ignored files (`.env`, generated files) are not copied into the base worktree unless you
   pass `--copy-ignored GLOB`; a base failure that looks environmental then gives UNKNOWN, with the missing
-  files listed.
+  files listed. One exception: for `tsc` and `next build`, git-ignored generated types (`.next/types`,
+  `next-env.d.ts`) are copied by default, because a fresh checkout fails the type check without them. Build
+  output (`dist/`, `build/`) is never copied automatically: on base it would be head's code. When base
+  still fails with errors head doesn't have, head's own errors are compared one by one anyway (an error
+  base doesn't report is NEW) and a note lists base's extra errors.
+- node:test: TypeScript test files need Node >= 22.6 (`--experimental-strip-types` below 23.6). On an older
+  node they fail to load on both sides and are reported ENVIRONMENT with the node version.
 - Monorepos and workspaces: npm/yarn/pnpm workspace packages in `node_modules` are re-pointed at the base
   copy; other layouts are not specially handled. Run it from the directory the tests run in (or `--cwd`).
 - It runs your test command several times (5 times on head and 5 to 10 times on base per failing test, up

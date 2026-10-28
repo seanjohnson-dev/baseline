@@ -4,6 +4,52 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- Whole-command runs are no longer called PRE-EXISTING from exit codes alone. A command Baseline can't read
+  per error that fails on base too is now UNKNOWN (exit 3) with "can't tell" wording, never "No failure was
+  caused by this change"; "same error" and "PRE-EXISTING (error changed)" now only come from comparing the
+  same unit's error text.
+- `npm test` / `npm run X` without such a script is a usage error ("no such npm script", exit 2) instead of a
+  pre-existing failure.
+- Load and setup failures classified ENVIRONMENT when they happen on both sides: `ERR_UNKNOWN_FILE_EXTENSION`
+  for TypeScript on an old Node (the reason names the node version), "requires Node >= X", `sh: 1: x: not
+  found`, npm's "Missing script". A `Cannot find module` for a source file path is no longer called a
+  missing package.
+- Wording: proper plurals ("1 test", "1 run"); "runs" instead of "test runs" for whole commands and checks;
+  the command itself instead of "(test command)"; "check passed" / "`cmd` passed" instead of "all tests
+  passed" for checks and other commands.
+- The plugin's hook is no longer silent for `node --test` and check commands (see Added).
+
+### Added
+
+- Check commands compared as error sets: `tsc` (both output forms), eslint (stylish, or JSON, which is
+  requested when no `--format` was given), `prettier --check`, `next build` type errors. One unit per error
+  (file + code/rule + message, no line numbers); one run per side. Five new type errors on top of two old
+  ones give 5 NEW and 2 PRE-EXISTING, exit 1.
+- For type checks, git-ignored generated types (`.next/types`, `next-env.d.ts`) are copied into the base
+  worktree; when base fails with errors head doesn't have, a note lists them and head's errors are still
+  compared one by one.
+- Whole-command failures carry their first and last error lines for head and base (JSON `error_raw`, text
+  report).
+- `node --test` runner: TAP reporter to a file (Node 20+), nested subtests, skip/todo, error text per test,
+  test files that fail to load as load errors, reruns of only the failing tests via `--test-name-pattern`.
+  Detected from a `package.json` test script that runs `node --test`, or from test files importing
+  `node:test` (with a note when they load TypeScript and the node on PATH is too old).
+- Hook: `node --test` (and npm scripts running it) gets a verdict like other runners; check commands get
+  a one-line hint naming `baseline check -- <command>` when they fail.
+
+### Changed (tests updated because the old behaviour was the bug)
+
+- `test_cli`: a whole command failing on both sides (same or different exit code) now expects UNKNOWN /
+  exit 3 instead of PRE-EXISTING / error changed with exit 0; the all-pass and NEW wording checks follow the
+  new text.
+- `test_parsers`: the generic unit id is the command, and its key is the error text, not "exit code N".
+- `test_hook`: `npm run build` (a `tsc` script) is now a check command for the hook, not ignored.
+- The `--strict-changed` CLI test used a whole command; whole commands can no longer be "error changed".
+
 ## [0.1.0] - 2026-10-28
 
 Initial release.

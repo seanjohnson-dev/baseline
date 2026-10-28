@@ -46,6 +46,15 @@ A *unit* is what can fail:
   `blocked_tests` (names taken from the base run).
 * if the runner itself crashes before writing any report, the whole session
   is one load-error unit, `(test session)`.
+* a **check error** (`kind: check_error`): one error printed by a check command
+  (`tsc`, eslint, `prettier --check`, `next build`). Its id is
+  `file: code message` (eslint: rule id; prettier: `file: not formatted`),
+  normalised, without line or column, so moving code doesn't make an error
+  new. A second identical error in the same file gets ` (#2)`. A check that
+  exits non-zero with nothing parsed is one whole-command unit, `(command)`.
+* a **whole command** (`kind: command`, id = the command): any command that is
+  neither a known test runner nor a known check. Its first and last
+  error-looking output lines are kept as `error_raw` for both sides.
 
 ## Sampling (how many runs a verdict rests on)
 
@@ -138,11 +147,22 @@ flaky tests usually fail far less often, and the head reruns alone catch them.
    * otherwise ⇒ **PRE-EXISTING (error changed)**, with a `similarity` score.
      A test whose file failed to load on base counts as failing on base with
      the error `[file failed to load] …`.
+   Whole commands (`kind: command`) are the exception: their output can't be
+   compared error by error, so failing on base too gives **ENVIRONMENT** when
+   both sides' errors are environment-class and **UNKNOWN** otherwise (exit 3,
+   "can't tell"), never PRE-EXISTING or error changed.
 6. **Never ran on base**:
    * file/package doesn't exist at base, or the test name isn't in the base
      sources ⇒ **NEW** (introduced by this change);
    * a load-error file that exists on base and produced no error there ⇒ **NEW**;
    * skipped on base, or exists but didn't run ⇒ **UNKNOWN**.
+
+Check errors: a check run whose errors were read and don't include this
+error counts as a pass on that side, so an error base doesn't report is
+**NEW** (even when base fails with other errors, e.g. because it lacks
+generated files; a note lists base's extra errors). An error reported on both
+sides is **PRE-EXISTING**. If base's check failed without readable errors,
+the error is **UNKNOWN**. Checks are deterministic: one run per side.
 
 Load errors follow the same rules with "loads fine" in place of "passes"
 (a file that loads on base and fails to load on head is a NEW load error).
@@ -195,7 +215,12 @@ Narrow, per-language patterns; a plain assertion failure (`assert …`,
   Ruby `cannot load such file`; only when *x* is third-party (a module that
   exists in the repo, or a relative import, is a code error).
 * `missing_executable` — `executable file not found in $PATH`, `spawn x ENOENT`,
-  `x: command not found`, `FileNotFoundError` from subprocess, missing Playwright browsers.
+  `x: command not found`, `sh: 1: x: not found`, `FileNotFoundError` from subprocess, missing
+  Playwright browsers.
+* `unsupported_runtime` — `ERR_UNKNOWN_FILE_EXTENSION` for `.ts`/`.mts` (Node older than 22.6;
+  the detail names the node version on PATH), "requires Node >= X", npm's engine mismatch.
+* `no_such_script` — npm/pnpm/yarn "Missing script". Before running, `baseline check -- npm test`
+  (or `npm run X`) for a script `package.json` doesn't define stops with exit 2, "no such npm script".
 * `missing_env_var` — `KeyError: 'DB_URL'` via `os.environ`, messages like
   `DATABASE_URL not set` / `environment variable X …`, and JS
   `TypeError`/`ReferenceError` whose first in-repo frame reads `process.env.X`;
@@ -286,7 +311,8 @@ passed in the full head run (see above).
 * A flaky test that passes in the full head run and doesn't flip in any other
   run that happened is not reported (`--flaky-hunt N` looks harder).
 * Unknown runners: the command runs as is and only the whole command gets a
-  verdict (by exit code; same exit code on base ⇒ PRE-EXISTING).
+  verdict: NEW if it passes on base, UNKNOWN (or ENVIRONMENT) if it fails on
+  base too. Never PRE-EXISTING.
 * jest/cargo/rspec support is parser-tested but not exercised end to end here;
   `missing` detection needs the full base run.
 * Windows: best effort (no process-group kill, `node_modules` mirroring needs
