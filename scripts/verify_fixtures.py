@@ -7,12 +7,16 @@ usage: verify_fixtures.py --fixtures DIR --truth DIR [--path-prepend DIRS] [--tr
 DIR must be a COPY of the fixture repos (the tool writes .git/<name>/). Every trial also asserts that
 `git status` and `git worktree list` are unchanged afterwards.
 FLAKY truth counts as correct when the test is reported FLAKY or not reported at all (it passed in the
-first head run, so there was nothing to attribute); it must never be NEW.
+first head run, so there was nothing to attribute); it must never be NEW. For every FLAKY case the
+script also prints how often it was surfaced as FLAKY vs silently absent; with --before FILE (the output
+of an earlier run of this script) it prints those rates before vs after.
 """
 import argparse
+import ast
 import collections
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -47,6 +51,33 @@ def labels(rep, truth):
     return out
 
 
+SECTION = re.compile(r"^== (\w+) (\w+): ")
+CASE_LINE = re.compile(r"^\s+(?:ok |BAD)\s+(\w+)\s+(.+?)\s+(\{.*\})\s*$")
+
+
+def parse_scorecard(text):
+    """Earlier output of this script -> {(eco, mode, test id): Counter(label -> n)} for FLAKY cases."""
+    out = {}
+    sect = None
+    for line in text.splitlines():
+        m = SECTION.match(line)
+        if m:
+            sect = (m.group(1), m.group(2))
+            continue
+        m = CASE_LINE.match(line)
+        if m and sect and m.group(1) == "FLAKY":
+            try:
+                out[sect + (m.group(2),)] = collections.Counter(ast.literal_eval(m.group(3)))
+            except (ValueError, SyntaxError):
+                pass
+    return out
+
+
+def flaky_rates(tally):
+    n = sum(tally.values())
+    return tally.get("flaky", 0), sum(v for k, v in tally.items() if k is None), n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fixtures", required=True)
@@ -57,8 +88,11 @@ def main():
     ap.add_argument("--cache", action="store_true", help="allow the base cache (default: --no-cache)")
     ap.add_argument("--auto", action="store_true", help="let the tool auto-detect the test command")
     ap.add_argument("--path-prepend", default="", help="dirs (os.pathsep-separated) to put first on PATH")
+    ap.add_argument("--before", help="earlier output of this script: compare FLAKY surfacing rates")
     ap.add_argument("extra", nargs=argparse.REMAINDER)
     a = ap.parse_args()
+    prev = parse_scorecard(Path(a.before).read_text()) if a.before else {}
+    flaky_rows = []
     extra = [x for x in a.extra if x != "--"]
     truth_dir = Path(a.truth)
     cmds = json.loads((truth_dir / "commands.json").read_text())
@@ -105,6 +139,25 @@ def main():
                 total_bad += bad
                 mark = "ok " if not bad else "BAD"
                 print(f"  {mark} {case:12} {k:55} {dict(tally[k])}")
+                if case == "FLAKY":
+                    flaky_rows.append((eco, mode, k, tally[k]))
+    if flaky_rows:
+        print("\nFLAKY cases: surfaced as FLAKY / silently absent / trials" + ("  (before -> after)" if prev else ""))
+        tot = collections.Counter()
+        for eco, mode, k, t in flaky_rows:
+            s, n_abs, n = flaky_rates(t)
+            tot.update({"s": s, "a": n_abs, "n": n})
+            line = f"  {eco:3} {mode:6} {k:45} {s}/{n_abs}/{n}"
+            b = prev.get((eco, mode, k))
+            if b is not None:
+                bs, ba, bn = flaky_rates(b)
+                tot.update({"bs": bs, "ba": ba, "bn": bn})
+                line = f"  {eco:3} {mode:6} {k:45} {bs}/{ba}/{bn} -> {s}/{n_abs}/{n}"
+            print(line)
+        summary = f"  total: surfaced {tot['s']}/{tot['n']}"
+        if prev:
+            summary = f"  total: surfaced {tot['bs']}/{tot['bn']} before -> {tot['s']}/{tot['n']} after"
+        print(summary)
     print(f"\nwrong verdicts: {total_bad}; false NEW on flaky tests: {false_new_flaky}")
     return 1 if total_bad or false_new_flaky else 0
 
