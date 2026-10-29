@@ -1,7 +1,7 @@
 # Stage 2A verification (2026-10-28)
 
-All numbers below were measured on this machine (8 cores) on 2026-10-28. Raw outputs are in
-`/workspace/stage2/` (`bench.txt`, `scorecard-*.txt`, `unittest-final.txt`, `validate.txt`, `live/`).
+All numbers below were measured on this machine (8 cores) on 2026-10-28. Raw outputs (`bench.txt`,
+`scorecard-*.txt`, `unittest-final.txt`, `validate.txt`, `live/`) were kept outside the repo (not published).
 
 ## Unit suite
 
@@ -22,9 +22,9 @@ and two live runs that must not touch each other), plugin assertions in `test_re
 ## `claude plugin validate . --strict`
 
 ```
-Validating marketplace manifest: /workspace/baseline/.claude-plugin/marketplace.json
+Validating marketplace manifest: /path/to/baseline/.claude-plugin/marketplace.json
 ℹ Advice (does not change the verdict):
-  ❯ /workspace/baseline/README.md: This README has no line that installs "baseline" from a marketplace. …
+  ❯ /path/to/baseline/README.md: This README has no line that installs "baseline" from a marketplace. …
 ✔ Validation passed
 ```
 
@@ -106,8 +106,8 @@ fired because agents pipe/chain test commands (now also PostToolUse), and a skil
 
 `grep` over all tracked and new files for the home-directory path, the user's email, API-key/token/private-key
 patterns, cloud keys and e-mail addresses (other than `noreply`/`example.invalid`): nothing. The only
-local paths are `/workspace/...` in `docs/live-demo.md` (the exact command and the verbatim hook
-output, as required) and in the stage-1 `SPEC.md`. `.gitignore` now also ignores `.claude/` and
+local paths were in `docs/live-demo.md` (the exact command and the verbatim hook output) and in the
+stage-1 `SPEC.md`; since 0.1.1 they read `/path/to/baseline` and `<research>`. `.gitignore` now also ignores `.claude/` and
 `*.hooklog`.
 
 ## Known gaps

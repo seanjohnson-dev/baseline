@@ -1,7 +1,7 @@
 # Live test: a headless Claude Code session with the plugin
 
 Date: 2026-10-28 (UTC 09:30–09:38). Claude Code 2.1.300, `--model sonnet --effort low`.
-Raw logs (stream-json, hook traces, metadata) are kept outside the repo in `/workspace/stage2/live/`;
+Raw logs (stream-json, hook traces, metadata) are kept outside the repo (not published);
 everything below is trimmed from them.
 
 ## Setup
@@ -16,7 +16,7 @@ unset. Each session ran:
 ```
 claude -p "Run the test suite with: python -m pytest -q -p no:cacheprovider. Tell me which failing tests are caused by the working-tree/branch change and which were already failing, then fix only what you broke." \
   --model sonnet --effort low --permission-mode acceptEdits --allowedTools Bash Read Edit \
-  --output-format stream-json --verbose --plugin-dir /workspace/baseline        # (control: without --plugin-dir)
+  --output-format stream-json --verbose --plugin-dir /path/to/baseline        # (control: without --plugin-dir)
 ```
 
 with `BASELINE_HOOK_LOG=<file>` (one JSON line per hook invocation) from run 4 on: Claude Code's
@@ -71,7 +71,7 @@ How to report these failures:
 - Fix the NEW failures: they pass on the base commit and fail with the current changes.
 - Call a failure pre-existing only if it is listed under PRE-EXISTING above, and cite base ae34f97 and its error.
 - FLAKY and ENVIRONMENT failures are not caused by this change and are not yours to fix: leave them and mention them to the user in one line.
-Details: .git/baseline/last.json, or run `/workspace/baseline/bin/baseline check -- python -m pytest -q -p no:cacheprovider`.
+Details: .git/baseline/last.json, or run `/path/to/baseline/bin/baseline check -- python -m pytest -q -p no:cacheprovider`.
 ```
 
 In run 5 the agent never ran the check itself or anything on the base commit (its tool calls: pytest,
@@ -144,7 +144,7 @@ by-hand comparison gets more expensive; that was not measured here.
 ## Installing through the marketplace file
 
 With an isolated config dir (`CLAUDE_CONFIG_DIR=/tmp/…`, so the user's own Claude Code setup was not
-changed), `claude plugin marketplace add /workspace/baseline` and `claude plugin install
+changed), `claude plugin marketplace add /path/to/baseline` and `claude plugin install
 baseline@baseline` both succeeded offline; `claude plugin details baseline@baseline` listed the two
 hooks (PostToolUseFailure, PostToolUse), the `failing-tests` skill and the `baseline` command, and the
 installed copy kept `bin/baseline` executable. A session under that isolated config could not run
