@@ -4,6 +4,63 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-10-29
+
+### Fixed
+
+- A change that edits dependencies could be called "not your fault" (reported on Reddit). The base
+  worktree links your `node_modules` and runs in your active Python environment, so when the change edits
+  a dependency manifest or lockfile, base runs with the new dependencies. An upgrade that makes a test fail
+  the same way on both commits was reported PRE-EXISTING, "No failure was caused by this change", exit 0.
+  Now Baseline reads the diff between base and the working tree (committed, staged, unstaged and untracked
+  files) for dependency manifests and lockfiles, by name at any depth. When one changed, every verdict
+  that rests on base (PRE-EXISTING, PRE-EXISTING (error changed), ENVIRONMENT, FLAKY on base) is UNKNOWN,
+  exit 3 unless a NEW forces 1, with the reason "Dependencies changed (<files>), so this can't be called
+  pre-existing: base ran with the new dependencies, not the base commit's, ...". NEW stays NEW; FLAKY on
+  head stays FLAKY, with a note. This holds per test, per load error, per check error and per part of a
+  chained command, and on every run, also when the base result comes from the cache. On a pytest project
+  whose branch bumps `greetlib==1.0` to `2.0` in `requirements.txt`: 0.1.0 said "1 pre-existing", exit 0;
+  0.1.1 says "1 unknown" with the reason, exit 3.
+
+### Added
+
+- `deps_changed` at the top level of the JSON report (repo-relative paths, sorted, `[]` when none; the
+  same list for a chain); a "Dependencies changed: ... — base ran with the new ones" line in the text
+  report; the same in the "Agent:" line and in the hook's context.
+- Files that count: `package.json`, `package-lock.json`, `npm-shrinkwrap.json`, `yarn.lock`,
+  `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `bun.lockb`, `bun.lock`; `*requirements*.txt|.in`, `.txt`/`.in`
+  files in a `requirements/` directory, `*constraints*.txt`, `pyproject.toml`, `poetry.lock`, `Pipfile`,
+  `Pipfile.lock`, `uv.lock`, `pdm.lock`, `setup.py`, `setup.cfg`; `Gemfile`, `Gemfile.lock`, `gems.rb`,
+  `gems.locked`, `*.gemspec`. A `package.json` edit that only touches `scripts`, `description`, `keywords`,
+  `author`, `contributors`, `license`, `homepage`, `repository`, `bugs` or `funding` doesn't count. Not
+  counted: `go.mod`, `go.sum`, `go.work`, `Cargo.toml`, `Cargo.lock`, because each worktree builds from its
+  own copy. This was checked with real offline runs: a Go module bump (v1.0.0 to v1.1.0, local file proxy)
+  and a cargo git-dependency bump (tag v1 to v2, also with a shared `CARGO_TARGET_DIR`) are both NEW, with
+  base passing on the old version.
+- `tests/test_deps.py`, 18 tests: the detector (every file family, nested monorepo paths, files that must
+  not count such as `requirements.md`, `src/package.json.bak`, `go.mod`, `Cargo.lock`; the `package.json`
+  exemption; staged, unstaged, untracked and deleted manifests against a real repo); the decision table
+  (every verdict with and without a dependency change, check errors, load errors, whole commands, surfaced
+  flaky); report, "Agent:" and hook wording; end to end: a pytest `requirements.txt` bump on a branch
+  (UNKNOWN for a changed library and for a removed one, NEW still NEW), the same repo without a dependency
+  change (verdicts unchanged), a dirty tree (unstaged, staged, untracked new manifest), the base-result
+  cache (second run a cache hit with the same verdict; the rule follows the diff, not the cache), a
+  `package.json` + `package-lock.json` change and a scripts-only `package.json` edit with the stand-in jest,
+  a chained npm script, and a Go `go.mod` bump through an offline module proxy (NEW).
+
+### Changed
+
+- With a dependency change, the "Agent:" line no longer says "No failure was caused by this change" and
+  the hook no longer says "None of these failures was caused by the current change", also when only
+  FLAKY-on-head failures are left (the new versions may be why they flip; the hook's FLAKY line says so).
+- Docs: README (verdict table, Safety, How it works, Limits), `docs/VERDICTS.md` (new section "When the
+  change edits dependencies", exit code 3, JSON), `SPEC.md`, `docs/PLUGIN.md`, the `failing-tests` skill.
+  Local paths in `docs/live-demo.md`, `docs/STAGE2-VERIFY.md` and `SPEC.md` now read `/path/to/baseline`
+  and `<research>`.
+- Version 0.1.1. The base-result cache key includes the version, so 0.1.0 cache files are not reused.
+
+No existing test asserted the old behaviour for a dependency change, so none was changed.
+
 ## [0.1.0] - 2026-10-28
 
 Initial release. Everything below was written before the first public release.

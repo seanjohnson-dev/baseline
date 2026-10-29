@@ -1,6 +1,6 @@
 {
   "name": "baseline",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "When a test command fails, re-runs the failing tests on the base commit and tells the agent, per failing test, whether the current change broke it (NEW) or it was already failing (PRE-EXISTING), flaky or environmental, with the evidence",
   "author": { "name": "Sean Johnson" },
   "license": "MIT",
