@@ -13,13 +13,14 @@ and a one-sentence reason an agent can paste into its report.
 | PRE-EXISTING (error changed) | `pre_existing_error_changed` | fails on base too, but with a different error — *still failing, check you didn't make it worse* | 0 (1 with `--strict-changed`) |
 | FLAKY | `flaky` | passed and failed on the same code | 0 |
 | ENVIRONMENT | `environment` | fails on base **and** head with an environment-class error | 0 |
-| UNKNOWN | `unknown` | no trustworthy base result — **must never be reported as pre-existing** | 3 (unless a NEW forces 1) |
+| UNKNOWN | `unknown` | no trustworthy base result (also: the change edits dependencies and it fails on base too, see [below](#when-the-change-edits-dependencies)) — **must never be reported as pre-existing** | 3 (unless a NEW forces 1) |
 
 Exit codes: `0` no NEW failure · `1` at least one NEW failure (incl. NEW load
 errors) · `2` tool/usage error (bad option, not a git repo, test command not
 found, head run timed out) · `3` the base result could not be established
 (cannot create the worktree, base run crashed or collected nothing, base
-untrusted for some failure) — exit 3 is never a "pre-existing" claim.
+untrusted for some failure, base ran with the change's new dependencies) —
+exit 3 is never a "pre-existing" claim.
 `130`/`128+n` when interrupted by a signal (worktree is still removed).
 
 Fixed tests (fail on every base run, pass on every head run) are listed under
@@ -246,6 +247,101 @@ If the base side fails part-way (worktree can't be created, base run crashes),
 head reruns still complete, so a test that is flaky on head is still FLAKY
 rather than UNKNOWN.
 
+After these steps, one more rule when the change edits dependencies (next
+section): what would rest on base becomes UNKNOWN.
+
+## When the change edits dependencies
+
+The base worktree has the base commit's files but not its installed packages:
+`node_modules` is linked from your tree, Python runs in your active
+environment, Ruby with your installed gems (see *The base worktree*). So when
+the change edits a dependency manifest or lockfile, base runs **with the new
+dependencies**, and "fails on base too" no longer means "was already broken
+before this change": the dependency change itself may be what breaks it (an
+upgrade that makes a test fail the same way on both commits). That must never
+come out as PRE-EXISTING.
+
+**Which files.** Before the verdicts, Baseline reads the same diff the
+closure analysis uses: base against the working tree, with staged, unstaged
+and untracked (not ignored) files and deletions, so it covers a committed
+branch, a dirty tree and both. A file counts by its name, at any depth
+(monorepos, nested packages), anywhere in the repo and whatever the runner
+(a manifest the tests seem not to use still counts):
+
+* JavaScript: `package.json`, `package-lock.json`, `npm-shrinkwrap.json`,
+  `yarn.lock`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` (pnpm catalogs pin
+  versions there), `bun.lockb`, `bun.lock`;
+* Python: `*requirements*.txt` and `*requirements*.in` (`requirements-dev.txt`,
+  `dev-requirements.txt`, pip-tools inputs), any `.txt`/`.in` file in a
+  `requirements/` directory, `*constraints*.txt`, `pyproject.toml`,
+  `poetry.lock`, `Pipfile`, `Pipfile.lock`, `uv.lock`, `pdm.lock`, `setup.py`,
+  `setup.cfg`;
+* Ruby: `Gemfile`, `Gemfile.lock`, `gems.rb`, `gems.locked`, `*.gemspec`
+  (the gems are installed once and shared; the lockfile picks the versions
+  bundler loads).
+
+One exception, because it is cheap to check and can't be wrong: a
+`package.json` whose only changes (both versions parsed as JSON) are in
+`scripts`, `description`, `keywords`, `author`, `contributors`, `license`,
+`homepage`, `repository`, `bugs` or `funding` doesn't count. Those can't
+change what a package manager installs, and each side reads its own
+`package.json`. `version` and `name` are not exempt: in a workspace they
+decide whether a sibling package is linked or installed. Every other edit
+counts, also one that only touches tool settings (`[tool.ruff]` in
+`pyproject.toml`, `[flake8]` in `setup.cfg`): telling those apart safely
+would need a TOML parser (Python 3.9 has none) and knowledge of every tool
+that keeps dependencies in these files. A false alarm costs an UNKNOWN; a
+miss would be a false "pre-existing". Baseline does not check whether you
+installed the new versions; it assumes you may have.
+
+Not counted: `go.mod`, `go.sum`, `go.work`, `Cargo.toml`, `Cargo.lock`. Each
+worktree builds from its own copy: Go fetches the versions the base `go.mod`
+names from the shared module cache (keyed by version), and cargo resolves
+from the base `Cargo.lock` and builds into the worktree's own `target/` (or
+a shared `CARGO_TARGET_DIR`, where builds are fingerprinted by dependency
+version). Nothing in the worktree setup links or shares them. Checked with
+real, offline runs: a branch that bumps a Go module from v1.0.0 to v1.1.0
+(a local file proxy), and one that moves a cargo git dependency from tag v1
+to v2 (also with a shared `CARGO_TARGET_DIR`), each make a test that passes
+on base fail on head; Baseline reports NEW, with base passing on the old
+version. `tests/test_deps.py` repeats the Go case.
+
+**The rule.** When any such file changed (`deps_changed` in the JSON is not
+empty), the runs are the same, and afterwards every verdict that says "not
+this change" because of what happened on base becomes UNKNOWN, with the
+reason *"Dependencies changed (`<files>`), so this can't be called
+pre-existing: base ran with the new dependencies, not the base commit's, and
+the dependency change may be what broke it"*, followed by what both sides
+showed:
+
+| would be | becomes | why |
+|---|---|---|
+| NEW | NEW | Both sides had the same new dependencies and only head fails: the code change broke it. |
+| PRE-EXISTING | UNKNOWN | Base ran the old code with the new dependencies; with its own it may have passed. |
+| PRE-EXISTING (error changed) | UNKNOWN | The same: "was failing before" is no longer known. |
+| ENVIRONMENT | UNKNOWN | The environment error may be the dependency change (a removed or renamed package: `No module named …`, `Cannot find module …`; a bump that needs a new variable, binary or service). Neither can be proven, so it is not called environmental. |
+| FLAKY on base (head failed every run) | UNKNOWN | Base flipped with the new dependencies; with the old ones it may have passed every run, which would make it NEW. |
+| FLAKY on head | FLAKY | It rests on head's own runs, not on base. The reason adds that the new versions may be what made it flaky, and the "Agent:" line and the hook don't say that no failure was caused by the change. |
+| FLAKY, surfaced (passed in head's full run) | unchanged | Not a failure on head. |
+| UNKNOWN | UNKNOWN | |
+| whole command | unchanged | Already never PRE-EXISTING, ENVIRONMENT or FLAKY on base: NEW or UNKNOWN. |
+
+Check errors (`tsc`, eslint, `prettier --check`) and load errors follow the
+same table per unit: an error reported on both sides after a `@types` or
+eslint-plugin bump is UNKNOWN, one that base doesn't report is still NEW.
+Chained commands: each part is a check of its own and applies the rule; they
+combine as before (NEW in any part ⇒ exit 1, else any UNKNOWN ⇒ exit 3). The
+`fixed` list is unchanged (informational).
+
+The rule is applied whenever a report is made, cached base results
+included: the cache is keyed by the base commit and the environment, while
+the diff is read fresh on every run.
+
+Where it shows: `deps_changed` at the top level of the JSON; a line in the
+text report (`Dependencies changed: package.json, package-lock.json — base ran
+with the new ones, ...`); the "Agent:" line; and the hook's context, which
+then never says "None of these failures was caused by the current change".
+
 ## Flaky tests that passed on head
 
 A flaky test that happens to pass in the full head run is not a failure, but
@@ -338,12 +434,19 @@ touched. `baseline clean [--dry-run] [--json]` lists/removes them by hand.
   your tree; jest keeps its cache under the system temp dir keyed by the
   config/rootDir, which differs between the sides. (A tool that writes inside
   an installed package's own directory would still write through the link.)
-* Python: the active venv is used as is. An editable install of the repo
+  Nothing is installed for base, so base runs with your installed packages:
+  when the change edits dependencies, see *When the change edits
+  dependencies*.
+* Python: the active venv is used as is (the same packages for both sides;
+  the same rule applies). An editable install of the repo
   (`.pth` / `__editable__` finder / `.egg-link` pointing into the repo) would
   make the base run import HEAD's code, so it is detected and each side gets
   its own copy of the mapped directories first on `PYTHONPATH`; absolute
   `PYTHONPATH` entries inside the repo are re-pointed at the worktree.
-* Go: the module/build caches are shared; nothing else is needed.
+* Go: the module/build caches are shared; nothing else is needed. Each side
+  builds with its own `go.mod`/`go.sum` (cargo likewise with its own
+  `Cargo.toml`/`Cargo.lock` and `target/`), so a dependency bump there shows
+  up as a difference between the sides, as it should.
 * Untracked/ignored files (`.env`, generated files) are **not** copied by
   default (secrets). Use `--copy-ignored GLOB` (repeatable). When a base
   failure looks environmental and head's doesn't, the verdict is UNKNOWN and
@@ -355,7 +458,9 @@ touched. `baseline clean [--dry-run] [--json]` lists/removes them by hand.
 `.git/<name>/last.json`. Top level: `tool`, `version`, `schema` (1),
 `exit_code`, `summary` (verdict counts + `tests_total/passed/failed/skipped`,
 `load_errors`, `fixed`, `missing`), `base` (`sha`, `short`, `ref`, `how`),
-`head` (`sha`, `short`, `dirty`), `runner` (`name`, `command`, `per_test`,
+`head` (`sha`, `short`, `dirty`), `deps_changed` (the dependency manifests and
+lockfiles the change edits, repo-relative and sorted, `[]` when none; see
+*When the change edits dependencies*), `runner` (`name`, `command`, `per_test`,
 `cwd`), `policy`, `test_runs`, `cache` (`enabled`, `hit`), `duration_s`,
 `results`, `fixed`, `flaky_passing`, `missing`, `warnings`, `notes`,
 `concurrency` (`serial`, `forced`, `collision`: the sign that made it go
@@ -385,7 +490,9 @@ part's own runner object, null when not judged), `exit_code`, `summary`,
 `part_command`; an unjudged part is one result of kind `command`, verdict
 `unknown`, `judged: false`. `summary` adds `parts` and `parts_judged`; the
 part lists `fixed`, `flaky_passing`, `missing` prefix entries with
-`[part N] `. The schema number stays 1 (fields were only added).
+`[part N] `. `deps_changed` is the same list for the chain as for each
+part. The schema number stays 1 (fields were only added; `deps_changed` in
+0.1.1).
 
 `kind` is `test`, `load_error` or `command` (unknown runner). `match` is
 `exact`/`loose` when both sides failed with the same error; `similarity` is

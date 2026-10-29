@@ -86,7 +86,7 @@ for your own Claude Code.
 | PRE-EXISTING (error changed) | failed on base too, but differently now: check you didn't make it worse | 0 (1 with `--strict-changed`) |
 | FLAKY | passed and failed on the same code | 0 |
 | ENVIRONMENT | fails on base and on head with the same environment error (missing module, env var, service down) | 0 |
-| UNKNOWN | Baseline can't tell; never to be reported as pre-existing | 3 |
+| UNKNOWN | Baseline can't tell (also: the change edits dependencies and it fails on base too); never to be reported as pre-existing | 3 |
 
 Exit codes: 0 no NEW failure, 1 at least one NEW, 2 usage or tool error, 3 the base result could not be
 established.
@@ -225,7 +225,14 @@ for Baseline once per session (`$BASELINE_BIN`, then `baseline` on `PATH`, then 
   directory whose entries are symlinks to the packages in your real `node_modules` (workspace packages
   are pointed at the worktree's copy instead, and the cache folders `.vite`, `.vitest`, `.cache` and
   `.vite-temp` are not linked). So a base run that writes inside an installed package's own directory
-  writes into your real `node_modules`. If the change edits dependencies, base runs with the new ones.
+  writes into your real `node_modules`.
+- Base runs with your installed packages (`node_modules`, your active Python environment, your gems). So
+  when the change edits dependencies (`package.json`, a lockfile, `requirements*.txt`, `pyproject.toml`,
+  `Gemfile`, ... anywhere in the repo), base runs with the new ones, and a failure on both sides may come
+  from the dependency change. Then no failure that also fails on base is called pre-existing, environment
+  or flaky on base: it is UNKNOWN (exit 3), and the report names the files ("Dependencies changed:
+  package.json, package-lock.json — base ran with the new ones"). NEW stays NEW. Go and Cargo build each
+  side from its own `go.mod` / `Cargo.lock`, so they are not affected.
 - Ignored and untracked files (`.env` and the like) are not copied into the worktree unless you pass
   `--copy-ignored GLOB`.
 
@@ -343,7 +350,10 @@ Details: [docs/PLUGIN.md](docs/PLUGIN.md).
    up to 15 runs per side.
 7. Environment classes (missing module, executable, env var or config; service unreachable) make a
    failure ENVIRONMENT only when it fails the same way on both sides.
-8. Base results are cached per base sha, command and environment, so the next check only reruns head.
+8. If the change edits dependency manifests or lockfiles, base ran with the new dependencies, so a failure
+   on both sides is UNKNOWN instead of pre-existing, environment or flaky on base (see Safety).
+9. Base results are cached per base sha, command and environment, so the next check only reruns head.
+   The dependency rule above is applied on every check, cached base results included.
 
 ## Benchmark
 
@@ -488,9 +498,15 @@ What it can't do, or does only partly:
   the change introduces that fails only some of the time is reported FLAKY, not NEW. Tests that only fail
   under load are reported FLAKY too.
 - The base worktree links your `node_modules` (see Safety) and uses your active Python environment;
-  nothing is installed or built for the base commit. If the change edits dependencies, base runs with the
-  new ones. Editable Python installs of the repo are detected and handled; other install modes may make
-  the base run import head's code.
+  nothing is installed or built for the base commit. So when the change edits a dependency manifest or
+  lockfile, Baseline can't tell whether a failure on both sides was already there or comes from the new
+  versions: every such failure is UNKNOWN (exit 3), never pre-existing. NEW (passing on base with the same
+  new dependencies) and FLAKY on head (flipping on head itself) still get their verdicts. Any edit to such a file counts, also one that
+  can't change dependencies (`[tool.*]` settings in `pyproject.toml`); a `package.json` edit that only
+  touches `scripts` (or `description`, `license` and the like) doesn't. It doesn't check whether you
+  installed the new versions. Go and Cargo are not affected. The file list and the reasoning are in
+  [docs/VERDICTS.md](docs/VERDICTS.md#when-the-change-edits-dependencies). Editable Python installs of the
+  repo are detected and handled; other install modes may make the base run import head's code.
 - Untracked and ignored files (`.env`, generated files) are not copied into the base worktree unless you
   pass `--copy-ignored GLOB`; a base failure that looks environmental then gives UNKNOWN, with the missing
   files listed. One exception: for `tsc` and `next build`, git-ignored generated types (`.next/types`,

@@ -28,7 +28,7 @@ index or branches: the base runs in a temporary worktree. `--json` prints the fu
 | PRE-EXISTING (error changed) | fails on base too, but differently now | check the change didn't make it worse |
 | FLAKY | passed and failed on the same code | not caused by the change; mention it in one line |
 | ENVIRONMENT | fails on base and head for an environmental reason (missing module, env var, service) | not a code bug; mention it in one line |
-| UNKNOWN | no trustworthy base result | say so; do not guess |
+| UNKNOWN | no trustworthy base result (also when the change edits dependencies and it fails on base too: base ran with the new ones) | say so; do not guess; with "Dependencies changed", the dependency change may be the cause |
 
 Exit codes: 0 no NEW failure · 1 at least one NEW · 2 usage error · 3 base could not be established
 (never a "pre-existing" claim).

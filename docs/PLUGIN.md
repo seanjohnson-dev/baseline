@@ -48,8 +48,9 @@ engine import (~30 ms, mostly Python start-up).
    one JSON line per invocation (event, command, seconds, context) for debugging.
 
 The context (≤ 3000 characters, per-group caps, long lines cut) starts with
-`[baseline] Per-test verdicts for the failing command …`, the counts and base → head shas, then one
-line per test with its evidence, grouped NEW, PRE-EXISTING (error changed), UNKNOWN, PRE-EXISTING,
+`[baseline] Per-test verdicts for the failing command …`, the counts and base → head shas (and, when
+the change edits dependency manifests or lockfiles, a line naming them: base ran with the new
+dependencies, so failures on both sides are UNKNOWN), then one line per test with its evidence, grouped NEW, PRE-EXISTING (error changed), UNKNOWN, PRE-EXISTING,
 ENVIRONMENT, FLAKY, then reporting guidance: fix the NEW ones; call a failure pre-existing only if it
 is listed so, citing the base sha and its error; FLAKY/ENVIRONMENT are not the agent's to fix (mention
 them in one line); UNKNOWN means no trustworthy base result.
