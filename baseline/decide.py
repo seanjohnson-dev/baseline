@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from . import brand, normalize
+from .deps import describe as describe_deps
 from .model import (ABSENT, BLOCKED, CHECK, COMMAND, ENVIRONMENT, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE,
                     PRE_CHANGED, SKIP, UNKNOWN, Obs, Unit)
 
@@ -437,3 +438,44 @@ def decide(st: UnitState) -> Dict:
     out.update(verdict=UNKNOWN, reason="The test exists on base but did not run there (no result), so there is "
                                        "nothing to compare against.")
     return out
+
+
+# What a verdict that rests on base would have claimed, for the reason text of the UNKNOWN that replaces it
+_DEPS_CLAIM = {PRE: "pre-existing", PRE_CHANGED: "pre-existing", ENVIRONMENT: "environmental",
+               FLAKY: "flaky on base"}
+
+
+def deps_rule(v: Dict, deps: List[str]) -> Dict:
+    """The change edits dependency manifests/lockfiles (deps.changed_manifests), so the base run used the
+    new dependencies, not the base commit's. Every verdict that says "not this change" because of what
+    happened on base becomes UNKNOWN: PRE-EXISTING (also error changed), ENVIRONMENT, FLAKY on base.
+    NEW stays (both sides had the same new dependencies and only head fails); FLAKY on head stays (it
+    rests on head's own runs) with a note; surfaced FLAKY (passed in head's full run) is not a failure.
+    Applied after sampling, on every run, cached base results included."""
+    if not deps or v.get("surfaced"):
+        return v
+    files = describe_deps(deps)
+    verdict = v["verdict"]
+    if verdict == FLAKY and v.get("flaky_side") != "base":
+        v["reason"] += (f" Dependencies changed too ({files}): head's own runs show the flip, but the new versions "
+                        f"may be what made it flaky.")
+        return v
+    if verdict not in _DEPS_CLAIM:
+        return v
+    h, b = v["head"], v["base"]
+    if verdict == PRE:
+        seen = f"it fails the same way on base ({b['failed']}/{b['runs']}) and head ({h['failed']}/{h['runs']})"
+    elif verdict == PRE_CHANGED:
+        seen = (f"it fails on base ({b['failed']}/{b['runs']}) and head ({h['failed']}/{h['runs']}), with a "
+                f"different error")
+    elif verdict == ENVIRONMENT:
+        seen = (f"it fails on base ({b['failed']}/{b['runs']}) and head ({h['failed']}/{h['runs']}) with an "
+                f"environment error ({(v.get('env_class') or {}).get('detail', '')})")
+    else:
+        seen = (f"head failed {h['failed']}/{h['runs']}; base failed {b['failed']} and passed {b['passed']} of "
+                f"{b['runs']}")
+    v["verdict"] = UNKNOWN
+    v["reason"] = (f"Dependencies changed ({files}), so this can't be called {_DEPS_CLAIM[verdict]}: base ran with "
+                   f"the new dependencies, not the base commit's, and the dependency change may be what broke it. "
+                   f"With the new dependencies on both sides, {seen}.")
+    return v

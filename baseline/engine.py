@@ -13,7 +13,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from . import __version__, brand, chain, closure, decide, envclass, gitutil, normalize, procs, pyenv
+from . import __version__, brand, chain, closure, decide, deps, envclass, gitutil, normalize, procs, pyenv
 from .cache import BaseCache, env_fingerprint
 from .model import (ABSENT, BLOCKED, CHECK, COMMAND, FAIL, FLAKY, LOAD_ERROR, NEW, PASS, PRE_CHANGED, SKIP, TEST,
                     UNKNOWN, Obs, RunResult, Unit)
@@ -355,6 +355,8 @@ class Engine:
         self.head_sha = gitutil.head_sha(self.root) or ""
         self.dirty = gitutil.is_dirty(self.root)
         self.changed = set(gitutil.changed_files(self.root, self.base.sha))
+        # from the diff, never from the cache: a cached base result still gets this rule
+        self.deps_changed = deps.changed_manifests(self.root, self.base.sha, self.changed)
         gdir = gitutil.git_dir(self.root)
         self.state_dir = gdir / brand.CACHE_DIR_NAME
         common = gitutil.common_git_dir(self.root)
@@ -1037,7 +1039,7 @@ class Engine:
         for s in states:
             v = decide.decide(s)
             v["suspicious_escalated"] = decide.suspicious(s)
-            results.append(v)
+            results.append(decide.deps_rule(v, self.deps_changed))
         flips = self._flips(states)
         results += flips
         order = {NEW: 0, PRE_CHANGED: 1, UNKNOWN: 2, "pre_existing": 3, "environment": 4, "flaky": 5}
@@ -1103,6 +1105,7 @@ class Engine:
             "base": {"sha": self.base.sha, "short": gitutil.short(self.base.sha), "ref": self.base.ref,
                      "how": self.base.how},
             "head": {"sha": self.head_sha, "short": gitutil.short(self.head_sha), "dirty": self.dirty},
+            "deps_changed": self.deps_changed,
             "runner": {"name": self.runner.name, "command": self.runner.argv, "per_test": self.runner.per_test,
                        "check": is_check, "noun": getattr(self.runner, "noun", ""), "cwd": self.project_rel},
             "policy": {"head_runs": self.policy.runs, "base_required": self.policy.base_required,
@@ -1166,6 +1169,8 @@ def run_chain(eng: Engine, det: Detection) -> Dict:
         raise BaseError(str(e))
     head_sha = gitutil.head_sha(eng.root) or ""
     dirty = gitutil.is_dirty(eng.root)
+    # each judged part applies the dependency rule itself; this is the same list, for the chain's report
+    deps_changed = deps.changed_manifests(eng.root, base.sha, gitutil.changed_files(eng.root, base.sha))
     parts = chain.expand(det.argv, eng.cwd, eng.root)
     if not parts:
         raise UsageError(f"`{' '.join(det.argv)}` contains no command to check")
@@ -1246,6 +1251,7 @@ def run_chain(eng: Engine, det: Detection) -> Dict:
         "summary": {**counts, **totals, "parts": len(parts), "parts_judged": judged},
         "base": {"sha": base.sha, "short": gitutil.short(base.sha), "ref": base.ref, "how": base.how},
         "head": {"sha": head_sha, "short": gitutil.short(head_sha), "dirty": dirty},
+        "deps_changed": deps_changed,
         "runner": {"name": "chain", "command": list(det.argv), "per_test": False, "check": False, "noun": "",
                    "cwd": eng.project_rel, "parts": infos},
         "policy": {"head_runs": eng.policy.runs, "base_required": eng.policy.base_required,

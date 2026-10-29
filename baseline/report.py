@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 from . import brand, normalize
+from .deps import describe as describe_deps
 from .model import ENVIRONMENT, FLAKY, NEW, PRE, PRE_CHANGED, UNKNOWN
 
 SECTIONS = [
@@ -114,6 +115,9 @@ def render(rep: Dict, json_path: str = "") -> str:
         lines.append("  note: unrecognised command — its output can't be read per test or per error, so it is one "
                      "unit: NEW if it passes on base or head fails in files base doesn't (`FAIL <file>` lines), "
                      "else UNKNOWN when base fails too.")
+    if rep.get("deps_changed") and rep["results"]:
+        lines.append(f"  Dependencies changed: {describe_deps(rep['deps_changed'])} — base ran with the new ones, so "
+                     f"a failure that fails on base too is UNKNOWN, not pre-existing or environment")
     for verdict, title in SECTIONS:
         items = [v for v in rep["results"] if v["verdict"] == verdict]
         if not items:
@@ -215,12 +219,16 @@ def agent_line(rep: Dict) -> str:
                    f"didn't make them worse before calling them pre-existing.")
     if s[UNKNOWN]:
         out.append(f"{s[UNKNOWN]} failure(s) could not be compared with base — do not claim they are pre-existing.")
+    deps = rep.get("deps_changed")
+    if deps:
+        out.append(f"This change edits dependencies ({describe_deps(deps)}) and base ran with the new ones, so a "
+                   f"failure on both sides may come from the dependency change.")
     rest = s[PRE] + s[FLAKY] + s[ENVIRONMENT]
     if rest:
         out.append(f"The other {rest} failure(s) are pre-existing, flaky or environmental (proof above); report them "
                    f"as such rather than fixing them as part of this change.")
     proven = all(v["verdict"] in (PRE, FLAKY, ENVIRONMENT) and (v["kind"] != "command" or v["verdict"] == FLAKY)
                  for v in rep["results"])
-    if not s[NEW] and not s[UNKNOWN] and not s[PRE_CHANGED] and proven:
+    if not s[NEW] and not s[UNKNOWN] and not s[PRE_CHANGED] and proven and not deps:
         out.insert(0, "No failure was caused by this change.")
     return "Agent: " + " ".join(out)

@@ -556,6 +556,12 @@ def format_context(rep: Dict, command: str, launcher: str, limit: int = MAX_CONT
     hdr = (f"[{brand.NAME}] {per} verdicts for the failing command `{_one(command, 120)}`: {counts or 'no failures'}. "
            f"Base {bshort} ({_one(how, 70)}) vs head {head_s}; {s.get('tests_total', 0)} tests, "
            f"{rep.get('test_runs', 0)} test runs, {rep.get('duration_s', 0):.0f}s.")
+    deps = rep.get("deps_changed") or []
+    if deps:
+        from .deps import describe
+        hdr += (f"\nDependencies changed in this diff ({describe(deps)}): base ran with the new dependencies, so a "
+                f"failure that also fails on base is UNKNOWN, not pre-existing or environmental; the dependency "
+                f"change may have caused it.")
     guide = [
         "How to report these failures:",
         "- Fix the NEW failures: they pass on the base commit and fail with the current changes.",
@@ -570,8 +576,12 @@ def format_context(rep: Dict, command: str, launcher: str, limit: int = MAX_CONT
         guide = [g for g in guide if not g.startswith("- UNKNOWN")]
     if not present & {"flaky", "environment"}:
         guide = [g for g in guide if not g.startswith("- FLAKY")]
+    elif deps:
+        # with new dependency versions a flaky failure may be theirs: don't call it "not caused by this change"
+        guide = ["- FLAKY failures passed and failed on head itself; the new dependency versions may be why: mention "
+                 "them to the user." if g.startswith("- FLAKY") else g for g in guide]
     if "new" not in present:
-        if present & {"unknown", "pre_existing_error_changed"}:
+        if present & {"unknown", "pre_existing_error_changed"} or deps:
             guide[1:2] = []
         else:
             guide[1:2] = ["- None of these failures was caused by the current change (no NEW)."]
